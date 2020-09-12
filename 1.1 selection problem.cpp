@@ -5,10 +5,10 @@
 #include <vector>
 #include <algorithm>
 #include <ctime>
-#include "C:\Users\HWZ\GitHub\rapidjson\include\rapidjson\reader.h"
-#include "C:\Users\HWZ\GitHub\rapidjson\include\rapidjson\document.h"
-#include "C:\Users\HWZ\GitHub\rapidjson\include\rapidjson\writer.h"
-#include "C:\Users\HWZ\GitHub\rapidjson\include\rapidjson\stringbuffer.h"
+#include "rapidjson\reader.h"
+#include "rapidjson\document.h"
+#include "rapidjson\writer.h"
+#include "rapidjson\stringbuffer.h"
 using namespace std;
 using namespace rapidjson;
 
