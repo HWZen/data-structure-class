@@ -1,0 +1,18 @@
+https://muzea-demo.github.io/random-data/
+
+constraint ch set a b c d e f g h i j k l m n o p q r s t u v w x y z
+constraint x int 20 50
+constraint y int 20 50
+
+repeat 1 {"x":[
+repeat 1 {"y":[
+repeat 1 "${ch}"
+repeat y ,"${ch}"
+repeat 1 ]}
+repeat group x
+repeat 1 ,{"y":[
+repeat 1 "${ch}"
+repeat y ,"${ch}"
+repeat 1 ]}
+end group
+repeat 1 ]}

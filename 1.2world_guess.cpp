@@ -13,11 +13,12 @@
 using namespace std;
 using namespace rapidjson;
 
-char **matrix;
-Document d, dicstionary, Anser;
-int Xnum;
-int Ynum;
+Document d, dicstionary, Anser; //记录字谜json、字典json、结果输出json
+char **matrix;                  //记录字谜矩阵
+int Xnum;                       //矩阵宽
+int Ynum;                       //矩阵长
 
+//各方向便利函数
 void W(int x, int y, Value &anser);
 void S(int x, int y, Value &anser);
 void A(int x, int y, Value &anser);
@@ -29,9 +30,12 @@ void SD(int x, int y, Value &anser);
 
 int main()
 {
+    //计时
     clock_t startTime, endTime;
     startTime = clock();
 
+    /*****************************/
+    /*读入文件********************/
     cout << "loading data..." << endl;
     FILE *fp = fopen("1.2data.json", "r");
     char readBuffer[65536];
@@ -68,17 +72,20 @@ int main()
         for (int i2 = 0; i2 < Ynum; i2++)
         {
             matrix[i1][i2] = *(y[i2].GetString());
-            //cout << matrix[i1][i2] << " ";
+            cout << matrix[i1][i2] << " "; //打印矩阵
         }
-        //cout << endl;
+        cout << endl;
     }
 
-    Value anserW(kObjectType), anserS(kObjectType), anserA(kObjectType), anserD(kObjectType), anserWA(kObjectType), anserWD(kObjectType), anserSA(kObjectType), anserSD(kObjectType);
-
+    /************************************/
+    /*数据处理***************************/
+    Anser.SetObject();
     for (int i1 = 0; i1 < Xnum; i1++)
     {
         for (int i2 = 0; i2 < Ynum; i2++)
         {
+            Value anserW(kObjectType), anserS(kObjectType), anserA(kObjectType), anserD(kObjectType), anserWA(kObjectType), anserWD(kObjectType), anserSA(kObjectType), anserSD(kObjectType);
+            //多线程处理
             thread thr1(W, i1, i2, ref(anserW));
             thread thr2(S, i1, i2, ref(anserS));
             thread thr3(A, i1, i2, ref(anserA));
@@ -95,18 +102,24 @@ int main()
             thr6.join();
             thr7.join();
             thr8.join();
+
+            //结果写入
+            char keystr[10];
+            sprintf(keystr, "(%d,%d)", i1, i2);
+            Value key(keystr, Anser.GetAllocator());
+            Value val(kObjectType);
+            val.AddMember("anserW", anserW, Anser.GetAllocator());
+            val.AddMember("anserS", anserS, Anser.GetAllocator());
+            val.AddMember("anserA", anserA, Anser.GetAllocator());
+            val.AddMember("anserD", anserD, Anser.GetAllocator());
+            val.AddMember("anserWA", anserWA, Anser.GetAllocator());
+            val.AddMember("anserWD", anserWD, Anser.GetAllocator());
+            val.AddMember("anserSA", anserSA, Anser.GetAllocator());
+            val.AddMember("anserSD", anserSD, Anser.GetAllocator());
+
+            Anser.AddMember(key, val, Anser.GetAllocator());
         }
     }
-
-    Anser.SetObject();
-    Anser.AddMember("anserW", anserW, Anser.GetAllocator());
-    Anser.AddMember("anserS", anserS, Anser.GetAllocator());
-    Anser.AddMember("anserA", anserA, Anser.GetAllocator());
-    Anser.AddMember("anserD", anserD, Anser.GetAllocator());
-    Anser.AddMember("anserWA", anserWA, Anser.GetAllocator());
-    Anser.AddMember("anserWD", anserWD, Anser.GetAllocator());
-    Anser.AddMember("anserSA", anserSA, Anser.GetAllocator());
-    Anser.AddMember("anserSD", anserSD, Anser.GetAllocator());
 
     cout << "writting anser.json..." << endl;
     fp = fopen("anser.json", "w");
@@ -145,7 +158,7 @@ void W(int x, int y, Value &anser)
             //cout << "in if ";
             Value key;
             Value val;
-            val.SetString(dicstionary[(int)(matrix[x][y] - 'a')][str.c_str()].GetString(),allocator);
+            val.SetString(dicstionary[(int)(matrix[x][y] - 'a')][str.c_str()].GetString(), allocator);
             key.SetString(str.c_str(), allocator);
             anser.AddMember(key, val, allocator);
         }
