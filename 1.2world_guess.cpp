@@ -13,6 +13,8 @@
 using namespace std;
 using namespace rapidjson;
 
+char readBuffer[65536];
+char readBuffer2[23164388];
 Document d, dicstionary, Anser; //记录字谜json、字典json、结果输出json
 char **matrix;                  //记录字谜矩阵
 int Xnum;                       //矩阵宽
@@ -38,7 +40,6 @@ int main()
     /*读入文件********************/
     cout << "loading data..." << endl;
     FILE *fp = fopen("1.2data.json", "r");
-    char readBuffer[65536];
     FileReadStream is1(fp, readBuffer, sizeof(readBuffer));
     if (d.ParseStream(is1).HasParseError())
         throw string("parse error!\n");
@@ -46,7 +47,6 @@ int main()
 
     cout << "loading dictionary..." << endl;
     fp = fopen("dictionary_alpha_arrays.json", "r");
-    char readBuffer2[65536];
     FileReadStream is2(fp, readBuffer2, sizeof(readBuffer2));
     if (dicstionary.ParseStream(is2).HasParseError())
         throw string("parse error!\n");

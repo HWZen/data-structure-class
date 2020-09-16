@@ -9,31 +9,24 @@
 #include "rapidjson\document.h"
 #include "rapidjson\writer.h"
 #include "rapidjson\stringbuffer.h"
+#include "rapidjson\filereadstream.h"
 using namespace std;
 using namespace rapidjson;
+
+char readBuffer[65536];
 
 int main()
 {
     clock_t startTime, endTime;
 
-    ifstream file;
-    file.open("1.1date.json");
-    //将文件读入到ostringstream对象buf中
-    ostringstream buf;
-    char ch;
-    while (buf && file.get(ch))
-        buf.put(ch);
-    //返回与流对象buf关联的字符串
-
-    string jsonstr = buf.str();
-
     Document d;
 
-    if (d.Parse(jsonstr.c_str()).HasParseError())
+    FILE *fp = fopen("1.1date.json", "r");
+    FileReadStream is1(fp, readBuffer, sizeof(readBuffer));
+    if (d.ParseStream(is1).HasParseError())
         throw string("parse error!\n");
+    fclose(fp);
 
-    if (!d.IsObject())
-        throw string("should be an object!\n");
 
     const bool Is_int = d["IS_int"].GetBool();
     int num = d["num"].GetInt();
@@ -104,7 +97,6 @@ int main()
         endTime = clock();
         cout << "runtime: " << (double)(endTime - startTime) / CLOCKS_PER_SEC << 's' << endl;
     }
-
     else
     {
         typedef double datatype;
