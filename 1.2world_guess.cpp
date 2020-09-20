@@ -13,14 +13,14 @@
 using namespace std;
 using namespace rapidjson;
 
-char readBuffer[65536];
-char readBuffer2[23164388];
+char readBuffer[65536];         //记录矩阵json
+char readBuffer2[23164388];     //记录答案json
 Document d, dicstionary, Anser; //记录字谜json、字典json、结果输出json
 char **matrix;                  //记录字谜矩阵
 int Xnum;                       //矩阵宽
 int Ynum;                       //矩阵长
 
-//各方向便利函数
+//各方向遍历函数
 void W(int x, int y, Value &anser);
 void S(int x, int y, Value &anser);
 void A(int x, int y, Value &anser);
@@ -138,7 +138,7 @@ int main()
 
     endTime = clock();
     cout << "use time: " << (double)(endTime - startTime) / CLOCKS_PER_SEC << endl;
-
+    cout << dicstionary[25].HasMember("zebu") << endl;
     return 0;
 }
 
