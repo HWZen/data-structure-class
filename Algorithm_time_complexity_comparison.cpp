@@ -27,11 +27,12 @@ int main()
     /*****************************/
     /*读入文件********************/
     cout << "loading data..." << endl;
-    FILE *fp = fopen("C://Users/HWZ/Desktop/Test.in", "r");
+    FILE *fp = fopen("sort_data.json", "r");
     FileReadStream is1(fp, readBuffer, sizeof(readBuffer));
     if (d.ParseStream(is1).HasParseError())
         throw string("parse error!\n");
     fclose(fp);
+    cout << "load completed." << endl;
 
     LONG *arrey1, *arrey2;
     LONG size = d[arreytype].GetArray().Size();
@@ -66,6 +67,9 @@ int main()
         cout << "STL::sort time: " << (double)(stop - start) / CLOCKS_PER_SEC << endl;
     }
 
+    cout << "arrey2: " << arrey2[0] << " " << arrey2[size / 10] << " " << arrey2[2 * size / 10] << " " << arrey2[6 * size / 10] << " " << arrey2 << endl;
+    cout << "arrey1: " << arrey1[0] << " " << arrey1[size / 10] << " " << arrey1[2 * size / 10] << " " << arrey1[6 * size / 10] << " " << arrey1 << endl;
+
     delete[] arrey1;
     delete[] arrey2;
 }
@@ -94,8 +98,18 @@ void Qsort(LONG arrey[], LONG hand, LONG last)
     }
     arrey[F] = T;
 
-    Qsort(arrey, hand, F - 1);
-    Qsort(arrey, L + 1, last);
+    if ((last - hand) > 3000000)
+    {
+        thread thL(Qsort, arrey, hand, F - 1);
+        thread thR(Qsort, arrey, L + 1, last);
+        thL.join();
+        thR.join();
+    }
+    else
+    {
+        Qsort(arrey, hand, F - 1);
+        Qsort(arrey, L + 1, last);
+    }
 }
 
 void Bubble(LONG arrey[], LONG Len)
