@@ -4,6 +4,7 @@
 #include <vector>
 using namespace std;
 
+/*节点数*/
 #define Vertex_num 11
 #define V_num Vertex_num
 
@@ -26,12 +27,10 @@ bool unsign_edges[Vertex_num][Vertex_num] = {
 class DFS
 {
 private:
- //   int finded[Vertex_num];
     int son[Vertex_num];
     int father[Vertex_num];
     int Num[Vertex_num];
     int Low[Vertex_num];
-//    bool Is_Cut_Points[Vertex_num] = {false};
     stack<int> DFS_stack;
     void Num_Low_Init();
     void Build_Low(int it,int low);
