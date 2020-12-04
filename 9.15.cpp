@@ -9,7 +9,13 @@ int tab[10][3];
 int find_next_Vertex();
 void tabing_Vertex_edge(int Vertex);
 bool finish();
-void Prim();
+void dijkstra();
+
+int tab2[10][3];
+int find_next_Vertex2();
+void tabing_Vertex_edge2(int Vertex);
+bool finish2();
+void Prime();
 
 int pre[10];
 vector<Graph::Edge> KEV;
@@ -40,16 +46,15 @@ int main()
     G.add_edges(5, 6, 2, 0);
     G.add_edges(2,6,1,0);
     G.add_edges(9, 6, 8, 0);
-    
-    
 
 
-    Prim();
+    Prime();
 
     cout << "W  P:" << endl;
     for (int i = 0; i < 10; i++)
-        cout << tab[i][1] << "  " << tab[i][2] << endl;
-    cout<<endl<<endl;
+        cout << tab2[i][1] << "  " << tab2[i][2] << endl;
+    cout << endl
+         << endl;
 
     Kruskal();
 
@@ -68,6 +73,14 @@ bool finish()
     return true;
 }
 
+bool finish2()
+{
+    for (int i = 0; i < 10; i++)
+        if (!tab2[i][0])
+            return false;
+    return true;
+}
+
 int find_next_Vertex()
 {
     int next_vertex = -1;
@@ -78,6 +91,21 @@ int find_next_Vertex()
         {
             next_vertex = i;
             next_weight = tab[i][1];
+        }
+    }
+    return next_vertex;
+}
+
+int find_next_Vertex2()
+{
+    int next_vertex = -1;
+    int next_weight = 0xfff;
+    for (int i = 0; i < 10; i++)
+    {
+        if (tab2[i][0] == 0 && tab2[i][1] < next_weight)
+        {
+            next_vertex = i;
+            next_weight = tab2[i][1];
         }
     }
     return next_vertex;
@@ -105,7 +133,29 @@ void tabing_Vertex_edge(int Vertex)
     }
 }
 
-void Prim()
+void tabing_Vertex_edge2(int Vertex)
+{
+    tab2[Vertex][0] = 1;
+    for (int i = 0; i < 10; i++)
+    {
+        if (i == Vertex)
+            continue;
+        int w = G.find_edge(Vertex, i).weight;
+        if (w != -1)
+        {
+            if (tab2[i][0] == 0)
+            {
+                if (tab2[i][1] > w)
+                {
+                    tab2[i][1] = w;
+                    tab2[i][2] = Vertex;
+                }
+            }
+        }
+    }
+}
+
+void dijkstra()
 {
     tab[0][0] = 0;
     tab[0][1] = 0;
@@ -122,9 +172,25 @@ void Prim()
         tabing_Vertex_edge(find_next_Vertex());
 }
 
+void Prime()
+{
+    tab2[0][0] = 0;
+    tab2[0][1] = 0;
+    tab2[0][1] = 0;
 
-//int temp[10] = {0};
-bool cnt(Graph::Edge a,Graph::Edge b)
+    for (int i = 1; i < 10; i++)
+    {
+        tab2[i][0] = 0;
+        tab2[i][1] = 0xffff;
+        tab2[i][2] = 0xffff;
+    }
+
+    while (!finish2())
+        tabing_Vertex_edge2(find_next_Vertex2());
+}
+
+    //int temp[10] = {0};
+    bool cnt(Graph::Edge a, Graph::Edge b)
 {
     return a.weight < b.weight;
 }
