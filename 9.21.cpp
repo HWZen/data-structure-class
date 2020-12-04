@@ -91,7 +91,7 @@ DFS::DFS()
             {
                 if(Num[i]!=-1)
                 {
-                    if(Num[i] < Num[it] && Low[it]!=i || Num[it] == -1)
+                    if((( Num[i] < Num[it]) && (Low[it]!=i)) || Num[it] == -1)
                         Build_Low(it, i);
                     continue;
                 }

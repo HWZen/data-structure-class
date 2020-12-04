@@ -41,3 +41,7 @@ sort_data.json
 Test.in
 run*
 Temp*
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
