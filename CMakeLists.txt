@@ -48,5 +48,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 ##########
 #add_library(lib hello.cpp)
 
+INCLUDE_DIRECTORIES(rapidjson)
 add_executable(run.app 9.21.cpp)
 target_link_libraries(run.app ${LINK_LIBRARIES})

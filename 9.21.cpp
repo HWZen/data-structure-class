@@ -111,7 +111,7 @@ DFS::DFS()
         else
         {
             son[it] = next;
-            father[next] = it;
+            father[next] = it; 
             it = next;
         }
 
