@@ -4,11 +4,11 @@
 #include <vector>
 using namespace std;
 
-/*èŠ‚ç‚¹æ•°*/
+/*½ÚµãÊı*/
 #define Vertex_num 11
 #define V_num Vertex_num
 
-
+/* Â¼Èë±ß */
 bool unsign_edges[Vertex_num][Vertex_num] = {
 /*A*/    {0,0,1,1,},
 /*B*/    {0,0,1,0,1},
@@ -24,6 +24,7 @@ bool unsign_edges[Vertex_num][Vertex_num] = {
     };
 
 
+/* DFSÀà */
 class DFS
 {
 private:
@@ -31,14 +32,14 @@ private:
     int father[Vertex_num];
     int Num[Vertex_num];
     int Low[Vertex_num];
-    stack<int> DFS_stack;
-    void Num_Low_Init();
-    void Build_Low(int it,int low);
+    stack<int> DFS_stack; // ÓÃÓÚ±éÀúµÄ¶Ñ
+    void Num_Low_Init(); // Num£¬LowÊı¾İ³õÊ¼»¯
+    void Build_Low(int it,int low); // ¸üĞÂLow
 
 public:
-    DFS();
+    DFS(); // ¹¹ÔìÊ±±ãÍê³ÉÁËËùÓĞ¼ÆËã
     ~DFS(){}
-    bool Is_cut_point(int V);
+    bool Is_cut_point(int V); // ¸îµãÅĞ¶Ï
     int *get_low() { return Low; }
     int *get_num() { return Num; }
 };
@@ -73,6 +74,7 @@ bool DFS::Is_cut_point(int V)
 
 DFS::DFS()
 {
+    /* ¹¹ÔìÍê³É£¬¼ÆËãÍê³É */
     Num_Low_Init();
 
     int it = 0;

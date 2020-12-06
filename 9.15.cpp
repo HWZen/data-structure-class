@@ -1,32 +1,47 @@
+/* À¬ »ø Í¼ Àà*/
 #include "Graph.h"
 #include <iostream>
 #include <algorithm>
 using namespace std;
 
+/*Í¼*/
 Graph G(10);
+
+/* dijkstraËã·¨(Ò»¿ªÊ¼²»Ğ¡ĞÄ°ÑPrimeĞ´³Édijkstra) */
+/*±í£¬[*][0]±íÊ¾ÊÇ·ñ±»ÕÒ¹ı£¬[*][1]±íÊ¾µ½¸ù½ÚµãµÄ¾àÀë£¬[*][2]±íÊ¾¸¸½Úµã*/
 int tab[10][3];
+int find_next_Vertex(); // ÕÒµ½ÏÂÒ»¸öÓ¦¸Ã×ßµÄ½Úµã£¨µ½¸ù½Úµã×î½üµÄ½Úµã£©
+void tabing_Vertex_edge(int Vertex);// °Ñ½ÚµãµÄ¸÷±ß´òÓ¡µ½tabÉÏ
+bool finish(); // ÅĞ¶ÏÊÇ·ñÈ«²¿×ßÍê
+void dijkstra(); // Ëã·¨³õÊ¼»¯¼°Èë¿Ú
+/* End dijkstra */
 
-int find_next_Vertex();
-void tabing_Vertex_edge(int Vertex);
-bool finish();
-void dijkstra();
 
+
+/* PrimeËã·¨ */
+/* ÏÂÁĞ¸÷º¯Êı¹¦ÄÜºÍdijkstra»ù±¾Ò»ÖÂ£¬Ö»ÊÇ°Ñtab»»³Étab2 */
 int tab2[10][3];
 int find_next_Vertex2();
 void tabing_Vertex_edge2(int Vertex);
 bool finish2();
 void Prime();
+/* End Prime */
 
-int pre[10];
-vector<Graph::Edge> KEV;
-bool cnt(Graph::Edge a,Graph::Edge b);
-int Find(int x);
-bool Combine(int x, int y);
-void Kruskal();
+
+/* KruskalËã·¨ */
+vector<Graph::Edge> KEV; // ´¢´æÒÑÑ¡ÔñµÄ±ß¡¾¼¯¡¿
+int pre[10]; // ´¢´æ½ÚµãµÄ¸ù
+bool cnt(Graph::Edge a,Graph::Edge b); // ¸østd::sortÓÃµÄÅĞ¶Ïº¯Êı
+int Find(int x); // ²éÕÒxµÄ¸ù½Úµã¡¾²é¡¿
+bool Combine(int x, int y); // ½«Á½¿Å¸ù½Úµã²»Í¬µÄÊ÷ºÏ²¢£¬Èç¹ûÎŞĞèºÏ²¢·µ»Øfalse,·ñÔòtrue ¡¾²¢¡¿
+void Kruskal(); //Ëã·¨³õÊ¼»¯¼°Èë¿Ú
+/* End Kuska */
+
+
 
 int main()
 {
-    
+    //Â¼Èë±ßµÄÊı¾İ
     G.add_edges(0, 1, 3, 0);
     G.add_edges(0, 4, 4, 0);
     G.add_edges(0, 3, 4, 0);
@@ -47,7 +62,7 @@ int main()
     G.add_edges(2,6,1,0);
     G.add_edges(9, 6, 8, 0);
 
-
+    //Ö´ĞĞPrimeËã·¨
     Prime();
 
     cout << "W  P:" << endl;
@@ -138,14 +153,14 @@ void tabing_Vertex_edge2(int Vertex)
     tab2[Vertex][0] = 1;
     for (int i = 0; i < 10; i++)
     {
-        if (i == Vertex)
+        if (i == Vertex) // Ìø¹ı×Ô¼º
             continue;
-        int w = G.find_edge(Vertex, i).weight;
+        int w = G.find_edge(Vertex, i).weight; // ´Ó Vertex µ½ i µÄÈ¨Öµ£¬Èç¹û±ß²»´æÔÚ£¬Ôò·µ»Ø-1
         if (w != -1)
         {
             if (tab2[i][0] == 0)
             {
-                if (tab2[i][1] > w)
+                if (tab2[i][1] > w) // Èı¸öif£ºµ±±ß´æÔÚ£»µ±iµãÃ»±»×ß¹ı£»µ±iµã¼ÇÂ¼µÄÈ¨Öµ´óÓÚw
                 {
                     tab2[i][1] = w;
                     tab2[i][2] = Vertex;
@@ -174,6 +189,7 @@ void dijkstra()
 
 void Prime()
 {
+    /*³õÊ¼»¯±í¸ñ*/
     tab2[0][0] = 0;
     tab2[0][1] = 0;
     tab2[0][1] = 0;
@@ -184,9 +200,11 @@ void Prime()
         tab2[i][1] = 0xffff;
         tab2[i][2] = 0xffff;
     }
+    /* ³õÊ¼»¯Íê³É */
 
+    /* µ±»¹Ã»ÓĞÍê³É */
     while (!finish2())
-        tabing_Vertex_edge2(find_next_Vertex2());
+        tabing_Vertex_edge2(find_next_Vertex2());/* ÕÒµ½ÏÂÒ»¸ö½Úµã²¢´ò±í */
 }
 
     //int temp[10] = {0};
@@ -198,25 +216,25 @@ void Prime()
 int Find(int x)
 {
     int r = x;
-    while (r != pre[r]) //åˆ¤æ–­æ˜¯å¦ä¸ºæ ¹èŠ‚ç‚¹
+    while (r != pre[r]) //ÅĞ¶ÏÊÇ·ñÎª¸ù½Úµã
         r = pre[r];
 
     int i = x, j;
-    while (pre[i] != r) //ä¼˜åŒ–è¿‡ç¨‹ï¼Œæœ€ç»ˆpre[i]éƒ½æŒ‡å‘æ ¹èŠ‚ç‚¹
+    while (pre[i] != r) //ÓÅ»¯¹ı³Ì£¬×îÖÕpre[i]¶¼Ö¸Ïò¸ù½Úµã
     {
         j = pre[i];
         pre[i] = r;
         i = j;
     }
-    return r; //è¿”å›æ ¹èŠ‚ç‚¹
+    return r; //·µ»Ø¸ù½Úµã
 }
 
 bool Combine(int x, int y)
 {
     int fx = Find(x), fy = Find(y);
-    if (fx != fy) //è‹¥æ ¹èŠ‚ç‚¹ä¸åŒ
+    if (fx != fy) //Èô¸ù½Úµã²»Í¬
     {
-        pre[fy] = fx; //å°†å…¶ä¸­ä¸€ä¸ªç½®ä¸ºå¦ä¸€ä¸ªçš„æ ¹èŠ‚ç‚¹ï¼Œå®ç°åˆå¹¶
+        pre[fy] = fx; //½«ÆäÖĞÒ»¸öÖÃÎªÁíÒ»¸öµÄ¸ù½Úµã£¬ÊµÏÖºÏ²¢
         return true;
     }
     return false;
@@ -225,16 +243,20 @@ bool Combine(int x, int y)
 void Kruskal()
 {
 
-
+    /* Kruskal³õÊ¼»¯ */
     sort(G.edges.begin(), G.edges.end(), cnt);
 
     for(int i=0;i<10;i++)
         pre[i] = i;
+    /* ³õÊ¼»¯Íê³É */
     
+
+
+    /* ´Ó×îĞ¡±ß¿ªÊ¼±éÀú */
     for(int i=0;i<G.edges.size();i++)
     {
         int *temp = G.edges.at(i).from_to;
         if(Combine(temp[0], temp[1]))
-            KEV.push_back(G.edges.at(i));
+            KEV.push_back(G.edges.at(i));// Èç¹ûºÏ²¢³É¹¦£¬½«±ßÍÆÈëvector
     }
 }
