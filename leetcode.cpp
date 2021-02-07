@@ -153,13 +153,140 @@ public:
         }
         return max;
     }
+
+    string intToRoman(int num) {
+        string res;
+        int M_num = num / 1000;
+        num -= 1000 * M_num;
+        for (int i = 0; i < M_num;i++)
+            res += 'M';
+        
+        int C_num = num / 100;
+        num -= 100 * C_num;
+        if (C_num==4)
+            res += "CD";
+        else if (C_num==9)
+            res += "CM";
+        else
+        {
+            if (C_num>=5)
+            {
+                res += 'D';
+                C_num -= 5;
+            }
+            while(C_num--)
+                res += 'C';
+        }
+        
+        int X_num = num / 10;
+        num -= 10 * X_num;
+        if (X_num==4)
+            res += "XL";
+        else if (X_num==9)
+            res += "XC";
+        else
+        {
+            if (X_num>=5)
+            {
+                res += 'L';
+                X_num -= 5;
+            }
+            while(X_num--)
+                res += 'X';
+        }
+        
+        int I_num = num / 1;
+        num -= 1 * I_num;
+        if (I_num==4)
+            res += "IV";
+        else if (I_num==9)
+            res += "IX";
+        else
+        {
+            if (I_num>=5)
+            {
+                res += 'V';
+                I_num -= 5;
+            }
+            while(I_num--)
+                res += 'I';
+        }
+        
+    //     while(num>=1000)
+    //     {
+    //         res += 'M';
+    //         num -= 1000;
+    //     }
+    //     if(num>=900)
+    //     {
+    //         res += "CM";
+    //         num -= 900;
+    //     }
+    //     if(num>=500)
+    //     {
+    //         res += 'D';
+    //         num -= 500;
+    //     }
+    //     if(num>=400)
+    //     {
+    //         res += "CD";
+    //         num -= 400;
+    //     }
+    //     while(num>=100)
+    //     {
+    //         res += "C";
+    //         num -= 100;
+    //     }
+    //     if(num>=90)
+    //     {
+    //         res += "XC";
+    //         num -= 90;
+    //     }
+    //     if(num>=50)
+    //     {
+    //         res += 'L';
+    //         num -= 50;
+    //     }
+    //     if(num>=40)
+    //     {
+    //         res += "XL";
+    //         num -= 40;
+    //     }
+    //     while(num>=10)
+    //     {
+    //         res += "X";
+    //         num -= 10;
+    //     }
+    //     if(num==9)
+    //     {
+    //         res += "IX";
+    //         return res;
+    //     }
+    //     if(num==4)
+    //     {
+    //         res += "IV";
+    //         return res;
+    //     }
+    //     if(num>=5)
+    //     {
+    //         res += 'V';
+    //         num -= 5;
+    //     }
+    //     while(num>=1)
+    //     {
+    //         res += 'I';
+    //         num--;
+    //     }
+
+    //     return res;
+    // };
 };
 
 int main()
 {
     // string s;
     // cin >> s;
-    vector<int> temp({1, 8, 6, 2, 5, 4, 8, 3, 7});
-    cout << Solution().maxArea(temp) << endl;
+    // vector<int> temp({1, 8, 6, 2, 5, 4, 8, 3, 7});
+    cout << Solution().intToRoman(1994) << endl;
     return 0;
 }
