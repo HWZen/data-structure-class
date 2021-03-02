@@ -285,20 +285,20 @@ public:
     string longestCommonPrefix(vector<string> &strs)
     {
         string res;
-        if (strs.size()==0)
+        if (strs.size() == 0)
             return res;
 
         int num = 0;
-        while(1)
+        while (1)
         {
-            if(strs[0].length()<=num)
+            if (strs[0].length() <= num)
                 return res;
             char temp = strs[0][num];
-            for (int i = 1; i < strs.size();i++)
+            for (int i = 1; i < strs.size(); i++)
             {
-                if(strs[i].length()<=num)
+                if (strs[i].length() <= num)
                     return res;
-                if(strs[i][num]!=temp)
+                if (strs[i][num] != temp)
                     return res;
             }
             num++;
@@ -307,15 +307,48 @@ public:
         return res;
     }
 
+    vector<vector<int>> threeSum(vector<int> &nums)
+    {
+        if (nums.size() < 3)
+            return vector<vector<int>>();
 
-    
+        sort(nums.begin(), nums.end());
+
+        char index[200000] = {0};
+        vector<vector<int>> res;
+        for (int i : nums)
+            index[i + 100000] += 1;
+
+        for (int i = 0; i < nums.size() && nums.at(i) <= 0; i++)
+        {
+            index[nums.at(i) + 100000] -= 1;
+
+            if (i > 0 && nums.at(i) == nums.at(i - 1))
+                continue;
+
+            for (int k = nums.size() - 1; k > i && nums.at(k) >= 0 && -nums.at(i) - nums.at(k) <= nums.at(k); k--)
+            {
+                index[nums.at(k) + 100000] -= 1;
+
+                if (k < nums.size() - 1 && nums.at(k) == nums.at(k + 1))
+                    continue;
+
+                if (index[-nums.at(i) - nums.at(k) + 100000] != 0)
+                    res.push_back({nums.at(i), -nums.at(i) - nums.at(k), nums.at(k)});
+            }
+        }
+
+        return res;
+    }
 };
 
 int main()
 {
     // string s;
     // cin >> s;
-    vector<string> temp({"dog", "racecar", "car"});
-    cout << Solution().longestCommonPrefix(temp) << endl;
+    vector<int> temp({-1, 0, 1, 2, -1, -4});
+    auto res = Solution().threeSum(temp);
+    cout << res.size() << endl;
+
     return 0;
 }
