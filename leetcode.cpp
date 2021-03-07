@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <vector>
 #include <string.h>
+#include <stdlib.h>
 using namespace std;
 
 class Solution
@@ -337,8 +338,43 @@ public:
                     res.push_back({nums.at(i), -nums.at(i) - nums.at(k), nums.at(k)});
             }
         }
-
+        
         return res;
+    }
+
+    int threeSumClosest(vector<int> &nums, int target)
+    {
+        sort(nums.begin(),nums.end());
+
+        int min_sum = nums.at(0) + nums.at(1) + nums.at(2);
+        for (int i = 0; i < nums.size() - 2;i++)
+        {
+            int l = i + 1, r = nums.size() - 1;
+            while(l!=r)
+            {
+                if(abs(min_sum-target)>abs(target-nums.at(i)-nums.at(l)-nums.at(r)))
+                    min_sum = nums.at(i) + nums.at(l) + nums.at(r);
+
+                if(abs(min_sum-target)==0)
+                    return min_sum;
+
+                if(nums.at(i)+nums.at(l)+nums.at(r)>target)
+                    r--;
+                else
+                    l++;
+            }
+        }
+        return min_sum;
+    }
+
+    vector<string> letterCombinations(string digits)
+    {
+        if(digits.length()==0)
+            return vector<string>();
+
+        vector<string> res;
+        
+
     }
 };
 
@@ -346,9 +382,9 @@ int main()
 {
     // string s;
     // cin >> s;
-    vector<int> temp({-1, 0, 1, 2, -1, -4});
-    auto res = Solution().threeSum(temp);
-    cout << res.size() << endl;
+    vector<int> temp({0, 5, -1, -2, 4, -1, 0, -3, 4, -5});
+    auto res = Solution().threeSumClosest(temp,1);
+    cout << res << endl;
 
     return 0;
 }
