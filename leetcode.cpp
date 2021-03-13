@@ -367,14 +367,25 @@ public:
         return min_sum;
     }
 
+    string n2s[10] = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+
+    void backtracking(string source, vector<string> &date, string temp = string())
+    {
+        if(source.length()==0)
+        {
+            if(!temp.empty())
+                date.push_back(temp);
+            return;
+        }
+        for(char ch:n2s[source[0]-'0'])
+            backtracking(string(++source.begin(), source.end()), date, temp + ch);
+    }
+
     vector<string> letterCombinations(string digits)
     {
-        if(digits.length()==0)
-            return vector<string>();
-
         vector<string> res;
-        
-
+        backtracking(digits, res);
+        return res;
     }
 };
 
@@ -382,9 +393,8 @@ int main()
 {
     // string s;
     // cin >> s;
-    vector<int> temp({0, 5, -1, -2, 4, -1, 0, -3, 4, -5});
-    auto res = Solution().threeSumClosest(temp,1);
-    cout << res << endl;
+    auto res = Solution().letterCombinations("23");
+    cout << res.size() << endl;
 
     return 0;
 }
