@@ -2,6 +2,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <queue>
 #include <string.h>
 #include <stdlib.h>
 using namespace std;
@@ -338,27 +339,27 @@ public:
                     res.push_back({nums.at(i), -nums.at(i) - nums.at(k), nums.at(k)});
             }
         }
-        
+
         return res;
     }
 
     int threeSumClosest(vector<int> &nums, int target)
     {
-        sort(nums.begin(),nums.end());
+        sort(nums.begin(), nums.end());
 
         int min_sum = nums.at(0) + nums.at(1) + nums.at(2);
-        for (int i = 0; i < nums.size() - 2;i++)
+        for (int i = 0; i < nums.size() - 2; i++)
         {
             int l = i + 1, r = nums.size() - 1;
-            while(l!=r)
+            while (l != r)
             {
-                if(abs(min_sum-target)>abs(target-nums.at(i)-nums.at(l)-nums.at(r)))
+                if (abs(min_sum - target) > abs(target - nums.at(i) - nums.at(l) - nums.at(r)))
                     min_sum = nums.at(i) + nums.at(l) + nums.at(r);
 
-                if(abs(min_sum-target)==0)
+                if (abs(min_sum - target) == 0)
                     return min_sum;
 
-                if(nums.at(i)+nums.at(l)+nums.at(r)>target)
+                if (nums.at(i) + nums.at(l) + nums.at(r) > target)
                     r--;
                 else
                     l++;
@@ -371,13 +372,13 @@ public:
 
     void backtracking(string source, vector<string> &date, string temp = string())
     {
-        if(source.length()==0)
+        if (source.length() == 0)
         {
-            if(!temp.empty())
+            if (!temp.empty())
                 date.push_back(temp);
             return;
         }
-        for(char ch:n2s[source[0]-'0'])
+        for (char ch : n2s[source[0] - '0'])
             backtracking(string(++source.begin(), source.end()), date, temp + ch);
     }
 
@@ -386,6 +387,95 @@ public:
         vector<string> res;
         backtracking(digits, res);
         return res;
+    }
+    struct ListNode
+    {
+        int val;
+        ListNode *next;
+        ListNode() : val(0), next(nullptr) {}
+        ListNode(int x) : val(x), next(nullptr) {}
+        ListNode(int x, ListNode *next) : val(x), next(next) {}
+    };
+    ListNode *deleteDuplicates(ListNode *head)
+    {
+        if (head == nullptr || head->next == nullptr)
+            return head;
+
+        ListNode *p = head;
+        ListNode *s = head;
+        ListNode *e = head;
+
+        while (head != nullptr && head->next != nullptr && head->val == head->next->val)
+        {
+            e = s->next;
+            while (e != nullptr && e->val == s->val)
+            {
+                e = e->next;
+            }
+            head = s = p = e;
+        }
+        while (p != nullptr && p->next != nullptr)
+        {
+            s = p->next;
+            if (s->next != nullptr && s->val == s->next->val)
+            {
+                e = s->next;
+                while (e != nullptr && e->val == s->val)
+                {
+                    e = e->next;
+                }
+                p->next = e;
+            }
+            else
+                p = p->next;
+        }
+        return head;
+    };
+};
+
+class NestedInteger
+{
+public:
+    // Return true if this NestedInteger holds a single integer, rather than a nested list.
+    bool isInteger() const;
+
+    // Return the single integer that this NestedInteger holds, if it holds a single integer
+    // The result is undefined if this NestedInteger holds a nested list
+    int getInteger() const;
+    // Return the nested list that this NestedInteger holds, if it holds a nested list
+    // The result is undefined if this NestedInteger holds a single integer
+    const vector<NestedInteger> &getList() const;
+};
+
+class NestedIterator
+{
+public:
+    vector<int> res;
+    void tra(const vector<NestedInteger> &nestedList)
+    {
+        for (NestedInteger Ne : nestedList)
+        {
+            if(Ne.isInteger())
+                res.push_back(Ne.getInteger());
+            else
+                tra(Ne.getList());
+        }
+    }
+    NestedIterator(vector<NestedInteger> &nestedList)
+    {
+        tra(nestedList);
+    }
+
+    int next()
+    {
+        int tmp = res.at(0);
+        res.erase(res.begin());
+        return tmp;
+    }
+
+    bool hasNext()
+    {
+        return !res.empty();
     }
 };
 
