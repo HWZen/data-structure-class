@@ -431,6 +431,25 @@ public:
         }
         return head;
     };
+    ListNode *rotateRight(ListNode *head, int k)
+    {
+        if (head == nullptr || head->next == nullptr)
+            return head;
+        ListNode *p = head;
+        int tol = 1;
+        while (p->next != nullptr)
+        {
+            p = p->next;
+            tol++;
+        }
+        p->next = head;
+        int targ = tol - (k % tol);
+        while (targ--)
+            p = p->next;
+        ListNode *res = p->next;
+        p->next = nullptr;
+        return res;
+    }
 };
 
 class NestedInteger
