@@ -449,7 +449,46 @@ public:
         ListNode *res = p->next;
         p->next = nullptr;
         return res;
-    }
+    };
+    class BSTIterator
+    {
+    public:
+        struct TreeNode
+        {
+            int val;
+            TreeNode *left;
+            TreeNode *right;
+            TreeNode() : val(0), left(nullptr), right(nullptr) {}
+            TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+            TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+        };
+
+        queue<int> date;
+        void bsp(TreeNode *node)
+        {
+            if (node->left != nullptr)
+                bsp(node->left);
+            date.push(node->val);
+            if (node->right != nullptr)
+                bsp(node->right);
+        }
+        BSTIterator(TreeNode *root)
+        {
+            bsp(root);
+        }
+
+        int next()
+        {
+            int res = date.front();
+            date.pop();
+            return res;
+        }
+
+        bool hasNext()
+        {
+            return !date.empty();
+        }
+    };
 };
 
 class NestedInteger
@@ -474,7 +513,7 @@ public:
     {
         for (NestedInteger Ne : nestedList)
         {
-            if(Ne.isInteger())
+            if (Ne.isInteger())
                 res.push_back(Ne.getInteger());
             else
                 tra(Ne.getList());
