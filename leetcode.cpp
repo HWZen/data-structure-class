@@ -5,8 +5,13 @@
 #include <queue>
 #include <string.h>
 #include <stdlib.h>
+#include <set>
+#include <fstream>
 using namespace std;
-
+bool cmp(const vector<int> &v, const int &tar)
+{
+    return v.at(0) < tar;
+}
 class Solution
 {
 public:
@@ -450,6 +455,7 @@ public:
         p->next = nullptr;
         return res;
     };
+    
     class BSTIterator
     {
     public:
@@ -500,61 +506,136 @@ public:
             n = n >> 1;
         }
         return res;
-    }
-};
+    };
 
-class NestedInteger
-{
-public:
-    // Return true if this NestedInteger holds a single integer, rather than a nested list.
-    bool isInteger() const;
-
-    // Return the single integer that this NestedInteger holds, if it holds a single integer
-    // The result is undefined if this NestedInteger holds a nested list
-    int getInteger() const;
-    // Return the nested list that this NestedInteger holds, if it holds a nested list
-    // The result is undefined if this NestedInteger holds a single integer
-    const vector<NestedInteger> &getList() const;
-};
-
-class NestedIterator
-{
-public:
-    vector<int> res;
-    void tra(const vector<NestedInteger> &nestedList)
+    bool searchMatrix(vector<vector<int>> &matrix, int target)
     {
-        for (NestedInteger Ne : nestedList)
+        if (matrix.at(0).at(0) >= target)
+            return binary_search(matrix[0].begin(), matrix[0].end(), target);
+        auto col = lower_bound(matrix.begin(), matrix.end(), target, &cmp);
+        col--;
+        return binary_search((*col).begin(), (*col).end(), target);
+    };
+
+    class NestedInteger
+    {
+    public:
+        // Return true if this NestedInteger holds a single integer, rather than a nested list.
+        bool isInteger() const;
+
+        // Return the single integer that this NestedInteger holds, if it holds a single integer
+        // The result is undefined if this NestedInteger holds a nested list
+        int getInteger() const;
+        // Return the nested list that this NestedInteger holds, if it holds a nested list
+        // The result is undefined if this NestedInteger holds a single integer
+        const vector<NestedInteger> &getList() const;
+    };
+
+    class NestedIterator
+    {
+    public:
+        vector<int> res;
+        void tra(const vector<NestedInteger> &nestedList)
         {
-            if (Ne.isInteger())
-                res.push_back(Ne.getInteger());
-            else
-                tra(Ne.getList());
+            for (NestedInteger Ne : nestedList)
+            {
+                if (Ne.isInteger())
+                    res.push_back(Ne.getInteger());
+                else
+                    tra(Ne.getList());
+            }
         }
-    }
-    NestedIterator(vector<NestedInteger> &nestedList)
-    {
-        tra(nestedList);
-    }
+        NestedIterator(vector<NestedInteger> &nestedList)
+        {
+            tra(nestedList);
+        }
 
-    int next()
-    {
-        int tmp = res.at(0);
-        res.erase(res.begin());
-        return tmp;
-    }
+        int next()
+        {
+            int tmp = res.at(0);
+            res.erase(res.begin());
+            return tmp;
+        }
 
-    bool hasNext()
+        bool hasNext()
+        {
+            return !res.empty();
+        }
+    };
+
+    vector<int> *Pnums;
+    void dfs(set<vector<int>> &res, vector<int> tmp, vector<int>::iterator it)
     {
-        return !res.empty();
-    }
+        if(it==Pnums->end())
+            res.insert(tmp);
+        else
+        {
+            dfs(res, tmp, it + 1);
+            tmp.push_back(*it);
+            dfs(res, tmp, it + 1);
+        };
+    };
+    vector<vector<int>> set2vector(set<vector<int>> s)
+    {
+        vector<vector<int>> res;
+        for (vector<int> tmp:s)
+            res.push_back(tmp);
+        return res;
+    };
+    vector<vector<int>> subsetsWithDup(vector<int> &nums)
+    {
+        Pnums = &nums;
+        sort(nums.begin(), nums.end());
+        set<vector<int>> res;
+        dfs(res, vector<int>(), nums.begin());
+        return set2vector(res);
+    };
+
+    int clumsy(int N)
+    {
+        int top_three[4] = { 0, 1, 2, 7 };
+        if(N<=3)
+            return top_three[N];
+
+
+        enum Operator{A,S} oper = A;
+        int res = N-- * N-- / N--;
+        while(N>=1)
+        {
+            switch(oper)
+            {
+                case A:
+                    res += N--;
+                    oper = S;
+                    break;
+                case S:
+                    {
+                        int tmp = N--;
+                        if(N>=1)
+                            tmp *= N--;
+                        if(N>=1)
+                            tmp /= N--;
+                        res -= tmp;
+                        oper = A;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        return res;
+    }   
 };
+
 
 int main()
 {
-    // string s;
-    // cin >> s;
-    auto res = Solution().reverseBits(43261596);
-    cout << res << endl;
+    ofstream file;
+    file.open("Temp.txt", ios::app);
+    file << "int tab[]={\n0, ";
+    for (int s = 1; s <= 10000;s++)
+        file << Solution().clumsy(s) <<", "<< endl;
+    file << "\b\b\n}";
 
     return 0;
 }
