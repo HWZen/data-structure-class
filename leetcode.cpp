@@ -12,6 +12,9 @@ bool cmp(const vector<int> &v, const int &tar)
 {
     return v.at(0) < tar;
 }
+
+vector<int> *H;
+
 class Solution
 {
 public:
@@ -624,18 +627,124 @@ public:
             }
         }
         return res;
-    }   
+    };
+
+    bool static trap_cmp(int l, int r)
+    {
+        return H->at(l) >= H->at(r);
+    };
+
+    int trap(vector<int> &height)
+    {
+        if (height.size() < 3)
+            return 0;
+
+        H = &height;
+        vector<int> index;
+        index.resize(height.size());
+        for (int i = 0; i < height.size(); i++)
+            index[i] = i;
+
+        bool (*cmp)(int l, int r) = Solution::trap_cmp;
+        sort(index.begin(), index.end(), cmp);
+
+        int res = 0;
+        int j = index[0];
+        int k = j;
+        for (int i = 1; i < index.size() || (j > 0 && k < index.size() - 1); i++)
+        {
+            if (index[i] > j && index[i] < k)
+                continue;
+
+            if (index[i] < j)
+            {
+                res += height[index[i]] * (j - index[i] - 1);
+                for (int t = index[i] + 1; t < j; t++)
+                    res -= height[t];
+                j = index[i];
+            }
+            else
+            {
+                res += height[index[i]] * (index[i] - k - 1);
+                for (int t = k + 1; t < index[i]; t++)
+                    res -= height[t];
+                k = index[i];
+            }
+        }
+        return res;
+    };
+
+
+    vector<vector<int>> DP;
+    string TXT1, TXT2;
+    void upDP(int i,int j)
+    {
+        if(TXT1[i]==TXT2[j])
+            DP[i][j] = max(DP[i - 1][j - 1] + 1, max(DP[i - 1][j], DP[i][j - 1]));
+        else
+            DP[i][j] = max(DP[i - 1][j], DP[i][j - 1]);
+    };
+    int longestCommonSubsequence(string text1, string text2)
+    {
+        if(text1.size()<=1&&text2.size()<=1)
+            return text1[0] == text2[0];
+        text1 = " " + text1;
+        text2 = " " + text2;
+        TXT1 = text1;
+        TXT2 = text2;
+        DP.resize(text1.size());
+        for (int i = 0; i < DP.size();i++)
+            DP[i].resize(text2.size());
+
+        for (int i = 0; i < text1.size(); i++)
+            DP[i][0] = 1;
+        for (int i = 0; i < text2.size(); i++)
+            DP[0][i] = 1;
+
+        for (int i = 1; i < text1.size();i++)
+            for (int j = 1; j < text2.size();j++)
+                upDP(i, j);
+
+        return DP[text1.size() - 1][text2.size() - 1] - 1;
+    };
+
+    int removeDuplicates(vector<int> &nums)
+    {
+        if(nums.size()<=2)
+            return 2;
+        int res = 2;
+        for (int i = 2; i < nums.size();i++)
+        {
+            if(nums[i]!=nums[res-2])
+                nums[res++] = nums[i];
+        }
+        return res;
+    }
+
+    vector<int> NUMS;
+    int dich(int l, int r)
+    {
+        if (NUMS[(l + r) / 2] > NUMS[(l + r) / 2 + 1])
+            return NUMS[(l + r) / 2 + 1];
+        if (NUMS[(l + r) / 2] > NUMS[r])
+            return dich((l + r) / 2, r);
+        else
+            return dich(l, (l + r) / 2);
+    }
+    int findMin(vector<int> &nums)
+    {
+        if(nums.size()<=1)
+            return *nums.begin();
+        if (*(nums.end() - 1) > *nums.begin())
+            return *nums.begin();
+        NUMS = nums;
+        return dich(0, nums.size() - 1);
+    }
 };
 
 
 int main()
 {
-    ofstream file;
-    file.open("Temp.txt", ios::app);
-    file << "int tab[]={\n0, ";
-    for (int s = 1; s <= 10000;s++)
-        file << Solution().clumsy(s) <<", "<< endl;
-    file << "\b\b\n}";
-
+    cout << Solution().findMin(vector<int>({11,13,15,17}));
     return 0;
 }
