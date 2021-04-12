@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <set>
 #include <fstream>
+#include <cmath>
 using namespace std;
 bool cmp(const vector<int> &v, const int &tar)
 {
@@ -772,11 +773,35 @@ public:
         }
         return ugly[n - 1];
     }
+
+    uint64_t static combine2int(int x1,int x2)
+    {
+        return x1 * pow(10, uint64_t(log10(x2)) + 1) + x2;
+    }
+    bool static largestNumberCMP(int l, int r)
+    {
+        return combine2int(l, r) > combine2int(r, l);
+    }
+    string largestNumber(vector<int> &nums)
+    {
+        int tmp;
+        for (tmp = 0; tmp < nums.size();tmp++)
+            if(nums[tmp]!=0)
+                break;
+        if(tmp==nums.size())
+            return "0";
+
+        sort(nums.begin(), nums.end(), Solution::largestNumberCMP);
+        string res;
+        for(int i:nums)
+            res += to_string(i);
+        return res;
+    }
 };
 
 
 int main()
 {
-    cout << Solution().nthUglyNumber(432);
+    cout << Solution().largestNumber(vector<int>({3, 30, 34, 5, 9}));
     return 0;
 }
