@@ -740,11 +740,43 @@ public:
         NUMS = nums;
         return dich(0, nums.size() - 1);
     }
+
+    bool isUgly(int n)
+    {
+        if(n<=0)
+            return false;
+        while(n%5==0)
+            n /= 5;
+        while(n%3==0)
+            n /= 3;
+        while(n%2==0)
+            n /= 2;
+        return n == 1;
+    }
+
+    int nthUglyNumber(int n)
+    {
+        vector<int> ugly({1});
+        int p2, p3, p5 = 0;
+        p2 = p3 = p5;
+        for (int i = 1; i < n;i++)
+        {
+            int np2 = ugly[p2] * 2, np3 = ugly[p3] * 3, np5 = ugly[p5] * 5;
+            ugly.push_back(min({np2,np3,np5}));
+            if(ugly[i]==np2)
+                p2++;
+            if(ugly[i]==np3)
+                p3++;
+            if(ugly[i]==np5)
+                p5++;
+        }
+        return ugly[n - 1];
+    }
 };
 
 
 int main()
 {
-    cout << Solution().findMin(vector<int>({11,13,15,17}));
+    cout << Solution().nthUglyNumber(432);
     return 0;
 }
