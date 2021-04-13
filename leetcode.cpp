@@ -19,6 +19,16 @@ vector<int> *H;
 class Solution
 {
 public:
+    struct TreeNode
+    {
+        int val;
+        TreeNode *left;
+        TreeNode *right;
+        TreeNode() : val(0), left(nullptr), right(nullptr) {}
+        TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+        TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+    };
+
     string convert(string s, int numRows)
     {
         if (numRows == 1)
@@ -463,15 +473,7 @@ public:
     class BSTIterator
     {
     public:
-        struct TreeNode
-        {
-            int val;
-            TreeNode *left;
-            TreeNode *right;
-            TreeNode() : val(0), left(nullptr), right(nullptr) {}
-            TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
-            TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
-        };
+
 
         queue<int> date;
         void bsp(TreeNode *node)
@@ -797,11 +799,30 @@ public:
             res += to_string(i);
         return res;
     }
+
+    void left_mid_right_tra_for_minDiffInBST(TreeNode *node, int &minimum, int &compara)
+    {
+        if(node->left!=nullptr)
+            left_mid_right_tra_for_minDiffInBST(node->left, minimum, compara);
+        if(minimum>abs(node->val-compara))
+            minimum = abs(node->val - compara);
+        compara = node->val;
+        if(node->right!=nullptr)
+            left_mid_right_tra_for_minDiffInBST(node->right, minimum, compara);
+    }
+    int minDiffInBST(TreeNode *root)
+    {
+        int res = 0xfffff;
+        int comp = 0xffff;
+        left_mid_right_tra_for_minDiffInBST(root, res, comp);
+        return res;
+    }
 };
 
 
 int main()
 {
     cout << Solution().largestNumber(vector<int>({3, 30, 34, 5, 9}));
+    system("pause");
     return 0;
 }
