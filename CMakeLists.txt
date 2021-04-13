@@ -1,10 +1,8 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.12)
 project(Temp)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
-include_directories(adns_src)
+add_executable(send Temp.cpp)
 
-file(GLOB_RECURSE src "adns_src/*.c")
-
-add_executable(temp Temp.cpp ${src})
+add_executable(recv Temp2.cpp)
