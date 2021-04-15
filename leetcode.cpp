@@ -817,12 +817,92 @@ public:
         left_mid_right_tra_for_minDiffInBST(root, res, comp);
         return res;
     }
+
+    class Trie
+    {
+    private:
+        bool is_a_word;
+        Trie *index[26];
+
+    public:
+        /** Initialize your data structure here. */
+        Trie()
+        {
+            for (int i = 0; i < 26; i++)
+                index[i] = nullptr;
+            is_a_word = false;
+        }
+
+        /** Inserts a word into the trie. */
+        void insert(string word)
+        {
+            Trie *p = this;
+            for (char ch:word)
+            {
+                if(p->index[ch-'a']==nullptr)
+                    p->index[ch - 'a'] = new Trie();
+                p = p->index[ch - 'a'];
+            }
+            p->is_a_word = true;
+        }
+
+        /** Returns if the word is in the trie. */
+        bool search(string word)
+        {
+            Trie *p = this;
+            for (char ch : word)
+            {
+                if (p->index[ch - 'a'] == nullptr)
+                    return false;
+                p = p->index[ch - 'a'];
+            }
+            return p->is_a_word;
+        }
+
+        /** Returns if there is any word in the trie that starts with the given prefix. */
+        bool startsWith(string prefix)
+        {
+            Trie *p = this;
+            for (char ch : prefix)
+            {
+                if (p->index[ch - 'a'] == nullptr)
+                    return false;
+                p = p->index[ch - 'a'];
+            }
+            return true;
+        }
+    };
+
+
+
+    int rob(vector<int> &nums)
+    {
+        if(nums.size()==1)
+            return nums[0];
+        int start = 0;
+        int res = 0;
+        vector<int> DP;
+        DP.push_back(nums[start]);
+        DP.push_back(max(nums[start], nums[start + 1]));
+        for (int i = 2; i < nums.size() - 1;i++)
+            DP.push_back(max(nums[i] + DP[i - 2], DP[i - 1]));
+        if(nums.size()==2)
+            return DP[1];
+        int res1 = DP[nums.size() - 2];
+        DP.resize(0);
+        start = 1;
+        DP.push_back(nums[start]);
+        DP.push_back(max(nums[start], nums[start + 1]));
+        for (int i = 3; i < nums.size(); i++)
+            DP.push_back(max(nums[i] + DP[i - 3], DP[i - 2]));
+        return max(res1, DP[nums.size() - 2]);
+    }
 };
 
 
 int main()
 {
-    cout << Solution().largestNumber(vector<int>({3, 30, 34, 5, 9}));
+    cout << Solution().rob(vector<int>({200, 3, 140, 20, 10})) << endl;
     system("pause");
     return 0;
 }
