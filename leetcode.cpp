@@ -897,6 +897,22 @@ public:
             DP.push_back(max(nums[i] + DP[i - 3], DP[i - 2]));
         return max(res1, DP[nums.size() - 2]);
     }
+
+    // TODO
+    bool isScramble(string s1, string s2)
+    {
+    }
+
+    int removeElement(vector<int> &nums, int val)
+    {
+        if(nums.size()<1)
+            return 0;
+        int p = 0;
+        for (int i = 0; i < nums.size(); i++)
+            if(nums[i]!=val)
+                nums[p++] = nums[i];
+        return p;
+    }
 };
 
 
