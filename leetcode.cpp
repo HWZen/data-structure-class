@@ -913,12 +913,46 @@ public:
                 nums[p++] = nums[i];
         return p;
     }
+
+    int strStr(string haystack, string needle)
+    {
+        if(needle.size()==0)
+            return 0;
+        if(needle.size()>haystack.size())
+            return -1;
+
+        for (int p = 0; p < haystack.size() - needle.size() + 1; p++)
+        {
+            if(haystack[p]==needle[0])
+            {
+                int i = p + 1;
+                for (; i < p + needle.size(); i++)
+                    if (haystack[i] != needle[i - p])
+                        break;
+                if(i==p+needle.size())
+                    return p;
+            }
+        }
+        return -1;
+    }
+
+    int combinationSum4(vector<int> &nums, int target)
+    {
+        uint64_t *dp = new uint64_t[target + 1];
+        memset(dp, 0, (target + 1) * sizeof(uint64_t));
+        dp[0] = 1;
+        for (int i = 1; i <= target;i++)
+            for(int j:nums)
+                if(j<=i)
+                    dp[i] += dp[i - j];
+        return dp[target];
+    }
 };
 
 
 int main()
 {
-    cout << Solution().rob(vector<int>({200, 3, 140, 20, 10})) << endl;
+    cout << Solution().combinationSum4(vector<int>({1, 2, 3}), 4) << endl;
     system("pause");
     return 0;
 }
