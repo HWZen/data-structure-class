@@ -8,6 +8,7 @@
 #include <set>
 #include <fstream>
 #include <cmath>
+#include <unordered_map>
 using namespace std;
 bool cmp(const vector<int> &v, const int &tar)
 {
@@ -28,7 +29,6 @@ public:
         TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
         TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
     };
-
     string convert(string s, int numRows)
     {
         if (numRows == 1)
@@ -947,12 +947,53 @@ public:
                     dp[i] += dp[i - j];
         return dp[target];
     }
-};
 
+    int singleNumber(vector<int> &nums)
+    {
+        int dual_bit[2] = {0, 0};
+        for(int i:nums)
+        {
+            dual_bit[1] = ~dual_bit[0] & (dual_bit[1] ^ i);
+            dual_bit[0] = ~dual_bit[1] & (dual_bit[0] ^ i);
+        }
+        return dual_bit[1];
+    }
+
+    int leastBricks(vector<vector<int>> &wall)
+    {
+
+        int width = 0;
+        for (int i:wall[0])
+            width += i;
+
+        if(width==1)
+            return wall.size();
+
+        unordered_map<int, int> index;
+        for (auto &col : wall)
+        {
+            int length = 0;
+            for (auto i : col)
+            {
+                length += i;
+                if (length < width)
+                    index[length]++;
+            }
+        }
+
+        int minest = 0;
+        for (auto i : index)
+            if (minest < i.second)
+                minest = i.second;
+
+        return wall.size() - minest;
+    }
+};
 
 int main()
 {
-    cout << Solution().combinationSum4(vector<int>({1, 2, 3}), 4) << endl;
-    system("pause");
+
+    vector<vector<int>> tmp = {{6}, {6}, {2, 4}, {6}, {1, 2, 2, 1}, {6}, {2, 1, 2, 1}, {1, 5}, {4, 1, 1}, {1, 4, 1}, {4, 2}, {3, 3}, {2, 2, 2}, {5, 1}, {5, 1}, {6}, {4, 2}, {1, 5}, {2, 3, 1}, {4, 2}, {1, 1, 4}, {1, 3, 1, 1}, {2, 3, 1}, {3, 3}, {3, 1, 1, 1}, {3, 2, 1}, {6}, {3, 2, 1}, {1, 5}, {1, 4, 1}};
+    cout << Solution().leastBricks(tmp) << endl;
     return 0;
 }
