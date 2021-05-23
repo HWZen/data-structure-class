@@ -988,12 +988,37 @@ public:
 
         return wall.size() - minest;
     }
+
+    int strangePrinter(string s)
+    {
+        int Size = s.size();
+        if(Size == 0)
+            return 0;
+
+        int dp[102][102] = {0};
+        for (int i = 0; i < Size; ++i)
+            dp[i][i] = 1;
+        for (int j = 1; j < Size; ++j)
+        {
+            for (int i = j - 1; i >= 0; --i)
+            {
+                int Min = 1 + dp[i][j - 1];
+                for (int k = i + 1; k < j; ++k)
+                    if(s[k]==s[j])
+                        Min = min(Min, dp[i][k - 1] + dp[k][j - 1]);
+                if(s[i] == s[j])
+                    Min = min(Min, dp[i][j - 1]);
+                dp[i][j] = Min;
+            }
+        }
+        return dp[0][Size - 1];
+    }
 };
 
 int main()
 {
 
-    vector<vector<int>> tmp = {{6}, {6}, {2, 4}, {6}, {1, 2, 2, 1}, {6}, {2, 1, 2, 1}, {1, 5}, {4, 1, 1}, {1, 4, 1}, {4, 2}, {3, 3}, {2, 2, 2}, {5, 1}, {5, 1}, {6}, {4, 2}, {1, 5}, {2, 3, 1}, {4, 2}, {1, 1, 4}, {1, 3, 1, 1}, {2, 3, 1}, {3, 3}, {3, 1, 1, 1}, {3, 2, 1}, {6}, {3, 2, 1}, {1, 5}, {1, 4, 1}};
-    cout << Solution().leastBricks(tmp) << endl;
+    // vector<vector<int>> tmp = {{6}, {6}, {2, 4}, {6}, {1, 2, 2, 1}, {6}, {2, 1, 2, 1}, {1, 5}, {4, 1, 1}, {1, 4, 1}, {4, 2}, {3, 3}, {2, 2, 2}, {5, 1}, {5, 1}, {6}, {4, 2}, {1, 5}, {2, 3, 1}, {4, 2}, {1, 1, 4}, {1, 3, 1, 1}, {2, 3, 1}, {3, 3}, {3, 1, 1, 1}, {3, 2, 1}, {6}, {3, 2, 1}, {1, 5}, {1, 4, 1}};
+    cout << Solution().strangePrinter("aaabbb") << endl;
     return 0;
 }
