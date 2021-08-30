@@ -9,6 +9,7 @@
 #include <fstream>
 #include <cmath>
 #include <unordered_map>
+#include <numeric>
 using namespace std;
 bool cmp(const vector<int> &v, const int &tar)
 {
@@ -20,6 +21,7 @@ vector<int> *H;
 class Solution
 {
 public:
+    Solution() = default;
     struct TreeNode
     {
         int val;
@@ -156,6 +158,7 @@ public:
         for (; p_it != p.end(); p_it++)
         {
         }
+        return false;
     }
 
     int maxArea(vector<int> &height)
@@ -233,72 +236,6 @@ public:
             while (I_num--)
                 res += 'I';
         }
-
-        //     while(num>=1000)
-        //     {
-        //         res += 'M';
-        //         num -= 1000;
-        //     }
-        //     if(num>=900)
-        //     {
-        //         res += "CM";
-        //         num -= 900;
-        //     }
-        //     if(num>=500)
-        //     {
-        //         res += 'D';
-        //         num -= 500;
-        //     }
-        //     if(num>=400)
-        //     {
-        //         res += "CD";
-        //         num -= 400;
-        //     }
-        //     while(num>=100)
-        //     {
-        //         res += "C";
-        //         num -= 100;
-        //     }
-        //     if(num>=90)
-        //     {
-        //         res += "XC";
-        //         num -= 90;
-        //     }
-        //     if(num>=50)
-        //     {
-        //         res += 'L';
-        //         num -= 50;
-        //     }
-        //     if(num>=40)
-        //     {
-        //         res += "XL";
-        //         num -= 40;
-        //     }
-        //     while(num>=10)
-        //     {
-        //         res += "X";
-        //         num -= 10;
-        //     }
-        //     if(num==9)
-        //     {
-        //         res += "IX";
-        //         return res;
-        //     }
-        //     if(num==4)
-        //     {
-        //         res += "IV";
-        //         return res;
-        //     }
-        //     if(num>=5)
-        //     {
-        //         res += 'V';
-        //         num -= 5;
-        //     }
-        //     while(num>=1)
-        //     {
-        //         res += 'I';
-        //         num--;
-        //     }
 
         return res;
     };
@@ -469,12 +406,10 @@ public:
         p->next = nullptr;
         return res;
     };
-    
+
     class BSTIterator
     {
     public:
-
-
         queue<int> date;
         void bsp(TreeNode *node)
         {
@@ -572,7 +507,7 @@ public:
     vector<int> *Pnums;
     void dfs(set<vector<int>> &res, vector<int> tmp, vector<int>::iterator it)
     {
-        if(it==Pnums->end())
+        if (it == Pnums->end())
             res.insert(tmp);
         else
         {
@@ -584,7 +519,7 @@ public:
     vector<vector<int>> set2vector(set<vector<int>> s)
     {
         vector<vector<int>> res;
-        for (vector<int> tmp:s)
+        for (vector<int> tmp : s)
             res.push_back(tmp);
         return res;
     };
@@ -599,34 +534,37 @@ public:
 
     int clumsy(int N)
     {
-        int top_three[4] = { 0, 1, 2, 7 };
-        if(N<=3)
+        int top_three[4] = {0, 1, 2, 7};
+        if (N <= 3)
             return top_three[N];
 
-
-        enum Operator{A,S} oper = A;
-        int res = N-- * N-- / N--;
-        while(N>=1)
+        enum Operator
         {
-            switch(oper)
+            A,
+            S
+        } oper = A;
+        int res = N-- * N-- / N--;
+        while (N >= 1)
+        {
+            switch (oper)
             {
-                case A:
-                    res += N--;
-                    oper = S;
-                    break;
-                case S:
-                    {
-                        int tmp = N--;
-                        if(N>=1)
-                            tmp *= N--;
-                        if(N>=1)
-                            tmp /= N--;
-                        res -= tmp;
-                        oper = A;
-                    }
-                    break;
-                default:
-                    break;
+            case A:
+                res += N--;
+                oper = S;
+                break;
+            case S:
+            {
+                int tmp = N--;
+                if (N >= 1)
+                    tmp *= N--;
+                if (N >= 1)
+                    tmp /= N--;
+                res -= tmp;
+                oper = A;
+            }
+            break;
+            default:
+                break;
             }
         }
         return res;
@@ -677,26 +615,25 @@ public:
         return res;
     };
 
-
     vector<vector<int>> DP;
     string TXT1, TXT2;
-    void upDP(int i,int j)
+    void upDP(int i, int j)
     {
-        if(TXT1[i]==TXT2[j])
+        if (TXT1[i] == TXT2[j])
             DP[i][j] = max(DP[i - 1][j - 1] + 1, max(DP[i - 1][j], DP[i][j - 1]));
         else
             DP[i][j] = max(DP[i - 1][j], DP[i][j - 1]);
     };
     int longestCommonSubsequence(string text1, string text2)
     {
-        if(text1.size()<=1&&text2.size()<=1)
+        if (text1.size() <= 1 && text2.size() <= 1)
             return text1[0] == text2[0];
         text1 = " " + text1;
         text2 = " " + text2;
         TXT1 = text1;
         TXT2 = text2;
         DP.resize(text1.size());
-        for (int i = 0; i < DP.size();i++)
+        for (int i = 0; i < DP.size(); i++)
             DP[i].resize(text2.size());
 
         for (int i = 0; i < text1.size(); i++)
@@ -704,8 +641,8 @@ public:
         for (int i = 0; i < text2.size(); i++)
             DP[0][i] = 1;
 
-        for (int i = 1; i < text1.size();i++)
-            for (int j = 1; j < text2.size();j++)
+        for (int i = 1; i < text1.size(); i++)
+            for (int j = 1; j < text2.size(); j++)
                 upDP(i, j);
 
         return DP[text1.size() - 1][text2.size() - 1] - 1;
@@ -713,12 +650,12 @@ public:
 
     int removeDuplicates(vector<int> &nums)
     {
-        if(nums.size()<=2)
+        if (nums.size() <= 2)
             return 2;
         int res = 2;
-        for (int i = 2; i < nums.size();i++)
+        for (int i = 2; i < nums.size(); i++)
         {
-            if(nums[i]!=nums[res-2])
+            if (nums[i] != nums[res - 2])
                 nums[res++] = nums[i];
         }
         return res;
@@ -736,7 +673,7 @@ public:
     }
     int findMin(vector<int> &nums)
     {
-        if(nums.size()<=1)
+        if (nums.size() <= 1)
             return *nums.begin();
         if (*(nums.end() - 1) > *nums.begin())
             return *nums.begin();
@@ -746,13 +683,13 @@ public:
 
     bool isUgly(int n)
     {
-        if(n<=0)
+        if (n <= 0)
             return false;
-        while(n%5==0)
+        while (n % 5 == 0)
             n /= 5;
-        while(n%3==0)
+        while (n % 3 == 0)
             n /= 3;
-        while(n%2==0)
+        while (n % 2 == 0)
             n /= 2;
         return n == 1;
     }
@@ -762,21 +699,21 @@ public:
         vector<int> ugly({1});
         int p2, p3, p5 = 0;
         p2 = p3 = p5;
-        for (int i = 1; i < n;i++)
+        for (int i = 1; i < n; i++)
         {
             int np2 = ugly[p2] * 2, np3 = ugly[p3] * 3, np5 = ugly[p5] * 5;
-            ugly.push_back(min({np2,np3,np5}));
-            if(ugly[i]==np2)
+            ugly.push_back(min({np2, np3, np5}));
+            if (ugly[i] == np2)
                 p2++;
-            if(ugly[i]==np3)
+            if (ugly[i] == np3)
                 p3++;
-            if(ugly[i]==np5)
+            if (ugly[i] == np5)
                 p5++;
         }
         return ugly[n - 1];
     }
 
-    uint64_t static combine2int(int x1,int x2)
+    uint64_t static combine2int(int x1, int x2)
     {
         return x1 * pow(10, uint64_t(log10(x2)) + 1) + x2;
     }
@@ -787,27 +724,27 @@ public:
     string largestNumber(vector<int> &nums)
     {
         int tmp;
-        for (tmp = 0; tmp < nums.size();tmp++)
-            if(nums[tmp]!=0)
+        for (tmp = 0; tmp < nums.size(); tmp++)
+            if (nums[tmp] != 0)
                 break;
-        if(tmp==nums.size())
+        if (tmp == nums.size())
             return "0";
 
         sort(nums.begin(), nums.end(), Solution::largestNumberCMP);
         string res;
-        for(int i:nums)
+        for (int i : nums)
             res += to_string(i);
         return res;
     }
 
     void left_mid_right_tra_for_minDiffInBST(TreeNode *node, int &minimum, int &compara)
     {
-        if(node->left!=nullptr)
+        if (node->left != nullptr)
             left_mid_right_tra_for_minDiffInBST(node->left, minimum, compara);
-        if(minimum>abs(node->val-compara))
+        if (minimum > abs(node->val - compara))
             minimum = abs(node->val - compara);
         compara = node->val;
-        if(node->right!=nullptr)
+        if (node->right != nullptr)
             left_mid_right_tra_for_minDiffInBST(node->right, minimum, compara);
     }
     int minDiffInBST(TreeNode *root)
@@ -837,9 +774,9 @@ public:
         void insert(string word)
         {
             Trie *p = this;
-            for (char ch:word)
+            for (char ch : word)
             {
-                if(p->index[ch-'a']==nullptr)
+                if (p->index[ch - 'a'] == nullptr)
                     p->index[ch - 'a'] = new Trie();
                 p = p->index[ch - 'a'];
             }
@@ -873,20 +810,18 @@ public:
         }
     };
 
-
-
     int rob(vector<int> &nums)
     {
-        if(nums.size()==1)
+        if (nums.size() == 1)
             return nums[0];
         int start = 0;
         int res = 0;
         vector<int> DP;
         DP.push_back(nums[start]);
         DP.push_back(max(nums[start], nums[start + 1]));
-        for (int i = 2; i < nums.size() - 1;i++)
+        for (int i = 2; i < nums.size() - 1; i++)
             DP.push_back(max(nums[i] + DP[i - 2], DP[i - 1]));
-        if(nums.size()==2)
+        if (nums.size() == 2)
             return DP[1];
         int res1 = DP[nums.size() - 2];
         DP.resize(0);
@@ -901,35 +836,36 @@ public:
     // TODO
     bool isScramble(string s1, string s2)
     {
+        return false;
     }
 
     int removeElement(vector<int> &nums, int val)
     {
-        if(nums.size()<1)
+        if (nums.size() < 1)
             return 0;
         int p = 0;
         for (int i = 0; i < nums.size(); i++)
-            if(nums[i]!=val)
+            if (nums[i] != val)
                 nums[p++] = nums[i];
         return p;
     }
 
     int strStr(string haystack, string needle)
     {
-        if(needle.size()==0)
+        if (needle.size() == 0)
             return 0;
-        if(needle.size()>haystack.size())
+        if (needle.size() > haystack.size())
             return -1;
 
         for (int p = 0; p < haystack.size() - needle.size() + 1; p++)
         {
-            if(haystack[p]==needle[0])
+            if (haystack[p] == needle[0])
             {
                 int i = p + 1;
                 for (; i < p + needle.size(); i++)
                     if (haystack[i] != needle[i - p])
                         break;
-                if(i==p+needle.size())
+                if (i == p + needle.size())
                     return p;
             }
         }
@@ -941,9 +877,9 @@ public:
         uint64_t *dp = new uint64_t[target + 1];
         memset(dp, 0, (target + 1) * sizeof(uint64_t));
         dp[0] = 1;
-        for (int i = 1; i <= target;i++)
-            for(int j:nums)
-                if(j<=i)
+        for (int i = 1; i <= target; i++)
+            for (int j : nums)
+                if (j <= i)
                     dp[i] += dp[i - j];
         return dp[target];
     }
@@ -951,7 +887,7 @@ public:
     int singleNumber(vector<int> &nums)
     {
         int dual_bit[2] = {0, 0};
-        for(int i:nums)
+        for (int i : nums)
         {
             dual_bit[1] = ~dual_bit[0] & (dual_bit[1] ^ i);
             dual_bit[0] = ~dual_bit[1] & (dual_bit[0] ^ i);
@@ -963,10 +899,10 @@ public:
     {
 
         int width = 0;
-        for (int i:wall[0])
+        for (int i : wall[0])
             width += i;
 
-        if(width==1)
+        if (width == 1)
             return wall.size();
 
         unordered_map<int, int> index;
@@ -992,7 +928,7 @@ public:
     int strangePrinter(string s)
     {
         int Size = s.size();
-        if(Size == 0)
+        if (Size == 0)
             return 0;
 
         int dp[102][102] = {0};
@@ -1004,21 +940,221 @@ public:
             {
                 int Min = 1 + dp[i][j - 1];
                 for (int k = i + 1; k < j; ++k)
-                    if(s[k]==s[j])
+                    if (s[k] == s[j])
                         Min = min(Min, dp[i][k - 1] + dp[k][j - 1]);
-                if(s[i] == s[j])
+                if (s[i] == s[j])
                     Min = min(Min, dp[i][j - 1]);
                 dp[i][j] = Min;
             }
         }
         return dp[0][Size - 1];
     }
+
+    ListNode *removeElements(ListNode *head, int val)
+    {
+        ListNode *Head = head;
+        ListNode *p = head;
+        while (p != nullptr)
+        {
+            if (p == Head && p->val == val)
+            {
+                p = Head = p->next;
+                continue;
+            }
+            if(p->next != nullptr && p->next->val == val)
+                p->next = p->next->next;
+            else
+                p = p->next;
+        }
+        return Head;
+    }
+
+    int findTargetSumWays(vector<int> &nums, int target)
+    {
+        // if(nums.size()<14)
+        // {
+            
+        // }
+
+        int **dp;
+        int SUM = 0;
+        for(auto i:nums)
+            SUM += abs(i);
+        if (target > SUM || (SUM - target) % 2 != 0)
+            return 0;
+        int lim = (SUM - target) / 2;
+        dp = new int *[nums.size() + 1];
+        for (int i = 0; i <= nums.size(); ++i)
+        {
+            dp[i] = new int[2 * SUM + 1];
+            memset(dp[i], 0, (2 * SUM + 1) * sizeof(int));
+        }
+
+        dp[0][0] = 1;
+
+        for (int i = 1; i < nums.size();++i)
+        {
+            int x = nums[i - 1];
+            for (int j = 0; j <= lim;++j)
+            {
+                dp[i][j] += dp[i - 1][j];
+                if(j >= x)
+                    dp[i][j] += dp[i - 1][j - x];
+            }
+        }
+        return dp[nums.size()][lim];
+    }
+
+    int getMaximumGenerated(int n)
+    {
+        if(n<=1)
+            return n;
+        unsigned short nums[101] = {0};
+        nums[0] = 0;
+        nums[1] = 1;
+        unsigned short max = 1;
+        for (int i = 2; i <= n;++i)
+        {
+            auto half = i >> 1;
+            if(i & 1)
+                nums[i] = nums[half] + nums[half + 1];
+            else
+                nums[i] = nums[half];
+            if(max<nums[i])
+                max = nums[i];
+        }
+        return max;
+    }
+
+    int findCheapestPrice(int n, vector<vector<int>> &flights, int src, int dst, int k)
+    {
+        const int MAX = 0xffffff;
+        queue<vector<int>> que;
+        vector<vector<vector<int>>> edge(n);
+        vector<int> price(n);
+        for (int i = 0; i < n;++i)
+            price[i] = MAX;
+        for(auto flight : flights)
+            edge[flight[0]].push_back(vector<int>({flight[1], flight[2]}));
+        price[src] = 0;
+        que.push(vector<int>({src, 0, price[src]}));
+        while(!que.empty())
+        {
+            auto node = que.front();
+            que.pop();
+            if(node[1] > k)
+                continue;
+            for(auto next:edge[node[0]])
+            {
+                if(price[next[0]] > node[2] + next[1])
+                {
+                    price[next[0]] = node[2] + next[1];
+                    que.push(vector<int>({next[0], node[1] + 1, node[2] + next[1]}));
+                }
+            }
+        }
+        return price[dst] == MAX ? -1 : price[dst];
+    }
+
+    class MedianFinder
+    {
+    public:
+        /** initialize your data structure here. */
+        multiset<int> buf;
+        MedianFinder()
+        {
+        }
+
+        void addNum(int num)
+        {
+            buf.insert(num);
+        }
+
+        double findMedian()
+        {
+            auto mid = buf.size();
+            auto it = buf.begin();
+            auto all = buf.get_allocator();
+            if(mid&1)
+            {
+                // for (int i = 1; i < buf.size() / 2 + 1;++i)
+                //     ++it;
+                return *next(it, buf.size() / 2);
+            }
+            else
+            {
+                // for (int i = 1; i < buf.size() / 2;++i)
+                //     ++it;
+                it = next(it, buf.size() / 2 - 1);
+                return double(*it + *(++it)) / 2;
+            }
+        }
+    };
+
+    int numRescueBoats(vector<int> &people, int limit)
+    {
+        sort(people.begin(),people.end());
+        int f = 0, b = people.size() - 1;
+        int nums = 0;
+        while(f<b)
+        {
+            ++nums;
+            if(people[f]+people[b]<=limit)
+                ++f;
+            --b;
+        }
+        if(f==b)
+            ++nums;
+        return nums;
+    }
+
+    vector<int> runningSum(vector<int> &nums)
+    {
+        for (int i = 1; i < nums.size();++i)
+            nums[i] += nums[i - 1];
+        return nums;
+    }
+
+    vector<int> _w;
+    Solution(vector<int> &w):_w(w)
+    {
+        partial_sum(_w.begin(), _w.end(), _w.begin());
+    }
+
+    int pickIndex()
+    {
+        // srand((unsigned)time( NULL ));
+        int r = rand() % _w.back();
+        return lower_bound(_w.begin(), _w.end(), r + 1) - _w.begin();
+    }
+
+    int sumOddLengthSubarrays(vector<int> &arr)
+    {
+        int sum = 0;
+        for (int i = 0; i < arr.size();++i)
+        {
+            int a = 0;
+            for (int x = 1; x <= arr.size(); x += 2)
+            {
+                // a += x;
+                // if (x > i + 1)
+                //     a -= x - i - 1;
+                // if (x > arr.size() - i)
+                //     a -= x - arr.size() + i;
+
+                a += x - ((x > i + 1) ? x - i - 1 : 0) - ((x > arr.size() - i) ? x - arr.size() + i : 0);
+            }
+            sum += arr[i] * a;
+        }
+        return sum;
+    }
 };
 
 int main()
 {
 
-    // vector<vector<int>> tmp = {{6}, {6}, {2, 4}, {6}, {1, 2, 2, 1}, {6}, {2, 1, 2, 1}, {1, 5}, {4, 1, 1}, {1, 4, 1}, {4, 2}, {3, 3}, {2, 2, 2}, {5, 1}, {5, 1}, {6}, {4, 2}, {1, 5}, {2, 3, 1}, {4, 2}, {1, 1, 4}, {1, 3, 1, 1}, {2, 3, 1}, {3, 3}, {3, 1, 1, 1}, {3, 2, 1}, {6}, {3, 2, 1}, {1, 5}, {1, 4, 1}};
-    cout << Solution().strangePrinter("aaabbb") << endl;
+    cout << Solution().sumOddLengthSubarrays(vector<int>({1, 4, 2, 5, 3}));
     return 0;
 }
+
+// {0,1,2,3,4,5,6,7,8,9}
