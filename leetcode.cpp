@@ -1148,13 +1148,63 @@ public:
         }
         return sum;
     }
+
+    vector<int> corpFlightBookings(vector<vector<int>> &bookings, int n)
+    {
+        vector<int> delta(n, 0);
+        for(auto &item:bookings)
+        {
+            delta[item[0] - 1] += item[2];
+            if(item[1]<n)
+                delta[item[1]] -= item[2];
+        }
+        partial_sum(delta.begin(), delta.end(), delta.begin());
+        return delta;
+    }
+
+    int compareVersion(char *version1, char *version2){
+        int len1 = strlen(version1);
+        int len2 = strlen(version2);
+        char *l1 = version1, *l2 = version2;
+        char *r1 = l1, *r2 = l2;
+        while (l1 < version1 + len1 || l2 < version2 + len2){
+            uint32_t v1 = 0, v2 = 0;
+            if (l1 < version1 + len1){
+                while(*r1 !='.' && *r1!='\0'){
+                    ++r1;
+                }
+                r1[0] = '\0';
+                v1 = atoi(l1);
+                l1 = ++r1;
+            }
+            if (l2 < version2 + len2){
+                while(*r2 !='.' && *r2!='\0'){
+                    ++r2;
+                }
+                r2[0] = '\0';
+                v2 = atoi(l2);
+                l2 = ++r2;
+            }
+            if(v1!=v2)
+                return (v1 > v2) ? 1 : -1;
+        }
+        return 0;
+    }
+
+    ListNode *getKthFromEnd(ListNode *head, int k)
+    {
+        auto res = head;
+        for (int i = 1; i < k; ++i)
+            head = head->next;
+        while ((head = head->next) != NULL)
+            res = res->next;
+        return res;
+    }
 };
 
 int main()
 {
-
-    cout << Solution().sumOddLengthSubarrays(vector<int>({1, 4, 2, 5, 3}));
-    return 0;
+    char version1[] = "1.01";
+    char version2[] = "1.001";
+    cout << Solution().compareVersion(version1, version2) << endl;
 }
-
-// {0,1,2,3,4,5,6,7,8,9}
