@@ -10,6 +10,7 @@
 #include <cmath>
 #include <unordered_map>
 #include <numeric>
+#include <thread>
 using namespace std;
 bool cmp(const vector<int> &v, const int &tar)
 {
@@ -1200,11 +1201,164 @@ public:
             res = res->next;
         return res;
     }
+
+    static void Qsort(int arrey[], int hand, int last)
+    {
+        if (hand >= last)
+            return;
+
+        int T = arrey[hand];
+        int F = hand;
+        int L = last;
+
+        while (F < L)
+        {
+            while (F < L && arrey[L] >= T)
+                --L;
+            arrey[F] = arrey[L];
+            while (F < L && arrey[F] < T)
+                ++F;
+            arrey[L] = arrey[F];
+        }
+        arrey[F] = T;
+
+        if ((last - hand) > 3000000)
+        {
+            thread thL(Qsort, arrey, hand, F - 1);
+            thread thR(Qsort, arrey, L + 1, last);
+            thL.join();
+            thR.join();
+        }
+        else
+        {
+            Qsort(arrey, hand, F - 1);
+            Qsort(arrey, L + 1, last);
+        }
+    }
+    int *smallestK(int *arr, int arrSize, int k, int *returnSize)
+    {
+        Qsort(arr, 0, arrSize - 1);
+        return arr;
+    }
+
+    vector<int> smallestK(vector<int> &arr, int k)
+    {
+        sort(arr.begin(), arr.end());
+        return {arr.begin(), arr.begin() + k};
+    }
+
+    int fib(int n)
+    {
+        if (n <= 1)
+            return n;
+        long long dp[101] = {0};
+        dp[1] = 1;
+        for (int i = 2; i <= n;++i)
+            dp[i] = (dp[i - 1] + dp[i - 2]) % int(1e9 + 7);
+        return dp[n] % int(1e9 + 7);
+    }
+
+    int rand7()
+    {
+        return (rand() % 7) + 1;
+    }
+    int rand10()
+    {
+        int num;
+        while ((num = ((rand7() - 1) * 7 + rand7())) > 40){}
+        return (num % 10) + 1;
+    }
+
+    int search(vector<int> &nums, int target)
+    {
+        int p = lower_bound(nums.begin(), nums.end(), target) - nums.begin();
+        return nums[p] == target ? p : -1;
+    }
+    int balancedStringSplit(string s)
+    {
+        int Stack = 0;
+        int sum = 0;
+        for (int i = 0; i < s.size(); ++i)
+        {
+            Stack += (s[i] == 'L') ? 1 : -1;
+            if(Stack == 0)
+                sum++;
+        }
+        return sum;
+    }
+
+    int findMaximizedCapital(int k, int w, vector<int> &profits, vector<int> &capital)
+    {
+        vector<int> index(profits.size(),0);
+        for (int i = 0; i < index.size();++i)
+            index[i] = i;
+        sort(index.begin(), index.end(), [&](int left, int right)
+                { return capital[left] < capital[right]; });
+        priority_queue<int> q;
+        auto it = index.begin();
+        do
+        {
+            while (it != index.end() && capital[*it] <= w)
+                q.push(profits[*(it++)]);
+            if(q.empty())
+                return w;
+            w += q.top();
+            q.pop();
+        } while (--k);
+        return w;
+    }
+
+    vector<string> fullJustify(vector<string> &words, int maxWidth)
+    {
+        vector<string> res;
+        auto begin = words.begin();
+        int sum = 0;
+        for (auto it = begin; it != words.end(); ++it)
+        {
+            if (sum + (*it).size() > maxWidth)
+            {
+                string tmp;
+                int spcae_num = ((it - begin) - 1) == 0 ? 0 : (maxWidth - sum + 1) / ((it - begin) - 1);
+                int remainder = ((it - begin) - 1) == 0 ? 0 : (maxWidth - sum + 1) % ((it - begin) - 1);
+                while (begin < it - 1)
+                {
+                    tmp += *begin;
+                    for (int i = 0; i < spcae_num + 1 + (remainder > 0 ? 1 : 0); ++i)
+                        tmp.push_back(' ');
+                    remainder--;
+                    ++begin;
+                } 
+                tmp += *begin++;
+                if(tmp.size()!=maxWidth)
+                    tmp.resize(maxWidth, ' ');
+                res.push_back(tmp);
+                sum = 0;
+            }
+                sum += (*it).size() + 1;
+        }
+        string tmp;
+        do
+        {
+            tmp += *begin + ' ';
+        } while (++begin != words.end());
+        tmp.resize(maxWidth, ' ');
+        res.push_back(tmp);
+        return res;
+    }
+
+    int chalkReplacer(vector<int> &chalk, int k)
+    {
+        vector<long long> _chalk(chalk.begin(), chalk.end());
+        partial_sum(_chalk.begin(),_chalk.end(),_chalk.begin());
+        long long remainder = k % _chalk.back();
+        return upper_bound(_chalk.begin(), _chalk.end(), remainder) - _chalk.begin();
+    }
 };
 
 int main()
 {
     char version1[] = "1.01";
     char version2[] = "1.001";
-    cout << Solution().compareVersion(version1, version2) << endl;
+    vector<string> strl({"what", "must", "be", "acknowledgment", "shall", "be"});
+    cout << Solution().fullJustify(strl, 16).at(1) << endl;
 }
