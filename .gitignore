@@ -43,5 +43,9 @@ run*
 Temp*
 CMakeFiles
 CMakeCache.txt
-cmake*
+cmake-*
 Makefile
+
+.idea
+.vs
+build
