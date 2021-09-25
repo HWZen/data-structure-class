@@ -11,7 +11,10 @@
 #include <unordered_map>
 #include <numeric>
 #include <thread>
+#include <stack>
 using namespace std;
+
+
 bool cmp(const vector<int> &v, const int &tar)
 {
     return v.at(0) < tar;
@@ -23,6 +26,8 @@ class Solution
 {
 public:
     Solution() = default;
+
+
     struct TreeNode
     {
         int val;
@@ -962,7 +967,7 @@ public:
                 p = Head = p->next;
                 continue;
             }
-            if(p->next != nullptr && p->next->val == val)
+            if (p->next != nullptr && p->next->val == val)
                 p->next = p->next->next;
             else
                 p = p->next;
@@ -974,12 +979,12 @@ public:
     {
         // if(nums.size()<14)
         // {
-            
+
         // }
 
         int **dp;
         int SUM = 0;
-        for(auto i:nums)
+        for (auto i : nums)
             SUM += abs(i);
         if (target > SUM || (SUM - target) % 2 != 0)
             return 0;
@@ -993,13 +998,13 @@ public:
 
         dp[0][0] = 1;
 
-        for (int i = 1; i < nums.size();++i)
+        for (int i = 1; i < nums.size(); ++i)
         {
             int x = nums[i - 1];
-            for (int j = 0; j <= lim;++j)
+            for (int j = 0; j <= lim; ++j)
             {
                 dp[i][j] += dp[i - 1][j];
-                if(j >= x)
+                if (j >= x)
                     dp[i][j] += dp[i - 1][j - x];
             }
         }
@@ -1008,20 +1013,20 @@ public:
 
     int getMaximumGenerated(int n)
     {
-        if(n<=1)
+        if (n <= 1)
             return n;
         unsigned short nums[101] = {0};
         nums[0] = 0;
         nums[1] = 1;
         unsigned short max = 1;
-        for (int i = 2; i <= n;++i)
+        for (int i = 2; i <= n; ++i)
         {
             auto half = i >> 1;
-            if(i & 1)
+            if (i & 1)
                 nums[i] = nums[half] + nums[half + 1];
             else
                 nums[i] = nums[half];
-            if(max<nums[i])
+            if (max < nums[i])
                 max = nums[i];
         }
         return max;
@@ -1033,21 +1038,21 @@ public:
         queue<vector<int>> que;
         vector<vector<vector<int>>> edge(n);
         vector<int> price(n);
-        for (int i = 0; i < n;++i)
+        for (int i = 0; i < n; ++i)
             price[i] = MAX;
-        for(auto flight : flights)
+        for (auto flight : flights)
             edge[flight[0]].push_back(vector<int>({flight[1], flight[2]}));
         price[src] = 0;
         que.push(vector<int>({src, 0, price[src]}));
-        while(!que.empty())
+        while (!que.empty())
         {
             auto node = que.front();
             que.pop();
-            if(node[1] > k)
+            if (node[1] > k)
                 continue;
-            for(auto next:edge[node[0]])
+            for (auto next : edge[node[0]])
             {
-                if(price[next[0]] > node[2] + next[1])
+                if (price[next[0]] > node[2] + next[1])
                 {
                     price[next[0]] = node[2] + next[1];
                     que.push(vector<int>({next[0], node[1] + 1, node[2] + next[1]}));
@@ -1076,7 +1081,7 @@ public:
             auto mid = buf.size();
             auto it = buf.begin();
             auto all = buf.get_allocator();
-            if(mid&1)
+            if (mid & 1)
             {
                 // for (int i = 1; i < buf.size() / 2 + 1;++i)
                 //     ++it;
@@ -1094,30 +1099,30 @@ public:
 
     int numRescueBoats(vector<int> &people, int limit)
     {
-        sort(people.begin(),people.end());
+        sort(people.begin(), people.end());
         int f = 0, b = people.size() - 1;
         int nums = 0;
-        while(f<b)
+        while (f < b)
         {
             ++nums;
-            if(people[f]+people[b]<=limit)
+            if (people[f] + people[b] <= limit)
                 ++f;
             --b;
         }
-        if(f==b)
+        if (f == b)
             ++nums;
         return nums;
     }
 
     vector<int> runningSum(vector<int> &nums)
     {
-        for (int i = 1; i < nums.size();++i)
+        for (int i = 1; i < nums.size(); ++i)
             nums[i] += nums[i - 1];
         return nums;
     }
 
     vector<int> _w;
-    Solution(vector<int> &w):_w(w)
+    Solution(vector<int> &w) : _w(w)
     {
         partial_sum(_w.begin(), _w.end(), _w.begin());
     }
@@ -1132,7 +1137,7 @@ public:
     int sumOddLengthSubarrays(vector<int> &arr)
     {
         int sum = 0;
-        for (int i = 0; i < arr.size();++i)
+        for (int i = 0; i < arr.size(); ++i)
         {
             int a = 0;
             for (int x = 1; x <= arr.size(); x += 2)
@@ -1153,40 +1158,46 @@ public:
     vector<int> corpFlightBookings(vector<vector<int>> &bookings, int n)
     {
         vector<int> delta(n, 0);
-        for(auto &item:bookings)
+        for (auto &item : bookings)
         {
             delta[item[0] - 1] += item[2];
-            if(item[1]<n)
+            if (item[1] < n)
                 delta[item[1]] -= item[2];
         }
         partial_sum(delta.begin(), delta.end(), delta.begin());
         return delta;
     }
 
-    int compareVersion(char *version1, char *version2){
+    int compareVersion(char *version1, char *version2)
+    {
         int len1 = strlen(version1);
         int len2 = strlen(version2);
         char *l1 = version1, *l2 = version2;
         char *r1 = l1, *r2 = l2;
-        while (l1 < version1 + len1 || l2 < version2 + len2){
+        while (l1 < version1 + len1 || l2 < version2 + len2)
+        {
             uint32_t v1 = 0, v2 = 0;
-            if (l1 < version1 + len1){
-                while(*r1 !='.' && *r1!='\0'){
+            if (l1 < version1 + len1)
+            {
+                while (*r1 != '.' && *r1 != '\0')
+                {
                     ++r1;
                 }
                 r1[0] = '\0';
                 v1 = atoi(l1);
                 l1 = ++r1;
             }
-            if (l2 < version2 + len2){
-                while(*r2 !='.' && *r2!='\0'){
+            if (l2 < version2 + len2)
+            {
+                while (*r2 != '.' && *r2 != '\0')
+                {
                     ++r2;
                 }
                 r2[0] = '\0';
                 v2 = atoi(l2);
                 l2 = ++r2;
             }
-            if(v1!=v2)
+            if (v1 != v2)
                 return (v1 > v2) ? 1 : -1;
         }
         return 0;
@@ -1253,7 +1264,7 @@ public:
             return n;
         long long dp[101] = {0};
         dp[1] = 1;
-        for (int i = 2; i <= n;++i)
+        for (int i = 2; i <= n; ++i)
             dp[i] = (dp[i - 1] + dp[i - 2]) % int(1e9 + 7);
         return dp[n] % int(1e9 + 7);
     }
@@ -1265,7 +1276,9 @@ public:
     int rand10()
     {
         int num;
-        while ((num = ((rand7() - 1) * 7 + rand7())) > 40){}
+        while ((num = ((rand7() - 1) * 7 + rand7())) > 40)
+        {
+        }
         return (num % 10) + 1;
     }
 
@@ -1281,7 +1294,7 @@ public:
         for (int i = 0; i < s.size(); ++i)
         {
             Stack += (s[i] == 'L') ? 1 : -1;
-            if(Stack == 0)
+            if (Stack == 0)
                 sum++;
         }
         return sum;
@@ -1289,18 +1302,18 @@ public:
 
     int findMaximizedCapital(int k, int w, vector<int> &profits, vector<int> &capital)
     {
-        vector<int> index(profits.size(),0);
-        for (int i = 0; i < index.size();++i)
+        vector<int> index(profits.size(), 0);
+        for (int i = 0; i < index.size(); ++i)
             index[i] = i;
         sort(index.begin(), index.end(), [&](int left, int right)
-                { return capital[left] < capital[right]; });
+             { return capital[left] < capital[right]; });
         priority_queue<int> q;
         auto it = index.begin();
         do
         {
             while (it != index.end() && capital[*it] <= w)
                 q.push(profits[*(it++)]);
-            if(q.empty())
+            if (q.empty())
                 return w;
             w += q.top();
             q.pop();
@@ -1327,14 +1340,14 @@ public:
                         tmp.push_back(' ');
                     remainder--;
                     ++begin;
-                } 
+                }
                 tmp += *begin++;
-                if(tmp.size()!=maxWidth)
+                if (tmp.size() != maxWidth)
                     tmp.resize(maxWidth, ' ');
                 res.push_back(tmp);
                 sum = 0;
             }
-                sum += (*it).size() + 1;
+            sum += (*it).size() + 1;
         }
         string tmp;
         do
@@ -1349,16 +1362,255 @@ public:
     int chalkReplacer(vector<int> &chalk, int k)
     {
         vector<long long> _chalk(chalk.begin(), chalk.end());
-        partial_sum(_chalk.begin(),_chalk.end(),_chalk.begin());
+        partial_sum(_chalk.begin(), _chalk.end(), _chalk.begin());
         long long remainder = k % _chalk.back();
         return upper_bound(_chalk.begin(), _chalk.end(), remainder) - _chalk.begin();
     }
+
+    int findPeakElement(vector<int> &nums)
+    {
+        int left = 0;
+        int right = nums.size() - 1;
+        while(left<right)
+        {
+            int mid = (left + right) >> 1;
+            if(nums[mid]>nums[mid+1])
+                right = mid;    
+            else
+                left = mid + 1;
+        }
+        return left;
+    }
+
+    bool isValidSudoku(vector<vector<char>> &board)
+    {
+        set<char> col[9], row[9], block[9];
+        for (int i = 0; i < 9; ++i)
+        {
+            for (int j = 0; j < 9; ++j)
+            {
+                if (board[i][j] == '.')
+                    continue;
+
+                if (col[i].find(board[i][j]) != col[i].end() ||
+                    row[j].find(board[i][j]) != row[j].end() ||
+                    block[(i / 3) * 3 + j / 3].find(board[i][j]) != block[(i / 3) * 3 + j / 3].end())
+                    return false;
+
+                col[i].insert(board[i][j]);
+                row[j].insert(board[i][j]);
+                block[(i / 3) * 3 + j / 3].insert(board[i][j]);
+            }
+        }
+        return true;
+
+    }
+
+    bool canWinNim(int n)
+    {
+        return n % 4 != 0;
+    }
+
+    int minSteps(int n)
+    {
+        vector<int> dp(n + 1, 0);
+        dp[1] = 0;
+        for (int i = 2; i <= n; ++i)
+        {
+            dp[i] = 0xffff;
+            for (int j = 1; j * j <= i; ++j)
+            {
+                if (i % j != 0)
+                    continue;
+                dp[i] = min({dp[i], dp[j] + i / j, dp[i / j] + j});
+            }
+        }
+        return dp[n];
+    }
+
+    int lengthOfLIS(vector<int> &nums)
+    {
+        vector<int> dp(nums);
+        dp[0] = 1;
+        int max_len = 1;
+        // int max_size = 1;
+        for (int i = 1; i < nums.size(); ++i)
+        {
+            dp[i] =1;
+            for (int j = 0; j < i; ++j)
+                dp[i] = max(dp[i], nums[i] > nums[j] ? dp[j] + 1 : 0);
+            if (dp[i] > max_len)
+                max_len = dp[i];
+        }
+        return max_len;
+    }
+
+    int findNumberOfLIS(vector<int> &nums)
+    {
+        vector<int> dp(nums);
+        dp[0] = 1;
+        int max_len = 1;
+        int max_size = 1;
+        vector<int> size(nums);
+        size[0] = 1;
+        for (int i = 1; i < nums.size(); ++i)
+        {
+            dp[i] = 1;
+            size[i] = 1;
+            for (int j = 0; j < i; ++j)
+            {
+                if (nums[i] > nums[j])
+                {
+                    if (dp[j] + 1 > dp[i])
+                    {
+                        dp[i] = dp[j] + 1;
+                        size[i] = size[j];
+                    }
+                    else if (dp[j] + 1 == dp[i])
+                        size[i] += size[j];
+                }
+            }
+            if (dp[i] > max_len)
+            {
+                max_len = dp[i];
+                max_size = size[i];
+            }
+            else if (dp[i] == max_len)
+                max_size += size[i];
+        }
+        return max_size;
+    }
+
+    
+    int lengthOfLastWord(string s)
+    {
+        auto rit = s.rbegin();
+        while(rit!=s.rend()&&*rit==' ')
+            ++rit;
+        int sum = 1;
+        while(++rit!=s.rend()&&*rit!=' ')
+            ++sum;
+        return sum;
+    }
+
+    vector<ListNode *> splitListToParts(ListNode *head, int k)
+    {
+        vector<ListNode *> res(k, nullptr);
+        int size = 0;
+        auto it = head;
+        while (it != nullptr)
+        {
+            it = it->next;
+            ++size;
+        }
+        int div = size / k;
+        int rem = size % k;
+        it = head;
+        for (auto &lp : res)
+        {
+            for (int i = 1; i < div + (rem > 0); ++i)
+                it = it->next;
+            lp = head;
+            if (it == nullptr)
+                break;
+            head = it->next;
+            it->next = nullptr;
+            it = head;
+            --rem;
+        }
+        return res;
+    }
+
+    bool isPowerOfThree(int n)
+    {
+        if (n == 0)
+            return false;
+        if(n <= 9)
+        {
+            while (n % 3 == 0)
+                n /= 3;
+            return n == 1;
+        }
+        else
+        {
+            return 1162261467 % n == 0;
+        }
+    }
+
+    class Node
+    {
+    public:
+        int val;
+        Node *prev;
+        Node *next;
+        Node *child;
+    };
+    Node *flatten(Node *head)
+    {
+        stack<Node *> pre_next;
+        auto it = head;
+        for (auto it = head; it;it=it->next)
+        {
+            if(it->child)
+            {
+                if(it->next)
+                    pre_next.push(it->next);
+                it->next = it->child;
+                it->next->prev = it;
+                it->child = nullptr;
+            }
+            if(!it->next && !pre_next.empty())
+            {
+                it->next = pre_next.top();
+                it->next->prev = it;
+                pre_next.pop();
+            }
+        }
+        return head;
+    }
+/*
+    vector<vector<int>> DP;
+    string TXT1, TXT2;
+    void upDP(int i, int j)
+    {
+        if (TXT1[i] == TXT2[j])
+            DP[i][j] = max(DP[i - 1][j - 1] + 1, max(DP[i - 1][j], DP[i][j - 1]));
+        else
+            DP[i][j] = max(DP[i - 1][j], DP[i][j - 1]);
+    };
+    */
+    int minDistance(string text1, string text2)
+    {
+        if (text1.size() <= 1 && text2.size() <= 1)
+            return text1[0] == text2[0];
+        text1 = " " + text1;
+        text2 = " " + text2;
+        TXT1 = text1;
+        TXT2 = text2;
+        DP.resize(text1.size());
+        for (int i = 0; i < DP.size(); i++)
+            DP[i].resize(text2.size());
+
+        for (int i = 0; i < text1.size(); i++)
+            DP[i][0] = 1;
+        for (int i = 0; i < text2.size(); i++)
+            DP[0][i] = 1;
+
+        for (int i = 1; i < text1.size(); i++)
+            for (int j = 1; j < text2.size(); j++)
+                upDP(i, j);
+
+        auto max = DP[text1.size() - 1][text2.size() - 1] - 1;
+        return text1.size() + text2.size() - 2 * max - 2;
+    };
 };
 
-int main()
+/*
+int __FAST_IO__ = []()
 {
-    char version1[] = "1.01";
-    char version2[] = "1.001";
-    vector<string> strl({"what", "must", "be", "acknowledgment", "shall", "be"});
-    cout << Solution().fullJustify(strl, 16).at(1) << endl;
-}
+    std::ios::sync_with_stdio(0);
+    std::cin.tie(0);
+    std::cout.tie(0);
+    return 0;
+}();
+*/
