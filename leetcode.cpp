@@ -6,13 +6,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <set>
+#include <unordered_set>
+#include <map>
 #include <fstream>
 #include <cmath>
 #include <unordered_map>
 #include <numeric>
 #include <thread>
 #include <stack>
+#include <functional>
+#include <sstream>
 using namespace std;
+
 
 
 bool cmp(const vector<int> &v, const int &tar)
@@ -37,6 +42,76 @@ public:
         TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
         TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
     };
+    class treeNodeInit
+    {
+    public:
+        void trimLeftTrailingSpaces(string &input)
+        {
+            input.erase(input.begin(), find_if(input.begin(), input.end(), [](int ch)
+                                               { return !isspace(ch); }));
+        }
+
+        void trimRightTrailingSpaces(string &input)
+        {
+            input.erase(find_if(input.rbegin(), input.rend(), [](int ch)
+                                { return !isspace(ch); })
+                            .base(),
+                        input.end());
+        }
+        TreeNode *stringToTreeNode(string input)
+        {
+            trimLeftTrailingSpaces(input);
+            trimRightTrailingSpaces(input);
+            input = input.substr(1, input.length() - 2);
+            if (!input.size())
+            {
+                return nullptr;
+            }
+
+            string item;
+            stringstream ss;
+            ss.str(input);
+
+            getline(ss, item, ',');
+            TreeNode *root = new TreeNode(stoi(item));
+            queue<TreeNode *> nodeQueue;
+            nodeQueue.push(root);
+
+            while (true)
+            {
+                TreeNode *node = nodeQueue.front();
+                nodeQueue.pop();
+
+                if (!getline(ss, item, ','))
+                {
+                    break;
+                }
+
+                trimLeftTrailingSpaces(item);
+                if (item != "null")
+                {
+                    int leftNumber = stoi(item);
+                    node->left = new TreeNode(leftNumber);
+                    nodeQueue.push(node->left);
+                }
+
+                if (!getline(ss, item, ','))
+                {
+                    break;
+                }
+
+                trimLeftTrailingSpaces(item);
+                if (item != "null")
+                {
+                    int rightNumber = stoi(item);
+                    node->right = new TreeNode(rightNumber);
+                    nodeQueue.push(node->right);
+                }
+            }
+            return root;
+        }
+    };
+
     string convert(string s, int numRows)
     {
         if (numRows == 1)
@@ -1602,8 +1677,787 @@ public:
 
         auto max = DP[text1.size() - 1][text2.size() - 1] - 1;
         return text1.size() + text2.size() - 2 * max - 2;
+    }
+
+    class pathsum
+    {
+    public:
+        int targetSum;
+        int res;
+        unordered_map<int, int> map;
+        void dfs(TreeNode *&root, int val)
+        {
+            if(map.count(val - targetSum))
+                res += map[val - targetSum];
+            ++map[val];
+            if(root->left)
+                dfs(root->left, val + root->left->val);
+            if(root->right)
+                dfs(root->right, val + root->right->val);
+            --map[val];
+        }
+        pathsum(TreeNode *root,int targetsum):targetSum(targetsum),res(0)
+        {
+            map[0] = 1;
+            dfs(root, root->val);
+        }
     };
+
+    int pathSum(TreeNode *root, int targetSum)
+    {
+        return pathsum(root, targetSum).res;
+    }
+
+    int getSum(int a, int b)
+    {
+        return b == 0 ? a : getSum(a ^ b, (a & b) << 1);
+    }
+
+    int computeArea(int ax1, int ay1, int ax2, int ay2, int bx1, int by1, int bx2, int by2)
+    {
+        int delta_x = ax2 - ax1 + bx2 - bx1 - (ax2 > bx2 ? ax2 : bx2) + (ax1 < bx1 ? ax1 : bx1);
+        if (delta_x < 0)
+            delta_x = 0;
+        int delta_y = ay2 - ay1 + by2 - by1 - (ay2 > by2 ? ay2 : by2) + (ay1 < by1 ? ay1 : by1);
+        if (delta_y < 0)
+            delta_y = 0;
+
+        return (ax2 - ax1) * (ay2 - ay1) + (bx2 - bx1) * (by2 - by1) - delta_x * delta_y;
+    }
+
+    string destCity(vector<vector<string>> &paths)
+    {
+        unordered_set<string> res, enres;
+        for (auto path : paths)
+        {
+            enres.insert(path[0]);
+            if(res.count(path[0]))
+                res.erase(path[0]);
+            if(!enres.count(path[1]))
+                res.insert(path[1]);
+        }
+        return *res.begin();
+    }
+
+    string toHex(unsigned int num)
+    {
+        const char hex[] = "0123456789abcdef";
+        string res;
+        while(num)
+        {
+            res.insert(res.begin(), hex[num % 16]);
+            num = num >> 4;
+        }
+        return res.empty() ? "0" : res;
+    }
+
+    string fractionToDecimal(long long numerator, int denominator)
+    {
+        if(!(numerator % denominator))
+            return to_string(numerator / denominator);
+        string integer;
+        if(numerator * denominator < 0)
+            integer = "-";
+        numerator = abs(numerator);
+        denominator = abs(denominator);
+        integer += to_string(numerator / denominator);
+
+        string decimal;
+        map<long long, size_t> Map;
+        numerator %= denominator;
+        auto it = 0;
+        while (numerator)
+        {
+
+            Map[numerator] = decimal.size();
+            numerator *= 10;
+            decimal += to_string(numerator / denominator);
+            numerator %= denominator;
+            if (Map.count(numerator))
+            {
+                decimal.insert(decimal.begin() + Map.find(numerator)->second, '(');
+                return integer + "." + decimal + ")";
+            }
+            
+        }
+        return integer + "." + decimal;
+    }
+
+    string licenseKeyFormatting(string s, int k)
+    {
+        while(s.find('-')!=s.npos)
+            s.erase(s.find('-'), 1);
+        if(s.empty())
+            return s;
+        for(auto &ch:s)
+        {
+            if(ch>=97)
+                ch -= 32;
+        }
+        auto rem = (s.size() % k);
+        size_t it = 0;
+        if(rem)
+            it += rem;
+        else
+            it += k;
+        if(it!=s.size())
+        {
+            s.insert(s.begin() + it, '-');
+            it += k + 1;
+        }
+
+        while(it < s.size())
+        {
+            s.insert(s.begin() + it, '-');
+            ++it;
+            it += k;
+        }
+        return s;
+    }
+
+    /*
+ * Below is the interface for Iterator, which is already defined for you.
+ * **DO NOT** modify the interface for Iterator.
+ */
+   class Iterator {
+        typename vector<int>::const_iterator end;
+        typename vector<int>::const_iterator it;
+
+    public:
+        Iterator(const vector<int> &nums) : it(nums.begin()), end(nums.end()) {}
+        Iterator(const Iterator &iter) : end(iter.end), it(iter.it) {}
+
+        // Returns the next element in the iteration.
+        int next()
+        {
+            return *++it;
+        };
+
+       // Returns true if the iteration has more elements.
+       bool hasNext() const{
+           return it != end;
+       };
+ 	};
+
+    class PeekingIterator : public Iterator
+    {
+    public:
+        vector<int>::const_iterator it;
+        PeekingIterator(const vector<int> &nums) : Iterator(nums)
+        {
+            it = nums.begin();
+            void *n = (void *)&nums;
+            ((vector<int> *)n)->at(1) = 2;
+        }
+        int peek()
+        {
+            return Iterator(*this).next();
+        }
+    };
+
+    int thirdMax(vector<int> &nums)
+    {
+        set<int> buf({INT_MIN, INT_MIN + 1, INT_MIN + 2});
+        for(int i:nums)
+        {
+            if(*buf.begin() < i)
+                buf.insert(i);
+
+            if(buf.size()>3)
+                buf.erase(buf.begin());
+        }
+        return (buf.size() == 3 ? *buf.begin() : *(--buf.end()));
+    }
+
+    int countSegments(string s)
+    {
+        s = " " + s + " ";
+        int sum = 0;
+        bool last_char_is_space = true;
+        for(char ch:s)
+        {
+            if (last_char_is_space && ch != ' ')
+            {
+                ++sum;
+                last_char_is_space = false;
+            }
+
+            if (!last_char_is_space && ch == ' ')
+                last_char_is_space = true;
+        }
+        return sum;
+    }
+
+    vector<string> findRepeatedDnaSequences(string s)
+    {
+        if(s.length()<=10)
+            return vector<string>();
+
+        int x;
+        unordered_map<char, int> bin({{'A', 0}, {'C', 1}, {'G', 2}, {'T', 3}});
+        for (int i = 0; i < 9; ++i)
+            x = (x << 2) | bin[s[i]];
+
+        vector<string> res;
+        unordered_map<int, int> hash_map;
+        for (int i = 9; i < s.length();++i)
+        {
+            x = ((x << 2) | bin[s[i]]) & ((1 << (10 * 2)) - 1);
+            if (++hash_map[x] == 2)
+            {
+                res.push_back(s.substr(i - 9, i));
+            }
+        }
+        return res;
+    }
+
+    class SummaryRanges
+    {
+    public:
+        map<int, int> start, end;
+        SummaryRanges() = default;
+
+        void addNum(int val)
+        {
+            auto it = end.lower_bound(val);
+            if (it != end.end() && it->second <= val)
+                return;
+
+            if (start.count(val + 1))
+            {
+                start[val] = start[val + 1];
+                end[start[val]] = val;
+                start.erase(val + 1);
+            } 
+            else
+                end[val] = val;
+
+            if (end.count(val - 1))
+            {
+                auto it = start.count(val) ? start[val] : val;
+                end[it] = end[val - 1];
+                start[end[val - 1]] = it;
+                end.erase(val - 1);
+
+                if(start.count(val))
+                    start.erase(val);
+            }
+            else if(!start.count(val))
+                start[val] = val;
+        }
+
+        vector<vector<int>> getIntervals()
+        {
+            vector<vector<int>> res;
+            for (auto it : start)
+                res.push_back({it.first, it.second});
+            return res;
+        }
+    };
+
+    int arrangeCoins(int n)
+    {
+        return (sqrt(8 * (long long)n + 1) - 1) / 2;
+    }
+
+    class NumberToWords
+    {
+    public:
+        unordered_map<int, string> i_to_s={
+            {1,"One"},            {2,"Two"},            {3,"Three"},            {4,"Four"},
+            {5,"Five"},           {6,"Six"},            {7,"Seven"},            {8,"Eight"},
+            {9,"Nine"},           {10,"Ten"},           {11,"Eleven"},          {12,"Twelve"},
+            {13,"Thirteen"},      {14,"Fourteen"},      {15,"Fifteen"},         {16,"Sixteen"},
+            {17,"Seventeen"},     {18,"Eighteen"},      {19,"Nineteen"},        {20,"Twenty"},
+            {30,"Thirty"},        {40,"Forty"},         {50,"Fifty"},           {60,"Sixty"},
+            {70,"Seventy"},       {80,"Eighty"},        {90,"Ninety"}
+            };
+
+        const vector<string> i3_to_s = {"Thousand", "Million", "Billion"};
+
+        string numberToWords(int num, int is_root = -1)
+        {
+            if (!num && is_root == -1)
+                return "Zero";
+
+            int tmp = num % 1000;
+            string res;
+
+            if (tmp > 99)
+            {
+                res = i_to_s[tmp / 100] + " Hundred";
+                tmp %= 100;
+                if (tmp != 0)
+                    res += " ";
+            }
+
+            if (tmp != 0)
+                res += (tmp < 20 || !(tmp % 10) ? i_to_s[tmp] : (i_to_s[(tmp / 10) * 10] + " " + i_to_s[tmp % 10]));
+
+            if (num && is_root != -1)
+                res += " " + i3_to_s[is_root] + " ";
+
+            if (num < 1000)
+                return res;
+
+            for (int cnt = 0; num /= 1000; ++cnt)
+            {
+                if(res==string())
+                {
+                    res = numberToWords(num % 1000, cnt) + res;
+                    if (res != string())
+                        res.erase(res.end() - 1);
+                }
+
+            }
+
+            return res;
+        }
+    };
+
+    int devide(long long devidend, long long devisor)
+    {
+        if(devidend == INT_MIN && devisor == -1)
+            return INT_MAX;
+        return devidend / devisor;
+    }
+
+    vector<string> fizzBuzz(int n)
+    {
+        vector<string> res;
+        for (int i = 1; i <= n;++i)
+        {
+            string tmp;
+            if (!(i % 3))
+                tmp = "Fizz";
+            if (!(i % 5))
+                tmp += "Buzz";
+            if (tmp.empty())
+                tmp = to_string(i);
+            res.push_back(tmp);
+        }
+        return res;
+    }
+
+    int peakIndexInMountainArray(vector<int> &arr)
+    {
+        int l = 0, r = arr.size() - 1;
+        while (l < r - 1)
+        {
+            if(arr[(l + r) / 2] > arr[(l + r) / 2 + 1] && arr[(l + r) / 2] > arr[(l + r) / 2 - 1])
+                return (l + r) / 2;
+                
+            if (arr[(l + r) / 2] > arr[(l + r) / 2 + 1])
+                r = (l + r) / 2;
+            else
+                l = (l + r) / 2;
+        }
+        return arr[l] > arr[r] ? l : r;
+    }
+
+    string countAndSay(int n)
+    {
+        string res = "1";
+        while(n--)
+        {
+            int cnt = 0;
+            char buf = res[0];
+            string tmp;
+            for (char ch : res)
+            {
+                if(ch == buf)
+                    ++cnt;
+                else
+                {
+                    tmp += to_string(cnt) + buf;
+                    cnt = 1;
+                    buf = ch;
+                }
+            }
+            tmp += to_string(cnt) + buf;
+            res = tmp;
+        }
+        return res;
+    }
+
+    class AddOperators
+    {
+    public:
+        vector<string> res;
+        string num;
+        int target;
+        void foo(string &str, int off, long sum, long mul)
+        {
+            if (off == num.size() && sum == target)
+            {
+                res.push_back(str);
+                return;
+            }
+            int sign = str.size();
+            if (off > 0)
+                str.push_back(0);
+            long val = 0;
+            for (int i = off; i < num.size() && (i != off || num[off] != '0'); ++i)
+            {
+                val = 10 * val + num[i] - '0';
+                str.push_back(num[i]);
+                if (off == 0)
+                    foo(str, i + 1, val, val);
+                else
+                {
+                    str[sign] = '*';
+                    foo(str, i + 1, sum - mul + mul * val, mul * val);
+
+                    str[sign] = '+';
+                    foo(str, i + 1, val + sum, val);
+
+                    str[sign] = '-';
+                    foo(str, i + 1, sum - val, -val);
+                }
+            }
+            str.resize(sign);
+        }
+        vector<string> addOperators(string _num, int _target)
+        {
+            num = _num;
+            target = _target;
+            string exp;
+            foo(exp, 0, 0, 0);
+            return res;
+        }
+    };
+
+    int kthSmallest(TreeNode *root, int k)
+    {
+        stack<TreeNode *> tree_stack;
+        // function<void(TreeNode *)> foo = [foo](TreeNode *node)
+        // {
+        //     if(node->left)
+        //         foo(node->left);
+
+        // };
+        auto it = root;
+        while(k)
+        {
+            if(it->left && it->left->val != -1)
+            {
+                tree_stack.push(it);
+                it = it->left;
+            }
+            else
+            {
+                if(it->val != -1)
+                {
+                    --k;
+                    if(!k)
+                        break;
+                    it->val = -1;
+                }
+                if (it->right && it->right->val != -1)
+                {
+                    tree_stack.push(it);
+                    it = it->right;
+                }
+                else
+                {
+                    it = tree_stack.top();
+                    tree_stack.pop();
+                }
+                
+            }
+        }
+        return it->val;
+    }
+
+    int findComplement(int num)
+    {
+        int off = 32 - int(log(num) / log(2)) - 1;
+        return (~(num << off)) >> off;
+    }
+
+    class WordDictionary
+    {
+    private:
+        struct nodetree;
+        typedef nodetree *pnode;
+        struct nodetree
+        {
+            bool is_end = false;
+            pnode node[26] = {nullptr};
+        };
+
+    public:
+        nodetree root;
+        WordDictionary() = default;
+
+        void addWord(string word)
+        {
+            auto it = &root;
+            for(char ch:word)
+            {
+                // if(!it->node)
+                //     it->node = new pnode;
+                if(!it->node[ch-'a'])
+                    it->node[ch - 'a'] = new nodetree();
+                it = it->node[ch - 'a'];
+            }
+            it->is_end = true;
+        }
+
+        bool search(string word,pnode _root = nullptr)
+        {
+            
+            if(!_root)
+                _root = &root;
+            for (int i = 0; i < word.size(); ++i)
+            {
+                // if (!_root->node)
+                //     return false;
+
+                if (word[i] != '.')
+                {
+                    if (!_root->node[word[i] - 'a'])
+                        return false;
+                    _root = _root->node[word[i] - 'a'];
+                }
+                else
+                {
+                    for (int j = 0; j < 26; ++j)
+                    {
+                        if (_root->node[j] && search(word.substr(i + 1), _root->node[j]))
+                            return true;
+                    }
+                    return false;
+                }
+            }
+            return _root->is_end;
+        }
+    };
+
+    int minMoves(vector<int> &nums)
+    {
+        int sum = 0, min=INT_MAX;
+        for(int i:nums)
+        {
+            if (i < min)
+                min = i;
+            sum += i;
+        }
+        return sum - nums.size() * min;
+    }
+
+    vector<int> plusOne(vector<int> &digits)
+    {
+        ++digits.back();
+        for (int it = digits.size() - 1; it >= 0 && digits[it] > 9; --it)
+        {
+            digits[it] = 0;
+            if(it==0)
+                digits.insert(digits.begin(), {1});
+            else
+                ++digits[it - 1];
+        }
+            return digits;
+    }
+
+    vector<int> majorityElement(vector<int>& nums)
+    {
+        int threshold = nums.size() / 3;
+        // map<int, int> cnt;
+        // for(int i:nums)
+        //     ++cnt[i];
+        // vector<int> res;
+        // for(auto p:cnt)
+        //     if (p.second > threshold)
+        //         res.push_back(p.first);
+        // return res;
+
+        int cnt[2] = {0, 0};
+        int candidate[2] = {-1, -1};
+        for(int i:nums)
+        {
+            if(i==candidate[0])
+                ++cnt[0];
+            else if(i==candidate[1])
+                ++cnt[1];
+            else if(cnt[0]==0)
+            {
+                candidate[0] = i;
+                cnt[0] = 1;
+            }
+            else if (cnt[1] == 0)
+            {
+                candidate[1] = i;
+                cnt[1] = 1;
+            }
+            else
+            {
+                --cnt[0];
+                --cnt[1];
+            }
+        }
+
+        vector<int> res;
+        if (cnt[0] > 0 && count(nums.begin(), nums.end(), candidate[0]) > threshold)
+            res.push_back(candidate[0]);
+        if (cnt[1] > 0 && count(nums.begin(), nums.end(), candidate[1]) > threshold)
+            res.push_back(candidate[1]);
+        return res;
+    }
+
+    vector<int> constructRectangle(int area)
+    {
+
+        for (int sq = sqrt(area); sq > 0; --sq)
+            if (area % sq == 0)
+                return {sq, area / sq};
+    }
+    
+    class ShoppingOffers
+    {
+    public:
+        int shoppingOffers(vector<int> &price, vector<vector<int>> &special, vector<int> &needs)
+        {
+            return dfs(price, special, needs);
+        }
+        map<vector<int>, int> hash;
+
+        int dfs(vector<int> &price, vector<vector<int>> &special, vector<int> &needs)
+        {
+            if (hash.count(needs))
+                return hash[needs];
+            int res = 0, n = (int)price.size();
+            for (int i = 0; i < n; i++)
+                res += (needs[i] * price[i]);
+            for (int i = 0; i < special.size(); i++)
+            {
+                bool valid = true;
+                for (int j = 0; j < n; j++)
+                {
+                    if (special[i][j] > needs[j])
+                    {
+                        valid = false;
+                        break;
+                    }
+                }
+                if (!valid)
+                    continue;
+                vector<int> tmp(n);
+                for (int j = 0; j < n; j++)
+                    tmp[j] = needs[j] - special[i][j];
+                res = min(res, special[i].back() + dfs(price, special, tmp));
+            }
+            hash[needs] = res;
+            return res;
+        }
+    };
+    int shoppingOffers(vector<int> &price, vector<vector<int>> &special, vector<int> &needs)
+    {
+        vector<int> accum(price.size() + 1);
+        accum[0] = 1;
+        for (int i = 1; i <= price.size(); ++i)
+            accum[i] = accum[i - 1] * (needs[i - 1] + 1);
+        int mask = accum[price.size()];
+        vector<int> f(mask);
+        int *cnt = new int[price.size()];
+        for (int state = 1; state < mask; ++state)
+        {
+            f[state] = INT_MAX;
+            memset(cnt, 0, price.size() * sizeof(int));
+            for (int i = 0; i < price.size(); ++i)
+                cnt[i] = state % accum[i + 1] / accum[i];
+            for (int i = 0; i < price.size(); ++i)
+                if (cnt[i] > 0)
+                    f[state] = min(f[state], f[state - accum[i]] + price[i]);
+
+            for (auto &x : special)
+            {
+                int cur = state;
+                int i = 0;
+                for (i = 0; i < price.size(); ++i)
+                {
+                    if(cnt[i] < x[i])
+                        break;
+                    cur -= x[i] * accum[i];
+                }
+                if (i == price.size())
+                    f[state] = min(f[state], f[cur] + x[price.size()]);
+            }
+        }
+        return f[mask - 1];
+    }
+    bool searchMatrix(vector<vector<int>> &matrix, int target, int x1 = 0, int y1 = 0, int x2 = 0, int y2 = 0, bool revix = true)
+    {
+        // if(revix)
+        // {
+        //     x2 = matrix.size() - x2 - 1;
+        //     y2 = matrix[0].size() - y2 - 1;
+        // }
+        // if (x1 > x2 || y1 > y2 || x1 < 0 || x2 >= matrix.size() || y1 < 0 || y2 >= matrix[0].size())
+        //     return false;
+        // if(target < matrix[x1][y1] || target > matrix[x2][y2])
+        //     return false;
+        // if (matrix[(x1 + x2) / 2][(y1 + y2) / 2] == target)
+        //     return true;
+        // else if (x1 == x2 && y1 == y2)
+        //     return false;
+        // if (searchMatrix(matrix, target, x1, (y1 + y2) / 2 + 1, (x1 + x2) / 2 - 1, y2, false) || 
+        //     searchMatrix(matrix, target, (x1 + x2) / 2 + 1, y1, x2, (y1 + y2) / 2 - 1, false))
+        //     return true;
+
+        // if (x2 - x1 <= 1 && y2 - y1 <= 1)
+        //     return matrix[x2][y1] == target || matrix[x1][y2] == target || matrix[x2][y2] == target;
+        // if (matrix[(x1 + x2) / 2][(y1 + y2) / 2] > target)
+        //     return searchMatrix(matrix, target, x1, y1, (x1 + x2) / 2, (y1 + y2) / 2, false);
+        // else
+        //     return searchMatrix(matrix, target, (x1 + x2) / 2, (y1 + y2) / 2, x2, y2, false);
+
+        int x = 0;
+        int y = matrix[0].size();
+        while (matrix[x][y] != target && x < matrix.size() && y >= 0)
+        {
+            if (matrix[x][y] > target)
+                ++x;
+            else
+                --y;
+        }
+        if (x < matrix.size() && y >= 0 && matrix[x][y] == target)
+            return true;
+        else
+            return false;
+    }
+
+    vector<int> nextGreaterElement(vector<int> &nums1, vector<int> &nums2)
+    {
+        unordered_map<int, int> Map;
+        stack<int> st;
+        for (auto it = nums2.rbegin(); it != nums2.rend(); ++it)
+        {
+            if (!st.empty() && *it > st.top())
+                st.pop();
+            Map[*it] = st.empty() ? -1 : st.top();
+            st.push(*it);
+        }
+
+        vector<int> res;
+        for (int i : nums1)
+            res.push_back(Map[i]);
+        return res;
+    }
+
+    bool isPerfectSquare(int num)
+    {
+        int cnt = 1;
+        while(num > 0)
+        {
+            num -= cnt;
+            cnt += 2;
+        }
+        return num == 0;
+    }
 };
+
+
 
 /*
 int __FAST_IO__ = []()
