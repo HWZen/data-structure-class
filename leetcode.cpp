@@ -1612,37 +1612,41 @@ public:
         }
     }
 
-    class Node
+    class flattenClass
     {
-    public:
-        int val;
-        Node *prev;
-        Node *next;
-        Node *child;
-    };
-    Node *flatten(Node *head)
-    {
-        stack<Node *> pre_next;
-        auto it = head;
-        for (auto it = head; it;it=it->next)
+        class Node
         {
-            if(it->child)
+        public:
+            int val;
+            Node *prev;
+            Node *next;
+            Node *child;
+        };
+        Node *flatten(Node *head)
+        {
+            stack<Node *> pre_next;
+            auto it = head;
+            for (auto it = head; it; it = it->next)
             {
-                if(it->next)
-                    pre_next.push(it->next);
-                it->next = it->child;
-                it->next->prev = it;
-                it->child = nullptr;
+                if (it->child)
+                {
+                    if (it->next)
+                        pre_next.push(it->next);
+                    it->next = it->child;
+                    it->next->prev = it;
+                    it->child = nullptr;
+                }
+                if (!it->next && !pre_next.empty())
+                {
+                    it->next = pre_next.top();
+                    it->next->prev = it;
+                    pre_next.pop();
+                }
             }
-            if(!it->next && !pre_next.empty())
-            {
-                it->next = pre_next.top();
-                it->next->prev = it;
-                pre_next.pop();
-            }
+            return head;
         }
-        return head;
-    }
+    };
+
 /*
     vector<vector<int>> DP;
     string TXT1, TXT2;
@@ -2454,6 +2458,188 @@ public:
             cnt += 2;
         }
         return num == 0;
+    }
+
+    class findTiltlass{
+        int tileSum = 0;
+        int dfs(TreeNode *node)
+        {
+            if(node)
+            {
+                auto l = dfs(node->left);
+                auto r = dfs(node->right);
+                tileSum += abs(l - r);
+                return l + r + node->val;
+            }
+            else
+                return 0;
+        }
+        int findTilt(TreeNode *root)
+        {
+            dfs(root);
+            return tileSum;
+        }
+    };
+
+    int integerReplacement(int n)
+    {
+        int cnt = 0;
+        while (n != 1)
+        {
+            if (n & 1)
+            {
+                if(n==3)
+                    return cnt + 2;
+                if((n >> 1) & 1)
+                    ++n;
+                else
+                    --n;
+            }
+            else
+                n = n >> 1;
+            ++cnt;
+        }
+        return cnt;
+    }
+
+    int findLHS(vector<int> &nums)
+    {
+        map<int, int> counter;
+        for (auto i : nums)
+            ++counter[i];
+        auto tmp = vector({0, -1});
+        int lengest = 0;
+        for(auto p:counter)
+        {
+            if (tmp[0] != 0 && abs(p.first - tmp[0]) <= 1 && (p.second + tmp[1]) > lengest)
+                lengest = p.second + tmp[1];
+            tmp[0] = p.first;
+            tmp[1] = p.second;
+        }
+        return lengest;
+    }
+
+    class maxDepthClass
+    {
+        class Node
+        {
+        public:
+            int val;
+            vector<Node *> children;
+
+            Node() {}
+
+            Node(int _val)
+            {
+                val = _val;
+            }
+
+            Node(int _val, vector<Node *> _children)
+            {
+                val = _val;
+                children = _children;
+            }
+        };
+        int maxDepth(Node *root, int deep = 0)
+        {
+            if (!root)
+                return deep;
+            if(root->children.empty())
+                ++deep;
+            int deepest = deep;
+            for(auto i : root->children)
+            {
+                deepest = max(maxDepth(i, deep + 1), deepest);
+            }
+                
+            return deepest;
+        }
+    };
+
+    class shuffle
+    {
+        class Solution
+        {
+        private:
+            vector<int> original;
+            vector<int> nums;
+        public:
+            Solution(std::vector<int> &_nums) : original(std::move(_nums)) { nums = original; }
+            vector<int> reset()
+            {
+                nums = original;
+                return nums;
+            }
+
+            vector<int> shuffle()
+            {
+                for (int i = 0; i < nums.size(); ++i)
+                {
+                    int j = (rand() % (nums.size() - i)) + i;
+                    swap(nums[i], nums[j]);
+                }
+                return nums;
+            }
+        };
+    };
+
+    bool buddyStrings(string s, string goal)
+    {
+        if(s.length()!=goal.length())
+            return false;
+        int state = 0;
+        char ch[2];
+        bool map[26] = {false};
+        bool has_double = false;
+        for (int i = 0; i < s.size(); ++i)
+        {
+            if(!has_double)
+            {
+                if (map[s[i] - 'a'])
+                    has_double = true;
+                else
+                    map[s[i] - 'a'] = true;
+            }
+            if(s[i]!=goal[i])
+            {
+                switch(++state)
+                {
+                    case 1:
+                        ch[0] = s[i];
+                        ch[1] = goal[i];
+                        break;
+                    case 2:
+                        if(ch[0]!=goal[i] || ch[1] !=s[i])
+                            return false;
+                        break;
+                    default:
+                        return false;
+                }
+            }
+        }
+        return state == 2 || (state == 0 && has_double);
+    }
+
+    string originalDigits(string s)
+    {
+        unordered_map<char, int> alphabet;
+        for(char ch:s)
+            ++alphabet[ch];
+        vector<int> nums(10, 0);
+        nums[0] = alphabet['z'];
+        nums[2] = alphabet['w'];
+        nums[4] = alphabet['u'];
+        nums[5] = alphabet['f'] - nums[4];
+        nums[1] = alphabet['o'] - nums[0] - nums[2] - nums[4];
+        nums[3] = alphabet['r'] - nums[0] - nums[4];
+        nums[6] = alphabet['x'];
+        nums[7] = alphabet['v'] - nums[5];
+        nums[8] = alphabet['g'];
+        nums[9] = alphabet['i'] - nums[5] - nums[6] - nums[8];
+        string res;
+        for (int i = 0; i < 10; ++i)
+            res += string(nums[i], i + '0');
+        return res;
     }
 };
 
