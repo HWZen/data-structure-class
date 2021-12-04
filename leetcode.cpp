@@ -16,9 +16,10 @@
 #include <stack>
 #include <functional>
 #include <sstream>
+#include <random>
 using namespace std;
 
-
+int a;
 
 bool cmp(const vector<int> &v, const int &tar)
 {
@@ -31,7 +32,6 @@ class Solution
 {
 public:
     Solution() = default;
-
 
     struct TreeNode
     {
@@ -1446,11 +1446,11 @@ public:
     {
         int left = 0;
         int right = nums.size() - 1;
-        while(left<right)
+        while (left < right)
         {
             int mid = (left + right) >> 1;
-            if(nums[mid]>nums[mid+1])
-                right = mid;    
+            if (nums[mid] > nums[mid + 1])
+                right = mid;
             else
                 left = mid + 1;
         }
@@ -1478,7 +1478,6 @@ public:
             }
         }
         return true;
-
     }
 
     bool canWinNim(int n)
@@ -1511,7 +1510,7 @@ public:
         // int max_size = 1;
         for (int i = 1; i < nums.size(); ++i)
         {
-            dp[i] =1;
+            dp[i] = 1;
             for (int j = 0; j < i; ++j)
                 dp[i] = max(dp[i], nums[i] > nums[j] ? dp[j] + 1 : 0);
             if (dp[i] > max_len)
@@ -1556,14 +1555,13 @@ public:
         return max_size;
     }
 
-    
     int lengthOfLastWord(string s)
     {
         auto rit = s.rbegin();
-        while(rit!=s.rend()&&*rit==' ')
+        while (rit != s.rend() && *rit == ' ')
             ++rit;
         int sum = 1;
-        while(++rit!=s.rend()&&*rit!=' ')
+        while (++rit != s.rend() && *rit != ' ')
             ++sum;
         return sum;
     }
@@ -1600,7 +1598,7 @@ public:
     {
         if (n == 0)
             return false;
-        if(n <= 9)
+        if (n <= 9)
         {
             while (n % 3 == 0)
                 n /= 3;
@@ -1647,7 +1645,7 @@ public:
         }
     };
 
-/*
+    /*
     vector<vector<int>> DP;
     string TXT1, TXT2;
     void upDP(int i, int j)
@@ -1691,16 +1689,16 @@ public:
         unordered_map<int, int> map;
         void dfs(TreeNode *&root, int val)
         {
-            if(map.count(val - targetSum))
+            if (map.count(val - targetSum))
                 res += map[val - targetSum];
             ++map[val];
-            if(root->left)
+            if (root->left)
                 dfs(root->left, val + root->left->val);
-            if(root->right)
+            if (root->right)
                 dfs(root->right, val + root->right->val);
             --map[val];
         }
-        pathsum(TreeNode *root,int targetsum):targetSum(targetsum),res(0)
+        pathsum(TreeNode *root, int targetsum) : targetSum(targetsum), res(0)
         {
             map[0] = 1;
             dfs(root, root->val);
@@ -1735,9 +1733,9 @@ public:
         for (auto path : paths)
         {
             enres.insert(path[0]);
-            if(res.count(path[0]))
+            if (res.count(path[0]))
                 res.erase(path[0]);
-            if(!enres.count(path[1]))
+            if (!enres.count(path[1]))
                 res.insert(path[1]);
         }
         return *res.begin();
@@ -1747,7 +1745,7 @@ public:
     {
         const char hex[] = "0123456789abcdef";
         string res;
-        while(num)
+        while (num)
         {
             res.insert(res.begin(), hex[num % 16]);
             num = num >> 4;
@@ -1757,10 +1755,10 @@ public:
 
     string fractionToDecimal(long long numerator, int denominator)
     {
-        if(!(numerator % denominator))
+        if (!(numerator % denominator))
             return to_string(numerator / denominator);
         string integer;
-        if(numerator * denominator < 0)
+        if (numerator * denominator < 0)
             integer = "-";
         numerator = abs(numerator);
         denominator = abs(denominator);
@@ -1782,35 +1780,34 @@ public:
                 decimal.insert(decimal.begin() + Map.find(numerator)->second, '(');
                 return integer + "." + decimal + ")";
             }
-            
         }
         return integer + "." + decimal;
     }
 
     string licenseKeyFormatting(string s, int k)
     {
-        while(s.find('-')!=s.npos)
+        while (s.find('-') != s.npos)
             s.erase(s.find('-'), 1);
-        if(s.empty())
+        if (s.empty())
             return s;
-        for(auto &ch:s)
+        for (auto &ch : s)
         {
-            if(ch>=97)
+            if (ch >= 97)
                 ch -= 32;
         }
         auto rem = (s.size() % k);
         size_t it = 0;
-        if(rem)
+        if (rem)
             it += rem;
         else
             it += k;
-        if(it!=s.size())
+        if (it != s.size())
         {
             s.insert(s.begin() + it, '-');
             it += k + 1;
         }
 
-        while(it < s.size())
+        while (it < s.size())
         {
             s.insert(s.begin() + it, '-');
             ++it;
@@ -1823,7 +1820,8 @@ public:
  * Below is the interface for Iterator, which is already defined for you.
  * **DO NOT** modify the interface for Iterator.
  */
-   class Iterator {
+    class Iterator
+    {
         typename vector<int>::const_iterator end;
         typename vector<int>::const_iterator it;
 
@@ -1837,11 +1835,12 @@ public:
             return *++it;
         };
 
-       // Returns true if the iteration has more elements.
-       bool hasNext() const{
-           return it != end;
-       };
- 	};
+        // Returns true if the iteration has more elements.
+        bool hasNext() const
+        {
+            return it != end;
+        };
+    };
 
     class PeekingIterator : public Iterator
     {
@@ -1862,12 +1861,12 @@ public:
     int thirdMax(vector<int> &nums)
     {
         set<int> buf({INT_MIN, INT_MIN + 1, INT_MIN + 2});
-        for(int i:nums)
+        for (int i : nums)
         {
-            if(*buf.begin() < i)
+            if (*buf.begin() < i)
                 buf.insert(i);
 
-            if(buf.size()>3)
+            if (buf.size() > 3)
                 buf.erase(buf.begin());
         }
         return (buf.size() == 3 ? *buf.begin() : *(--buf.end()));
@@ -1878,7 +1877,7 @@ public:
         s = " " + s + " ";
         int sum = 0;
         bool last_char_is_space = true;
-        for(char ch:s)
+        for (char ch : s)
         {
             if (last_char_is_space && ch != ' ')
             {
@@ -1894,7 +1893,7 @@ public:
 
     vector<string> findRepeatedDnaSequences(string s)
     {
-        if(s.length()<=10)
+        if (s.length() <= 10)
             return vector<string>();
 
         int x;
@@ -1904,7 +1903,7 @@ public:
 
         vector<string> res;
         unordered_map<int, int> hash_map;
-        for (int i = 9; i < s.length();++i)
+        for (int i = 9; i < s.length(); ++i)
         {
             x = ((x << 2) | bin[s[i]]) & ((1 << (10 * 2)) - 1);
             if (++hash_map[x] == 2)
@@ -1932,7 +1931,7 @@ public:
                 start[val] = start[val + 1];
                 end[start[val]] = val;
                 start.erase(val + 1);
-            } 
+            }
             else
                 end[val] = val;
 
@@ -1943,10 +1942,10 @@ public:
                 start[end[val - 1]] = it;
                 end.erase(val - 1);
 
-                if(start.count(val))
+                if (start.count(val))
                     start.erase(val);
             }
-            else if(!start.count(val))
+            else if (!start.count(val))
                 start[val] = val;
         }
 
@@ -1967,15 +1966,8 @@ public:
     class NumberToWords
     {
     public:
-        unordered_map<int, string> i_to_s={
-            {1,"One"},            {2,"Two"},            {3,"Three"},            {4,"Four"},
-            {5,"Five"},           {6,"Six"},            {7,"Seven"},            {8,"Eight"},
-            {9,"Nine"},           {10,"Ten"},           {11,"Eleven"},          {12,"Twelve"},
-            {13,"Thirteen"},      {14,"Fourteen"},      {15,"Fifteen"},         {16,"Sixteen"},
-            {17,"Seventeen"},     {18,"Eighteen"},      {19,"Nineteen"},        {20,"Twenty"},
-            {30,"Thirty"},        {40,"Forty"},         {50,"Fifty"},           {60,"Sixty"},
-            {70,"Seventy"},       {80,"Eighty"},        {90,"Ninety"}
-            };
+        unordered_map<int, string> i_to_s = {
+            {1, "One"}, {2, "Two"}, {3, "Three"}, {4, "Four"}, {5, "Five"}, {6, "Six"}, {7, "Seven"}, {8, "Eight"}, {9, "Nine"}, {10, "Ten"}, {11, "Eleven"}, {12, "Twelve"}, {13, "Thirteen"}, {14, "Fourteen"}, {15, "Fifteen"}, {16, "Sixteen"}, {17, "Seventeen"}, {18, "Eighteen"}, {19, "Nineteen"}, {20, "Twenty"}, {30, "Thirty"}, {40, "Forty"}, {50, "Fifty"}, {60, "Sixty"}, {70, "Seventy"}, {80, "Eighty"}, {90, "Ninety"}};
 
         const vector<string> i3_to_s = {"Thousand", "Million", "Billion"};
 
@@ -2006,13 +1998,12 @@ public:
 
             for (int cnt = 0; num /= 1000; ++cnt)
             {
-                if(res==string())
+                if (res == string())
                 {
                     res = numberToWords(num % 1000, cnt) + res;
                     if (res != string())
                         res.erase(res.end() - 1);
                 }
-
             }
 
             return res;
@@ -2021,7 +2012,7 @@ public:
 
     int devide(long long devidend, long long devisor)
     {
-        if(devidend == INT_MIN && devisor == -1)
+        if (devidend == INT_MIN && devisor == -1)
             return INT_MAX;
         return devidend / devisor;
     }
@@ -2029,7 +2020,7 @@ public:
     vector<string> fizzBuzz(int n)
     {
         vector<string> res;
-        for (int i = 1; i <= n;++i)
+        for (int i = 1; i <= n; ++i)
         {
             string tmp;
             if (!(i % 3))
@@ -2048,9 +2039,9 @@ public:
         int l = 0, r = arr.size() - 1;
         while (l < r - 1)
         {
-            if(arr[(l + r) / 2] > arr[(l + r) / 2 + 1] && arr[(l + r) / 2] > arr[(l + r) / 2 - 1])
+            if (arr[(l + r) / 2] > arr[(l + r) / 2 + 1] && arr[(l + r) / 2] > arr[(l + r) / 2 - 1])
                 return (l + r) / 2;
-                
+
             if (arr[(l + r) / 2] > arr[(l + r) / 2 + 1])
                 r = (l + r) / 2;
             else
@@ -2062,14 +2053,14 @@ public:
     string countAndSay(int n)
     {
         string res = "1";
-        while(n--)
+        while (n--)
         {
             int cnt = 0;
             char buf = res[0];
             string tmp;
             for (char ch : res)
             {
-                if(ch == buf)
+                if (ch == buf)
                     ++cnt;
                 else
                 {
@@ -2141,19 +2132,19 @@ public:
 
         // };
         auto it = root;
-        while(k)
+        while (k)
         {
-            if(it->left && it->left->val != -1)
+            if (it->left && it->left->val != -1)
             {
                 tree_stack.push(it);
                 it = it->left;
             }
             else
             {
-                if(it->val != -1)
+                if (it->val != -1)
                 {
                     --k;
-                    if(!k)
+                    if (!k)
                         break;
                     it->val = -1;
                 }
@@ -2167,7 +2158,6 @@ public:
                     it = tree_stack.top();
                     tree_stack.pop();
                 }
-                
             }
         }
         return it->val;
@@ -2197,21 +2187,21 @@ public:
         void addWord(string word)
         {
             auto it = &root;
-            for(char ch:word)
+            for (char ch : word)
             {
                 // if(!it->node)
                 //     it->node = new pnode;
-                if(!it->node[ch-'a'])
+                if (!it->node[ch - 'a'])
                     it->node[ch - 'a'] = new nodetree();
                 it = it->node[ch - 'a'];
             }
             it->is_end = true;
         }
 
-        bool search(string word,pnode _root = nullptr)
+        bool search(string word, pnode _root = nullptr)
         {
-            
-            if(!_root)
+
+            if (!_root)
                 _root = &root;
             for (int i = 0; i < word.size(); ++i)
             {
@@ -2240,8 +2230,8 @@ public:
 
     int minMoves(vector<int> &nums)
     {
-        int sum = 0, min=INT_MAX;
-        for(int i:nums)
+        int sum = 0, min = INT_MAX;
+        for (int i : nums)
         {
             if (i < min)
                 min = i;
@@ -2256,15 +2246,15 @@ public:
         for (int it = digits.size() - 1; it >= 0 && digits[it] > 9; --it)
         {
             digits[it] = 0;
-            if(it==0)
+            if (it == 0)
                 digits.insert(digits.begin(), {1});
             else
                 ++digits[it - 1];
         }
-            return digits;
+        return digits;
     }
 
-    vector<int> majorityElement(vector<int>& nums)
+    vector<int> majorityElement(vector<int> &nums)
     {
         int threshold = nums.size() / 3;
         // map<int, int> cnt;
@@ -2278,13 +2268,13 @@ public:
 
         int cnt[2] = {0, 0};
         int candidate[2] = {-1, -1};
-        for(int i:nums)
+        for (int i : nums)
         {
-            if(i==candidate[0])
+            if (i == candidate[0])
                 ++cnt[0];
-            else if(i==candidate[1])
+            else if (i == candidate[1])
                 ++cnt[1];
-            else if(cnt[0]==0)
+            else if (cnt[0] == 0)
             {
                 candidate[0] = i;
                 cnt[0] = 1;
@@ -2316,7 +2306,7 @@ public:
             if (area % sq == 0)
                 return {sq, area / sq};
     }
-    
+
     class ShoppingOffers
     {
     public:
@@ -2380,7 +2370,7 @@ public:
                 int i = 0;
                 for (i = 0; i < price.size(); ++i)
                 {
-                    if(cnt[i] < x[i])
+                    if (cnt[i] < x[i])
                         break;
                     cur -= x[i] * accum[i];
                 }
@@ -2405,7 +2395,7 @@ public:
         //     return true;
         // else if (x1 == x2 && y1 == y2)
         //     return false;
-        // if (searchMatrix(matrix, target, x1, (y1 + y2) / 2 + 1, (x1 + x2) / 2 - 1, y2, false) || 
+        // if (searchMatrix(matrix, target, x1, (y1 + y2) / 2 + 1, (x1 + x2) / 2 - 1, y2, false) ||
         //     searchMatrix(matrix, target, (x1 + x2) / 2 + 1, y1, x2, (y1 + y2) / 2 - 1, false))
         //     return true;
 
@@ -2452,7 +2442,7 @@ public:
     bool isPerfectSquare(int num)
     {
         int cnt = 1;
-        while(num > 0)
+        while (num > 0)
         {
             num -= cnt;
             cnt += 2;
@@ -2460,11 +2450,12 @@ public:
         return num == 0;
     }
 
-    class findTiltlass{
+    class findTiltlass
+    {
         int tileSum = 0;
         int dfs(TreeNode *node)
         {
-            if(node)
+            if (node)
             {
                 auto l = dfs(node->left);
                 auto r = dfs(node->right);
@@ -2488,9 +2479,9 @@ public:
         {
             if (n & 1)
             {
-                if(n==3)
+                if (n == 3)
                     return cnt + 2;
-                if((n >> 1) & 1)
+                if ((n >> 1) & 1)
                     ++n;
                 else
                     --n;
@@ -2507,9 +2498,9 @@ public:
         map<int, int> counter;
         for (auto i : nums)
             ++counter[i];
-        auto tmp = vector({0, -1});
+        auto tmp = vector<int>({0, -1});
         int lengest = 0;
-        for(auto p:counter)
+        for (auto p : counter)
         {
             if (tmp[0] != 0 && abs(p.first - tmp[0]) <= 1 && (p.second + tmp[1]) > lengest)
                 lengest = p.second + tmp[1];
@@ -2544,14 +2535,14 @@ public:
         {
             if (!root)
                 return deep;
-            if(root->children.empty())
+            if (root->children.empty())
                 ++deep;
             int deepest = deep;
-            for(auto i : root->children)
+            for (auto i : root->children)
             {
                 deepest = max(maxDepth(i, deep + 1), deepest);
             }
-                
+
             return deepest;
         }
     };
@@ -2563,6 +2554,7 @@ public:
         private:
             vector<int> original;
             vector<int> nums;
+
         public:
             Solution(std::vector<int> &_nums) : original(std::move(_nums)) { nums = original; }
             vector<int> reset()
@@ -2585,7 +2577,7 @@ public:
 
     bool buddyStrings(string s, string goal)
     {
-        if(s.length()!=goal.length())
+        if (s.length() != goal.length())
             return false;
         int state = 0;
         char ch[2];
@@ -2593,27 +2585,27 @@ public:
         bool has_double = false;
         for (int i = 0; i < s.size(); ++i)
         {
-            if(!has_double)
+            if (!has_double)
             {
                 if (map[s[i] - 'a'])
                     has_double = true;
                 else
                     map[s[i] - 'a'] = true;
             }
-            if(s[i]!=goal[i])
+            if (s[i] != goal[i])
             {
-                switch(++state)
+                switch (++state)
                 {
-                    case 1:
-                        ch[0] = s[i];
-                        ch[1] = goal[i];
-                        break;
-                    case 2:
-                        if(ch[0]!=goal[i] || ch[1] !=s[i])
-                            return false;
-                        break;
-                    default:
+                case 1:
+                    ch[0] = s[i];
+                    ch[1] = goal[i];
+                    break;
+                case 2:
+                    if (ch[0] != goal[i] || ch[1] != s[i])
                         return false;
+                    break;
+                default:
+                    return false;
                 }
             }
         }
@@ -2623,7 +2615,7 @@ public:
     string originalDigits(string s)
     {
         unordered_map<char, int> alphabet;
-        for(char ch:s)
+        for (char ch : s)
             ++alphabet[ch];
         vector<int> nums(10, 0);
         nums[0] = alphabet['z'];
@@ -2641,9 +2633,194 @@ public:
             res += string(nums[i], i + '0');
         return res;
     }
+
+    int poorPigs(int buckets, int minutesToDie, int minutesToTest)
+    {
+        int times = minutesToTest / minutesToDie;
+        int tmp = log(buckets) / log(times + 1);
+        return pow(times + 1, tmp) > buckets ? tmp : tmp + 1;
+    }
+
+    TreeNode *searchBST(TreeNode *root, int val)
+    {
+        TreeNode *it = root;
+        while (it && it->val != val)
+            it = it->val > val ? it->left : it->right;
+        return it;
+    }
+
+    class RandomFlipMatrix
+    {
+        class Solution
+        {
+        private:
+            /* Seed */
+            shared_ptr<std::random_device> rd;
+
+            /* Random number generator */
+            shared_ptr<std::default_random_engine> generateor;
+            /* Distribution on which to apply the generator */
+            shared_ptr<std::uniform_int_distribution<int32_t>> distribution;
+
+        public:
+            int mn;
+            std::set<int> Map;
+            int _n;
+            int _m;
+            Solution(int m, int n) : _n(n), _m(m), mn(m * n), rd(new std::random_device()),
+                                     generateor(new std::default_random_engine((*rd)())),
+                                     distribution(new std::uniform_int_distribution<int32_t>(0, (int32_t)(1e+8)))
+            {
+                for (int i = 0; i < mn; ++i)
+                    Map.insert(i);
+            }
+
+            vector<int> flip()
+            {
+                auto gen = (*distribution)(*generateor) % mn--;
+                auto it = Map.begin();
+                for (int i = 0; i < gen; ++i)
+                {
+                    ++it;
+                }
+
+                vector<int> res({*it % _m, *it / _m});
+                Map.erase(it);
+                return std::move(res);
+            }
+
+            void reset()
+            {
+                mn = _n * _m;
+                for (int i = 0; i < mn; ++i)
+                    Map.insert(i);
+            }
+        };
+    };
+
+    vector<int> findAnagrams(string s, string p)
+    {
+        if (s.length() < p.length())
+            return vector<int>();
+        vector<int> counter(26, 0);
+        int diff = 0;
+        for (char ch : p)
+        {
+            if (counter[ch - 'a']++ == 0)
+                ++diff;
+        }
+        for (int i = 0; i < p.length(); ++i)
+        {
+            if (--counter[s[i] - 'a'] == 0)
+                --diff;
+            else if (counter[s[i] - 'a'] == -1)
+                ++diff;
+        }
+        vector<int> res;
+        if (!diff)
+            res.push_back(0);
+        for (int i = 0,j = p.length(); j < s.length(); ++i, ++j)
+        {
+
+            ++counter[s[i] - 'a'];
+            if (counter[s[i] - 'a'] == 0)
+                --diff;
+            else if (counter[s[i] - 'a'] == 1)
+                ++diff;
+
+            --counter[s[j] - 'a'];
+            if (counter[s[j] - 'a'] == 0)
+                --diff;
+            else if (counter[s[j] - 'a'] == -1)
+                ++diff;
+            if (!diff)
+                res.push_back(i + 1);
+        }
+        return res;
+    }
+
+    int findNthDigit(int n)
+    {
+        uint32_t index = 1;
+        uint64_t base = 9;
+        while (n >  base * index)
+        {
+            n -= base * index;
+            base *= 10;
+            ++index;
+        }
+        auto num = (n - 1) / index + (uint32_t)pow(10, index - 1);
+        auto dig = (n - 1) % index;
+        return num / (uint32_t)pow(10, index - dig - 1) % 10;
+    }
+
+    int maxPower(string s)
+    {
+        if (s.size() == 1)
+            return 1;
+        int count = 0;
+        auto f = s.begin();
+        for (auto it = f; it < s.end();++it)
+        {
+            if (*it != *f)
+            {
+                
+                if (it - f > count)
+                    count = it - f;
+                f = it;
+            }
+        }
+        if (*(s.end() - 1) == *f)
+            if (s.end() - f > count)
+                count = s.end() - f;
+        return count;
+    }
+
+    vector<string> findRelativeRanks(vector<int> &score)
+    {
+        vector<int> index(score.size());
+        for (int i = 0; i < index.size(); ++i)
+            index[i] = i;
+        sort(index.begin(), index.end(), [&score](int l, int r) -> bool
+             { return score[l] > score[r]; });
+        vector<string> res(index.size());
+        for (int i = 0; i < index.size(); ++i)
+        {
+            switch(i)
+            {
+                case 0:
+                    res[index[i]] = "Gold Medal";
+                    break;
+                case 1:
+                    res[index[i]] = "Silver Meda";
+                    break;
+                case 2:
+                    res[index[i]] = "Bronze Meda";
+                    break;
+                default:
+                    res[index[i]] = to_string(i + 1);
+                    break;
+            }
+        }
+        return res;
+    }
+
+    bool canConstruct(string ransomNote, string magazine)
+    {
+        if(ransomNote.length() > magazine.length())
+            return false;
+
+        for(char ch:ransomNote)
+        {
+            auto f = magazine.find(ch);
+            if(f != magazine.npos)
+                magazine[f] = ' ';
+            else
+                return false;
+        }
+        return true;
+    }
 };
-
-
 
 /*
 int __FAST_IO__ = []()
