@@ -2805,6 +2805,29 @@ public:
         return res;
     }
 
+    int largestSumAfterKNegations(vector<int> &nums, int k)
+    {
+        auto end = nums.end();
+        auto begin = nums.begin();
+        sort(begin, end);
+        auto it = begin;
+        for (; it < end && *it < 0 && k; ++it, --k)
+            *it = -*it;
+        if (k & 1)
+        {
+            if (it != begin && it != end)
+                *it -= 2 * min(*it, *(it - 1));
+            else if(it == begin)
+                *it = -*it;
+            else
+                *(it - 1) = -*(it - 1);
+        }
+        int sum = 0;
+        for(int i:nums)
+            sum += i;
+        return sum;
+    }
+
     bool canConstruct(string ransomNote, string magazine)
     {
         if(ransomNote.length() > magazine.length())
@@ -2819,6 +2842,163 @@ public:
                 return false;
         }
         return true;
+    }
+
+    class superPowClass
+    {
+    public:
+        const int MOD = 1337;
+        
+        int superPow(int a, vector<int> &b)
+        {
+            int res = qmod(a, b[0]) % MOD;
+            for (int i = 1; i < b.size();++i)
+                res = qmod(res, 10) * qmod(a, b[i]) % MOD;
+            return res;
+        }
+
+        int qmod(int a,int b)
+        {
+            int ans = 1;
+            a %= MOD;
+            while(b)
+            {
+                if (b & 1)
+                    ans = ans * a % MOD;
+                a = a * a % MOD;
+                b >>= 1;
+            }
+            return ans;
+        }
+    };
+
+    string truncateSentence(string s, int k)
+    {
+        auto it = s.begin();
+        for (; k && it < s.end(); --k)
+        {
+            while (*it != ' ' && it != s.end())
+                ++it;
+            while (*it == ' ' && it != s.end())
+                ++it;
+        }
+        return std::move(string(s.begin(),it));
+    }
+
+    vector<vector<int>> colorBorder(vector<vector<int>> &grid, int row, int col, int color)
+    {
+        struct pairHash{
+            size_t operator()(const pair<int,int> &p) const
+            {
+                return hash<int>{}(p.first) ^ hash<int>{}(p.second);
+            }
+        };
+        unordered_set<pair<int, int>, pairHash> edge;
+
+        int m = grid.size(), n = grid[0].size();
+        vector<vector<bool>> visited(m, vector<bool>(n, false));
+        int originalColor = grid[row][col];
+
+        function<void(int, int)>
+            dfs = [&grid, &edge, &dfs, &visited, &m, &n, &originalColor](int x, int y)
+        {
+            visited[x][y] = true;
+            bool is_edge = false;
+            if (x > 0 && grid[x - 1][y] == originalColor)
+            {
+                if (!visited[x - 1][y])
+                    dfs(x - 1, y);
+            }
+            else 
+                is_edge = true;
+            if (y < n - 1 && grid[x][y + 1] == originalColor)
+            {
+                if (!visited[x][y + 1])
+                    dfs(x, y + 1);
+            }
+            else
+                is_edge = true;
+            if (x < m - 1 && grid[x + 1][y] == originalColor)
+            {
+                if (!visited[x + 1][y])
+                    dfs(x + 1, y);
+            }
+            else
+                is_edge = true;
+            if (y > 0 && grid[x][y - 1] == originalColor)
+            {
+                if (!visited[x][y - 1])
+                    dfs(x, y - 1);
+            }
+            else
+                is_edge = true;
+            
+            if(is_edge)
+                edge.insert(pair<int, int>(x, y));
+        };
+        dfs(row, col);
+        for(auto p : edge)
+            grid[p.first][p.second] = color;
+        return grid;
+    }
+
+    class TopVotedCandidate
+    {
+    private:
+        vector<int> presons;
+        vector<int> times;
+    public:
+        TopVotedCandidate(vector<int> &_persons, vector<int> &_times)
+        :presons(std::move(_persons)),times(std::move(_times))
+        {
+            unordered_map<int, int> votes;
+            int cnt = 0;
+            votes[-1] = -1;
+            int max_it = -1;
+            for(auto &i : presons)
+            {
+                ++votes[i];
+                if(votes[i] >= votes[max_it])
+                    max_it = i;
+                i = max_it;
+            }
+        }
+
+        int q(int t)
+        {
+            auto i = upper_bound(times.begin(), times.end(), t) - times.begin();
+            return presons[i == 0 ? 0 : i - 1];
+        }
+    };
+
+    string toLowerCase(string &s)
+    {
+        for(char &ch : s)
+            if (isupper(ch))
+                ch += 32;
+        return std::move(s);
+    }
+
+    int maxIncreaseKeepingSkyline(vector<vector<int>> &grid)
+    {
+        vector<int> col(grid.size(), -1);
+        vector<int> row(grid.size(), -1);
+
+        for (int i = 0; i < grid.size(); ++i)
+        {
+            for (int j = 0; j < grid.size(); ++j)
+            {
+                row[i] = max(grid[i][j], row[i]);
+                col[j] = max(grid[i][j], col[j]);
+            }
+        }
+        int res = 0;
+        for (int i = 0; i < grid.size(); ++i)
+        {
+            for (int j = 0; j < grid.size(); ++j)
+                res += min(row[i], col[j]) - grid[i][j];
+        }
+        return res;
     }
 };
 
