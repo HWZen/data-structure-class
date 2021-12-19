@@ -17,6 +17,7 @@
 #include <functional>
 #include <sstream>
 #include <random>
+#include <corecrt_math_defines.h>
 using namespace std;
 
 int a;
@@ -2999,6 +3000,127 @@ public:
                 res += min(row[i], col[j]) - grid[i][j];
         }
         return res;
+    }
+
+    int scheduleCourse(vector<vector<int>> &courses)
+    {
+        sort(courses.begin(), courses.end(), [](const vector<int> &l, const vector<int> &r)
+             { return l[1] < r[1]; });
+        priority_queue<int> q;
+
+        int sum = 0;
+        for(auto &c : courses)
+        {
+            if(c[0] + sum <= c[1])
+            {
+                sum += c[0];
+                q.push(c[0]);
+            }
+            else if(!q.empty() && q.top() > c[0])
+            {
+                sum -= q.top() - c[0];
+                q.pop();
+                q.push(c[0]);
+            }
+        }
+        return q.size();
+    }
+
+    vector<int> loudAndRich(vector<vector<int>> &richer, vector<int> &quiet)
+    {
+        auto len = quiet.size();
+        vector<vector<int>> graph(len);
+        for(auto &v : richer)
+            graph[v[1]].emplace_back(v[0]);
+
+        vector<int> ans(len, -1);
+        function<void(int)> dfs = [&graph, &quiet, &dfs, &ans](int index)
+        {
+            if(ans[index] != -1)
+                return;
+            ans[index] = index;
+            for(int i: graph[index])
+            {
+                dfs(i);
+                if(quiet[ans[i]] < quiet[ans[index]])
+                    ans[index] = ans[i];
+            }
+        };
+        for (int i = 0; i < len; ++i)
+            dfs(i);
+        return ans;
+    }
+
+    int visiblePoints(vector<vector<int>> &points, int angle, vector<int> &location)
+    {
+        auto pos_num = points.size();
+        vector<double> angles;
+        int same_location = 0;
+        for (int i = 0; i < pos_num; ++i)
+        {
+            if (points[i][0] == location[0] && points[i][1] == location[1])
+            {
+                ++same_location;
+                continue;
+            }
+            double x = points[i][0] - location[0];
+            double y = points[i][1] - location[1];
+            angles.emplace_back(atan2(y, x) / M_PI * 180);
+            angles.emplace_back(angles.back() + 360);
+        }
+        if(angles.empty())
+            return same_location;
+        sort(angles.begin(), angles.end());
+        auto end = angles.end(); 
+        auto begin = *angles.begin();
+        auto top = upper_bound(angles.begin(), angles.end(), angles[0] + angle);
+        auto botton = angles.begin();
+        int max = top - botton;
+        for (; top < end; ++top)
+        {
+            botton = lower_bound(botton, top, *top - angle);
+            if(top - botton + 1 > max)
+                max = top - botton + 1;
+        }
+        return max + same_location;
+    }
+
+    int numWaterBottles(int bottles, int exchange)
+    {
+        if(bottles < exchange)
+            return bottles;
+        else
+            return (bottles - exchange) / (exchange - 1) + 1 + bottles;
+    }
+
+    int countBattleships(vector<vector<char>> &board)
+    {
+        auto col = board.size();
+        auto row = board[0].size();
+
+        int sum = 0;
+        for (int y = 0; y < col; ++y)
+            for (int x = 0; x < row; ++x)
+                if (board[y][x] == 'X' && 
+                    (x == 0 || board[y][x - 1] == '.') && 
+                    (y == 0 || board[y - 1][x] == '.'))
+                        ++sum;
+
+        return sum;
+    }
+    int findJudge(int n, vector<vector<int>> &trust)
+    {
+        vector<pair<int, int>> trust_ed(n, pair<int, int>(0, 0));
+        for(auto &Pair : trust)
+        {
+            ++trust_ed[Pair[0] - 1].first;
+            ++trust_ed[Pair[1] - 1].second;
+        }
+
+        for (int i = 0; i < n; ++i)
+            if(trust_ed[i].second == n - 1 && trust_ed[i].first == 0)
+                return i + 1;
+        return -1;
     }
 };
 
