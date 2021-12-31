@@ -2720,7 +2720,7 @@ public:
         vector<int> res;
         if (!diff)
             res.push_back(0);
-        for (int i = 0,j = p.length(); j < s.length(); ++i, ++j)
+        for (int i = 0, j = p.length(); j < s.length(); ++i, ++j)
         {
 
             ++counter[s[i] - 'a'];
@@ -2744,7 +2744,7 @@ public:
     {
         uint32_t index = 1;
         uint64_t base = 9;
-        while (n >  base * index)
+        while (n > base * index)
         {
             n -= base * index;
             base *= 10;
@@ -2761,11 +2761,11 @@ public:
             return 1;
         int count = 0;
         auto f = s.begin();
-        for (auto it = f; it < s.end();++it)
+        for (auto it = f; it < s.end(); ++it)
         {
             if (*it != *f)
             {
-                
+
                 if (it - f > count)
                     count = it - f;
                 f = it;
@@ -2787,20 +2787,20 @@ public:
         vector<string> res(index.size());
         for (int i = 0; i < index.size(); ++i)
         {
-            switch(i)
+            switch (i)
             {
-                case 0:
-                    res[index[i]] = "Gold Medal";
-                    break;
-                case 1:
-                    res[index[i]] = "Silver Meda";
-                    break;
-                case 2:
-                    res[index[i]] = "Bronze Meda";
-                    break;
-                default:
-                    res[index[i]] = to_string(i + 1);
-                    break;
+            case 0:
+                res[index[i]] = "Gold Medal";
+                break;
+            case 1:
+                res[index[i]] = "Silver Meda";
+                break;
+            case 2:
+                res[index[i]] = "Bronze Meda";
+                break;
+            default:
+                res[index[i]] = to_string(i + 1);
+                break;
             }
         }
         return res;
@@ -2818,26 +2818,26 @@ public:
         {
             if (it != begin && it != end)
                 *it -= 2 * min(*it, *(it - 1));
-            else if(it == begin)
+            else if (it == begin)
                 *it = -*it;
             else
                 *(it - 1) = -*(it - 1);
         }
         int sum = 0;
-        for(int i:nums)
+        for (int i : nums)
             sum += i;
         return sum;
     }
 
     bool canConstruct(string ransomNote, string magazine)
     {
-        if(ransomNote.length() > magazine.length())
+        if (ransomNote.length() > magazine.length())
             return false;
 
-        for(char ch:ransomNote)
+        for (char ch : ransomNote)
         {
             auto f = magazine.find(ch);
-            if(f != magazine.npos)
+            if (f != magazine.npos)
                 magazine[f] = ' ';
             else
                 return false;
@@ -2849,20 +2849,20 @@ public:
     {
     public:
         const int MOD = 1337;
-        
+
         int superPow(int a, vector<int> &b)
         {
             int res = qmod(a, b[0]) % MOD;
-            for (int i = 1; i < b.size();++i)
+            for (int i = 1; i < b.size(); ++i)
                 res = qmod(res, 10) * qmod(a, b[i]) % MOD;
             return res;
         }
 
-        int qmod(int a,int b)
+        int qmod(int a, int b)
         {
             int ans = 1;
             a %= MOD;
-            while(b)
+            while (b)
             {
                 if (b & 1)
                     ans = ans * a % MOD;
@@ -2883,13 +2883,14 @@ public:
             while (*it == ' ' && it != s.end())
                 ++it;
         }
-        return std::move(string(s.begin(),it));
+        return std::move(string(s.begin(), it));
     }
 
     vector<vector<int>> colorBorder(vector<vector<int>> &grid, int row, int col, int color)
     {
-        struct pairHash{
-            size_t operator()(const pair<int,int> &p) const
+        struct pairHash
+        {
+            size_t operator()(const pair<int, int> &p) const
             {
                 return hash<int>{}(p.first) ^ hash<int>{}(p.second);
             }
@@ -2910,7 +2911,7 @@ public:
                 if (!visited[x - 1][y])
                     dfs(x - 1, y);
             }
-            else 
+            else
                 is_edge = true;
             if (y < n - 1 && grid[x][y + 1] == originalColor)
             {
@@ -2933,12 +2934,12 @@ public:
             }
             else
                 is_edge = true;
-            
-            if(is_edge)
+
+            if (is_edge)
                 edge.insert(pair<int, int>(x, y));
         };
         dfs(row, col);
-        for(auto p : edge)
+        for (auto p : edge)
             grid[p.first][p.second] = color;
         return grid;
     }
@@ -2948,18 +2949,19 @@ public:
     private:
         vector<int> presons;
         vector<int> times;
+
     public:
         TopVotedCandidate(vector<int> &_persons, vector<int> &_times)
-        :presons(std::move(_persons)),times(std::move(_times))
+            : presons(std::move(_persons)), times(std::move(_times))
         {
             unordered_map<int, int> votes;
             int cnt = 0;
             votes[-1] = -1;
             int max_it = -1;
-            for(auto &i : presons)
+            for (auto &i : presons)
             {
                 ++votes[i];
-                if(votes[i] >= votes[max_it])
+                if (votes[i] >= votes[max_it])
                     max_it = i;
                 i = max_it;
             }
@@ -2974,7 +2976,7 @@ public:
 
     string toLowerCase(string &s)
     {
-        for(char &ch : s)
+        for (char &ch : s)
             if (isupper(ch))
                 ch += 32;
         return std::move(s);
@@ -3009,14 +3011,14 @@ public:
         priority_queue<int> q;
 
         int sum = 0;
-        for(auto &c : courses)
+        for (auto &c : courses)
         {
-            if(c[0] + sum <= c[1])
+            if (c[0] + sum <= c[1])
             {
                 sum += c[0];
                 q.push(c[0]);
             }
-            else if(!q.empty() && q.top() > c[0])
+            else if (!q.empty() && q.top() > c[0])
             {
                 sum -= q.top() - c[0];
                 q.pop();
@@ -3030,19 +3032,19 @@ public:
     {
         auto len = quiet.size();
         vector<vector<int>> graph(len);
-        for(auto &v : richer)
+        for (auto &v : richer)
             graph[v[1]].emplace_back(v[0]);
 
         vector<int> ans(len, -1);
         function<void(int)> dfs = [&graph, &quiet, &dfs, &ans](int index)
         {
-            if(ans[index] != -1)
+            if (ans[index] != -1)
                 return;
             ans[index] = index;
-            for(int i: graph[index])
+            for (int i : graph[index])
             {
                 dfs(i);
-                if(quiet[ans[i]] < quiet[ans[index]])
+                if (quiet[ans[i]] < quiet[ans[index]])
                     ans[index] = ans[i];
             }
         };
@@ -3068,10 +3070,10 @@ public:
             angles.emplace_back(atan2(y, x) / M_PI * 180);
             angles.emplace_back(angles.back() + 360);
         }
-        if(angles.empty())
+        if (angles.empty())
             return same_location;
         sort(angles.begin(), angles.end());
-        auto end = angles.end(); 
+        auto end = angles.end();
         auto begin = *angles.begin();
         auto top = upper_bound(angles.begin(), angles.end(), angles[0] + angle);
         auto botton = angles.begin();
@@ -3079,7 +3081,7 @@ public:
         for (; top < end; ++top)
         {
             botton = lower_bound(botton, top, *top - angle);
-            if(top - botton + 1 > max)
+            if (top - botton + 1 > max)
                 max = top - botton + 1;
         }
         return max + same_location;
@@ -3087,7 +3089,7 @@ public:
 
     int numWaterBottles(int bottles, int exchange)
     {
-        if(bottles < exchange)
+        if (bottles < exchange)
             return bottles;
         else
             return (bottles - exchange) / (exchange - 1) + 1 + bottles;
@@ -3101,26 +3103,179 @@ public:
         int sum = 0;
         for (int y = 0; y < col; ++y)
             for (int x = 0; x < row; ++x)
-                if (board[y][x] == 'X' && 
-                    (x == 0 || board[y][x - 1] == '.') && 
+                if (board[y][x] == 'X' &&
+                    (x == 0 || board[y][x - 1] == '.') &&
                     (y == 0 || board[y - 1][x] == '.'))
-                        ++sum;
+                    ++sum;
 
         return sum;
     }
     int findJudge(int n, vector<vector<int>> &trust)
     {
         vector<pair<int, int>> trust_ed(n, pair<int, int>(0, 0));
-        for(auto &Pair : trust)
+        for (auto &Pair : trust)
         {
             ++trust_ed[Pair[0] - 1].first;
             ++trust_ed[Pair[1] - 1].second;
         }
 
         for (int i = 0; i < n; ++i)
-            if(trust_ed[i].second == n - 1 && trust_ed[i].first == 0)
+            if (trust_ed[i].second == n - 1 && trust_ed[i].first == 0)
                 return i + 1;
         return -1;
+    }
+
+    int findRadius(vector<int> &houses, vector<int> &heaters)
+    {
+        sort(heaters.begin(), heaters.end());
+        int ans = 0;
+        for (int i : houses)
+        {
+            auto it = upper_bound(heaters.begin(), heaters.end(), i);
+            if (it == heaters.end())
+                --it;
+            auto delta = min(abs(*it - i), abs(i - *(it == heaters.begin() ? it : it - 1)));
+            if (delta > ans)
+                ans = delta;
+        }
+        return ans;
+    }
+
+    int dayOfYear(string &date)
+    {
+        date[4] = '\0';
+        date[6] = '\0';
+        auto strp = date.c_str();
+        int year = atoi(strp);
+        int month = atoi(strp + 5);
+        int day = atoi(strp + 8);
+        if ((!(year % 4) && year % 100) || !(year % 400))
+        {
+            int month_day_sum[] = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
+            return month_day_sum[month - 1] + day;
+        }
+        else
+        {
+            int month_day_sum[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+            return month_day_sum[month - 1] + day;
+        }
+    }
+
+    int repeatedStringMatch(string &a, string &b)
+    {
+        auto asource = a;
+        auto asize = a.size();
+        auto bsize = b.size();
+
+        while (a.size() < bsize)
+            a += asource;
+        if (a.find(b) != string::npos)
+            return a.size() / asize;
+        a += asource;
+        return a.find(b) == string::npos ? -1 : a.size() / asize;
+    }
+
+    string longestDupSubstring(string &s)
+    {
+        auto size = s.size();
+        int mid = size / 2;
+        int left = 1;
+        int right = size;
+        hash<string> hs;
+        unordered_set<size_t> tab;
+        string res;
+        while (left <= right)
+        {
+            mid = (left + right) / 2;
+            tab.clear();
+            int i;
+            string substr;
+            for (i = 0; i <= size - mid; ++i)
+            {
+                substr = s.substr(i, mid);
+                size_t Hash = hs(substr);
+                if (tab.find(Hash) != tab.end())
+                {
+                    if (mid > res.size())
+                        res = substr;
+                    break;
+                }
+                tab.insert(Hash);
+            }
+            if (i <= size - mid)
+                left = mid + 1;
+            else
+                right = mid - 1;
+        }
+        return std::move(res);
+    }
+
+    int countQuadruplets(vector<int> &nums)
+    {
+        sort(nums.begin(), nums.end());
+        auto size = nums.size();
+        int res = 0;
+        for (int i1 = 0; i1 < size; ++i1)
+        {
+            for (int i2 = i1 + 1; i2 < size; ++i2)
+            {
+                for (int i3 = i2 + 1; i3 < size; ++i3)
+                {
+                    for (int i4 = i3 + 1; i4 < size; ++i4)
+                    {
+                        if (nums[i1] + nums[i2] + nums[i3] == nums[i4])
+                            ++res;
+                        else if (nums[i1] + nums[i2] + nums[i3] < nums[i4])
+                            break;
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
+    bool isNStraightHand(vector<int> &hand, int groupSize)
+    {
+        auto size = hand.size();
+        if(size % groupSize)
+            return false;
+
+        sort(hand.begin(), hand.end());
+
+        int cnt = 0;
+        auto it = hand.begin();
+        while(it < hand.end())
+        {
+            if(cnt < groupSize)
+            {
+                auto next_it = upper_bound(hand.begin(), hand.end(), *it);
+                if(next_it == hand.end())
+                    return false;
+                *it = -1;
+                it = next_it;
+            }
+            else
+            {
+                cnt = 0;
+                *it = -1;
+                ++it;
+            }
+        }
+        return true;
+    }
+
+    bool checkPerfectNumber(int num)
+    {
+        int sum = -num;
+        int sq = sqrt(num);
+        for (int i = 1; i <= sq; ++i)
+        {
+            if(num % i)
+                continue;
+
+            sum += i + num / i;
+        }
+        return sum == num;
     }
 };
 
