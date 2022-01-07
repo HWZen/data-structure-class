@@ -3277,9 +3277,171 @@ public:
         }
         return sum == num;
     }
+
+    vector<vector<int>> construct2DArray(vector<int> &original, int m, int n)
+    {
+        int size = original.size();
+
+        if (size != m * n)
+            return vector<vector<int>>();
+        vector<vector<int>> res(m, vector<int>(n));
+        auto row_it = res.begin();
+        auto it = row_it->begin();
+
+        for (int i : original)
+        {
+            *it = i;
+            if (++it == row_it->end())
+            {
+                ++row_it;
+                if (row_it != res.end())
+                    it = row_it->begin();
+            }
+        }
+
+        return std::move(res);
+    }
+
+    int lastRemaining(int n)
+    {
+        int l = 1;
+        int nums = n;
+        int delta = 1;
+        bool revel = true;
+        while(nums > 1)
+        {
+            if (revel || nums & 1)
+                l += delta;
+            delta *= 2;
+            nums /= 2;
+            revel = !revel;
+        }
+        return l;
+    }
+
+    string dayOfTheWeek(int day, int month, int year)
+    {
+        int delta_year = year - 1971;
+        int delta_day = 365 * delta_year + (delta_year + 2) / 4;
+
+        if ((!(year % 4) && year % 100) || !(year % 400))
+        {
+            int month_day_sum[] = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
+            delta_day += month_day_sum[month - 1] + day;
+        }
+        else
+        {
+            int month_day_sum[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+            delta_day += month_day_sum[month - 1] + day;
+
+        }
+
+        int week = delta_day % 7;
+
+        switch(week)
+        {
+            case 1:
+                return "Friday";
+                break;
+            case 2:
+                return "Saturday";
+                break;
+            case 3:
+                return "Sunday";
+                break;
+            case 4:
+                return "Monday";
+                break;
+            case 5:
+                return "Tuesday";
+                break;
+            case 6:
+                return "Wednesday";
+                break;
+            case 0:
+                return "Thursday";
+                break;
+            default:
+                return "";
+                break;
+        }
+    }
+
+    string modifyString(string &s)
+    {
+        auto begin = s.begin();
+        auto end = s.end();
+
+        if (s.size() == 1)
+            return *begin == '?' ? "a" : s;
+
+        for (auto it = begin; it < s.end(); ++it)
+        {
+            if(*it != '?')
+                continue;
+            *it = 'a';
+            while ((it != begin && *it == *(it + 1)) || (it != end - 1 && *it == *(it - 1)))
+                ++(*it);
+        }
+        return std::move(s);
+    }
+
+    string simplifyPath(string &path)
+    {
+        stack<string> folders;
+        auto begin = path.begin();
+        auto end = path.end();
+        auto it = begin;
+        while (++it < end)
+        {
+            if (*it == '/')
+                continue;
+            auto r = it;
+            while (++r < end && *r != '/') {}
+            auto tmp = string(it, r);
+            if (tmp == "..")
+            {
+                if (!folders.empty())
+                    folders.pop();
+            }
+            else if (tmp != ".")
+                folders.push(std::move(tmp));
+
+            it = r;
+        }
+
+        string res;
+        while (!folders.empty())
+        {
+            res = "/" + std::move(folders.top()) + res;
+            folders.pop();
+        }
+
+        return std::move(res == "" ? "/" : res);
+    }
+
+    int maxDepth(string &s)
+    {
+        uint16_t depth = 0;
+        uint16_t max_depth = 0;
+
+        for(char ch : s)
+        {
+            if(ch == '(')
+            {
+                ++depth;
+                if(depth > max_depth)
+                    ++max_depth;
+
+            }
+            else if(ch == ')')
+                --depth;
+        }
+        return max_depth;
+    }
 };
 
-/*
+                                   /*
 int __FAST_IO__ = []()
 {
     std::ios::sync_with_stdio(0);
