@@ -1,28 +1,33 @@
-#include <iostream>
-#include <string>
 #include <algorithm>
-#include <vector>
-#include <queue>
-#include <string.h>
-#include <stdlib.h>
-#include <set>
-#include <unordered_set>
-#include <map>
-#include <fstream>
+#include <array>
 #include <cmath>
-#include <unordered_map>
-#include <numeric>
-#include <thread>
-#include <stack>
-#include <functional>
-#include <sstream>
-#include <random>
 #include <corecrt_math_defines.h>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <numeric>
+#include <queue>
+#include <random>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <stdint.h>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
 using namespace std;
 
 int a;
 
-bool cmp(const vector<int> &v, const int &tar)
+auto cmp(const vector<int> &v, const int &tar) -> bool
 {
     return v.at(0) < tar;
 }
@@ -36,30 +41,28 @@ public:
 
     struct TreeNode
     {
-        int val;
-        TreeNode *left;
-        TreeNode *right;
-        TreeNode() : val(0), left(nullptr), right(nullptr) {}
-        TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
-        TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+        int val{};
+        TreeNode *left{};
+        TreeNode *right{};
+        TreeNode() = default;
+        TreeNode(int x) : val(x) {}
+        TreeNode(int x, TreeNode *_left, TreeNode *_right) : val(x), left(_left), right(_right) {}
     };
     class treeNodeInit
     {
     public:
         void trimLeftTrailingSpaces(string &input)
         {
-            input.erase(input.begin(), find_if(input.begin(), input.end(), [](int ch)
-                                               { return !isspace(ch); }));
+            input.erase(input.begin(), find_if(input.begin(), input.end(), [](int ch) { return !isspace(ch); }));
         }
 
         void trimRightTrailingSpaces(string &input)
         {
-            input.erase(find_if(input.rbegin(), input.rend(), [](int ch)
-                                { return !isspace(ch); })
+            input.erase(find_if(input.rbegin(), input.rend(), [](int ch) { return !isspace(ch); })
                             .base(),
                         input.end());
         }
-        TreeNode *stringToTreeNode(string input)
+        auto stringToTreeNode(string input) -> TreeNode *
         {
             trimLeftTrailingSpaces(input);
             trimRightTrailingSpaces(input);
@@ -74,7 +77,7 @@ public:
             ss.str(input);
 
             getline(ss, item, ',');
-            TreeNode *root = new TreeNode(stoi(item));
+            auto *root = new TreeNode(stoi(item));
             queue<TreeNode *> nodeQueue;
             nodeQueue.push(root);
 
@@ -150,11 +153,7 @@ public:
             x /= 10;
             if (count == 8)
             {
-                if ((res > 214748364 || res < -214748364) && x != 0)
-                    return 0;
-                else if (res == 214748364 && x > 7)
-                    return 0;
-                else if (res == -214748364 && x < -8)
+                if ((res > 214748364 || res < -214748364) && x != 0 || (res == 214748364 && x > 7) || (res == -214748364 && x < -8))
                     return 0;
             }
 
@@ -164,7 +163,7 @@ public:
         return 0;
     }
 
-    int myAtoi(string s)
+    int myAtoi(const string &s)
     {
         bool start = false;
         long long res = 0;
@@ -185,7 +184,7 @@ public:
                     if (ch == '-')
                         sign = false;
                     else if (ch >= '0' && ch <= '9')
-                        res += sign * (ch - '0');
+                        res += static_cast<long long>(sign * (ch - '0'));
                 }
             }
             else
@@ -197,12 +196,12 @@ public:
                     else if (res < -2147483648)
                         return -2147483648;
                     else
-                        return res;
+                        return static_cast<int>(res);
                 }
                 else
                 {
                     res *= 10;
-                    res += (sign ? 1 : -1) * (ch - '0');
+                    res += static_cast<long long>((sign ? 1 : -1) * (ch - '0'));
                 }
                 if (res > 2147483647)
                     return 2147483647;
@@ -215,7 +214,7 @@ public:
         else if (res < -2147483648)
             return -2147483648;
         else
-            return res;
+            return static_cast<int>(res);
     }
 
     bool isPalindrome(int x)
@@ -246,7 +245,7 @@ public:
     int maxArea(vector<int> &height)
     {
         int hand_ptr = 0;
-        int last_ptr = height.size() - 1;
+        auto last_ptr = height.size() - 1;
         int max = 0;
         while (hand_ptr != last_ptr)
         {
@@ -329,7 +328,7 @@ public:
             return res;
 
         int num = 0;
-        while (1)
+        while (true)
         {
             if (strs[0].length() <= num)
                 return res;
@@ -350,11 +349,11 @@ public:
     vector<vector<int>> threeSum(vector<int> &nums)
     {
         if (nums.size() < 3)
-            return vector<vector<int>>();
+            return {};
 
         sort(nums.begin(), nums.end());
 
-        char index[200000] = {0};
+        std::array<char, 200000> index = {};
         vector<vector<int>> res;
         for (int i : nums)
             index[i + 100000] += 1;
@@ -406,7 +405,7 @@ public:
         return min_sum;
     }
 
-    string n2s[10] = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+    const array<string, 10> n2s = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
 
     void backtracking(string source, vector<string> &date, string temp = string())
     {
@@ -423,15 +422,15 @@ public:
     vector<string> letterCombinations(string digits)
     {
         vector<string> res;
-        backtracking(digits, res);
+        backtracking(std::move(digits), res);
         return res;
     }
     struct ListNode
     {
-        int val;
-        ListNode *next;
-        ListNode() : val(0), next(nullptr) {}
-        ListNode(int x) : val(x), next(nullptr) {}
+        int val{};
+        ListNode *next = nullptr;
+        ListNode() = default;
+        ListNode(int x) : val(x) {}
         ListNode(int x, ListNode *next) : val(x), next(next) {}
     };
     ListNode *deleteDuplicates(ListNode *head)
@@ -551,7 +550,7 @@ public:
         int getInteger() const;
         // Return the nested list that this NestedInteger holds, if it holds a nested list
         // The result is undefined if this NestedInteger holds a single integer
-        const vector<NestedInteger> &getList() const;
+        [[nodiscard]] const vector<NestedInteger> &getList() const;
     };
 
     class NestedIterator
@@ -598,10 +597,11 @@ public:
             dfs(res, tmp, it + 1);
         };
     };
-    vector<vector<int>> set2vector(set<vector<int>> s)
+    vector<vector<int>> set2vector(const set<vector<int>> &s)
     {
         vector<vector<int>> res;
-        for (vector<int> tmp : s)
+        res.reserve(s.size());
+        for (const vector<int> &tmp : s)
             res.push_back(tmp);
         return res;
     };
@@ -616,7 +616,7 @@ public:
 
     int clumsy(int N)
     {
-        int top_three[4] = {0, 1, 2, 7};
+        const array<int, 4> top_three = {0, 1, 2, 7};
         if (N <= 3)
             return top_three[N];
 
@@ -625,7 +625,8 @@ public:
             A,
             S
         } oper = A;
-        int res = N-- * N-- / N--;
+        int res = (N - 1) * (N - 2) / (N - 3);
+        N -= 3;
         while (N >= 1)
         {
             switch (oper)
@@ -715,8 +716,8 @@ public:
         TXT1 = text1;
         TXT2 = text2;
         DP.resize(text1.size());
-        for (int i = 0; i < DP.size(); i++)
-            DP[i].resize(text2.size());
+        for (auto &i : DP)
+            i.resize(text2.size());
 
         for (int i = 0; i < text1.size(); i++)
             DP[i][0] = 1;
@@ -841,19 +842,18 @@ public:
     {
     private:
         bool is_a_word;
-        Trie *index[26];
+        array<Trie *, 26> index;
 
     public:
         /** Initialize your data structure here. */
         Trie()
         {
-            for (int i = 0; i < 26; i++)
-                index[i] = nullptr;
+            index.fill(nullptr);
             is_a_word = false;
         }
 
         /** Inserts a word into the trie. */
-        void insert(string word)
+        void insert(const string &word)
         {
             Trie *p = this;
             for (char ch : word)
@@ -866,7 +866,7 @@ public:
         }
 
         /** Returns if the word is in the trie. */
-        bool search(string word)
+        bool search(const string &word)
         {
             Trie *p = this;
             for (char ch : word)
@@ -879,7 +879,7 @@ public:
         }
 
         /** Returns if there is any word in the trie that starts with the given prefix. */
-        bool startsWith(string prefix)
+        bool startsWith(const string &prefix)
         {
             Trie *p = this;
             for (char ch : prefix)
@@ -916,7 +916,7 @@ public:
     }
 
     // TODO
-    bool isScramble(string s1, string s2)
+    bool isScramble(const string &s1, const string &s2)
     {
         return false;
     }
@@ -956,8 +956,7 @@ public:
 
     int combinationSum4(vector<int> &nums, int target)
     {
-        uint64_t *dp = new uint64_t[target + 1];
-        memset(dp, 0, (target + 1) * sizeof(uint64_t));
+        vector<uint64_t> dp(target + 1, 0);
         dp[0] = 1;
         for (int i = 1; i <= target; i++)
             for (int j : nums)
@@ -968,7 +967,7 @@ public:
 
     int singleNumber(vector<int> &nums)
     {
-        int dual_bit[2] = {0, 0};
+        array<int, 2> dual_bit = {0, 0};
         for (int i : nums)
         {
             dual_bit[1] = ~dual_bit[0] & (dual_bit[1] ^ i);
@@ -1013,7 +1012,7 @@ public:
         if (Size == 0)
             return 0;
 
-        int dp[102][102] = {0};
+        array<array<int, 102>, 102> dp = {};
         for (int i = 0; i < Size; ++i)
             dp[i][i] = 1;
         for (int j = 1; j < Size; ++j)
@@ -1091,7 +1090,7 @@ public:
     {
         if (n <= 1)
             return n;
-        unsigned short nums[101] = {0};
+        array<uint16_t, 101> nums = {};
         nums[0] = 0;
         nums[1] = 1;
         unsigned short max = 1;
@@ -1143,9 +1142,7 @@ public:
     public:
         /** initialize your data structure here. */
         multiset<int> buf;
-        MedianFinder()
-        {
-        }
+        MedianFinder() = default;
 
         void addNum(int num)
         {
@@ -1284,12 +1281,12 @@ public:
         auto res = head;
         for (int i = 1; i < k; ++i)
             head = head->next;
-        while ((head = head->next) != NULL)
+        while ((head = head->next) != nullptr)
             res = res->next;
         return res;
     }
 
-    static void Qsort(int arrey[], int hand, int last)
+    static void Qsort(int *arrey, int hand, int last)
     {
         if (hand >= last)
             return;
@@ -1338,7 +1335,7 @@ public:
     {
         if (n <= 1)
             return n;
-        long long dp[101] = {0};
+        array<int64_t, 101> dp = {};
         dp[1] = 1;
         for (int i = 2; i <= n; ++i)
             dp[i] = (dp[i - 1] + dp[i - 2]) % int(1e9 + 7);
@@ -1363,13 +1360,13 @@ public:
         int p = lower_bound(nums.begin(), nums.end(), target) - nums.begin();
         return nums[p] == target ? p : -1;
     }
-    int balancedStringSplit(string s)
+    int balancedStringSplit(const string &s)
     {
         int Stack = 0;
         int sum = 0;
-        for (int i = 0; i < s.size(); ++i)
+        for (char i : s)
         {
-            Stack += (s[i] == 'L') ? 1 : -1;
+            Stack += (i == 'L') ? 1 : -1;
             if (Stack == 0)
                 sum++;
         }
@@ -1381,8 +1378,7 @@ public:
         vector<int> index(profits.size(), 0);
         for (int i = 0; i < index.size(); ++i)
             index[i] = i;
-        sort(index.begin(), index.end(), [&](int left, int right)
-             { return capital[left] < capital[right]; });
+        sort(index.begin(), index.end(), [&](int left, int right) { return capital[left] < capital[right]; });
         priority_queue<int> q;
         auto it = index.begin();
         do
@@ -1460,7 +1456,7 @@ public:
 
     bool isValidSudoku(vector<vector<char>> &board)
     {
-        set<char> col[9], row[9], block[9];
+        array<set<char>, 9> col = {}, row = {}, block = {};
         for (int i = 0; i < 9; ++i)
         {
             for (int j = 0; j < 9; ++j)
@@ -1666,8 +1662,8 @@ public:
         TXT1 = text1;
         TXT2 = text2;
         DP.resize(text1.size());
-        for (int i = 0; i < DP.size(); i++)
-            DP[i].resize(text2.size());
+        for (auto &i : DP)
+            i.resize(text2.size());
 
         for (int i = 0; i < text1.size(); i++)
             DP[i][0] = 1;
@@ -1744,7 +1740,7 @@ public:
 
     string toHex(unsigned int num)
     {
-        const char hex[] = "0123456789abcdef";
+        const string hex = "0123456789abcdef";
         string res;
         while (num)
         {
@@ -1779,10 +1775,10 @@ public:
             if (Map.count(numerator))
             {
                 decimal.insert(decimal.begin() + Map.find(numerator)->second, '(');
-                return integer + "." + decimal + ")";
+                return std::move(integer + "." + decimal + ")");
             }
         }
-        return integer + "." + decimal;
+        return std::move(integer + "." + decimal);
     }
 
     string licenseKeyFormatting(string s, int k)
@@ -1895,7 +1891,7 @@ public:
     vector<string> findRepeatedDnaSequences(string s)
     {
         if (s.length() <= 10)
-            return vector<string>();
+            return {};
 
         int x;
         unordered_map<char, int> bin({{'A', 0}, {'C', 1}, {'G', 2}, {'T', 3}});
@@ -2001,7 +1997,7 @@ public:
             {
                 if (res == string())
                 {
-                    res = numberToWords(num % 1000, cnt) + res;
+                    res = std::move(numberToWords(num % 1000, cnt) + res);
                     if (res != string())
                         res.erase(res.end() - 1);
                 }
@@ -2115,7 +2111,7 @@ public:
         }
         vector<string> addOperators(string _num, int _target)
         {
-            num = _num;
+            num = std::move(_num);
             target = _target;
             string exp;
             foo(exp, 0, 0, 0);
@@ -2174,18 +2170,18 @@ public:
     {
     private:
         struct nodetree;
-        typedef nodetree *pnode;
+        using pnode = nodetree *;
         struct nodetree
         {
             bool is_end = false;
-            pnode node[26] = {nullptr};
+            array<pnode, 26> node = {nullptr};
         };
 
     public:
         nodetree root;
         WordDictionary() = default;
 
-        void addWord(string word)
+        void addWord(const string &word)
         {
             auto it = &root;
             for (char ch : word)
@@ -2267,8 +2263,8 @@ public:
         //         res.push_back(p.first);
         // return res;
 
-        int cnt[2] = {0, 0};
-        int candidate[2] = {-1, -1};
+        array<int, 2> cnt = {0, 0};
+        array<int, 2> candidate = {-1, -1};
         for (int i : nums)
         {
             if (i == candidate[0])
@@ -2306,6 +2302,7 @@ public:
         for (int sq = sqrt(area); sq > 0; --sq)
             if (area % sq == 0)
                 return {sq, area / sq};
+        return {};
     }
 
     class ShoppingOffers
@@ -2435,6 +2432,7 @@ public:
         }
 
         vector<int> res;
+        res.reserve(nums1.size());
         for (int i : nums1)
             res.push_back(Map[i]);
         return res;
@@ -2519,7 +2517,7 @@ public:
             int val;
             vector<Node *> children;
 
-            Node() {}
+            Node() = default;
 
             Node(int _val)
             {
@@ -2529,7 +2527,7 @@ public:
             Node(int _val, vector<Node *> _children)
             {
                 val = _val;
-                children = _children;
+                children = std::move(_children);
             }
         };
         int maxDepth(Node *root, int deep = 0)
@@ -2581,8 +2579,8 @@ public:
         if (s.length() != goal.length())
             return false;
         int state = 0;
-        char ch[2];
-        bool map[26] = {false};
+        array<char, 2> ch;
+        array<bool, 26> map = {false};
         bool has_double = false;
         for (int i = 0; i < s.size(); ++i)
         {
@@ -2613,7 +2611,7 @@ public:
         return state == 2 || (state == 0 && has_double);
     }
 
-    string originalDigits(string s)
+    string originalDigits(const string &s)
     {
         unordered_map<char, int> alphabet;
         for (char ch : s)
@@ -2699,10 +2697,10 @@ public:
         };
     };
 
-    vector<int> findAnagrams(string s, string p)
+    vector<int> findAnagrams(string s, const string &p)
     {
         if (s.length() < p.length())
-            return vector<int>();
+            return {};
         vector<int> counter(26, 0);
         int diff = 0;
         for (char ch : p)
@@ -2782,8 +2780,7 @@ public:
         vector<int> index(score.size());
         for (int i = 0; i < index.size(); ++i)
             index[i] = i;
-        sort(index.begin(), index.end(), [&score](int l, int r) -> bool
-             { return score[l] > score[r]; });
+        sort(index.begin(), index.end(), [&score](int l, int r) -> bool { return score[l] > score[r]; });
         vector<string> res(index.size());
         for (int i = 0; i < index.size(); ++i)
         {
@@ -2829,7 +2826,7 @@ public:
         return sum;
     }
 
-    bool canConstruct(string ransomNote, string magazine)
+    bool canConstruct(const string &ransomNote, string magazine)
     {
         if (ransomNote.length() > magazine.length())
             return false;
@@ -2902,42 +2899,41 @@ public:
         int originalColor = grid[row][col];
 
         function<void(int, int)>
-            dfs = [&grid, &edge, &dfs, &visited, &m, &n, &originalColor](int x, int y)
-        {
-            visited[x][y] = true;
-            bool is_edge = false;
-            if (x > 0 && grid[x - 1][y] == originalColor)
-            {
-                if (!visited[x - 1][y])
-                    dfs(x - 1, y);
-            }
-            else
-                is_edge = true;
-            if (y < n - 1 && grid[x][y + 1] == originalColor)
-            {
-                if (!visited[x][y + 1])
-                    dfs(x, y + 1);
-            }
-            else
-                is_edge = true;
-            if (x < m - 1 && grid[x + 1][y] == originalColor)
-            {
-                if (!visited[x + 1][y])
-                    dfs(x + 1, y);
-            }
-            else
-                is_edge = true;
-            if (y > 0 && grid[x][y - 1] == originalColor)
-            {
-                if (!visited[x][y - 1])
-                    dfs(x, y - 1);
-            }
-            else
-                is_edge = true;
+            dfs = [&grid, &edge, &dfs, &visited, &m, &n, &originalColor](int x, int y) {
+                visited[x][y] = true;
+                bool is_edge = false;
+                if (x > 0 && grid[x - 1][y] == originalColor)
+                {
+                    if (!visited[x - 1][y])
+                        dfs(x - 1, y);
+                }
+                else
+                    is_edge = true;
+                if (y < n - 1 && grid[x][y + 1] == originalColor)
+                {
+                    if (!visited[x][y + 1])
+                        dfs(x, y + 1);
+                }
+                else
+                    is_edge = true;
+                if (x < m - 1 && grid[x + 1][y] == originalColor)
+                {
+                    if (!visited[x + 1][y])
+                        dfs(x + 1, y);
+                }
+                else
+                    is_edge = true;
+                if (y > 0 && grid[x][y - 1] == originalColor)
+                {
+                    if (!visited[x][y - 1])
+                        dfs(x, y - 1);
+                }
+                else
+                    is_edge = true;
 
-            if (is_edge)
-                edge.insert(pair<int, int>(x, y));
-        };
+                if (is_edge)
+                    edge.insert(pair<int, int>(x, y));
+            };
         dfs(row, col);
         for (auto p : edge)
             grid[p.first][p.second] = color;
@@ -3006,8 +3002,7 @@ public:
 
     int scheduleCourse(vector<vector<int>> &courses)
     {
-        sort(courses.begin(), courses.end(), [](const vector<int> &l, const vector<int> &r)
-             { return l[1] < r[1]; });
+        sort(courses.begin(), courses.end(), [](const vector<int> &l, const vector<int> &r) { return l[1] < r[1]; });
         priority_queue<int> q;
 
         int sum = 0;
@@ -3036,8 +3031,7 @@ public:
             graph[v[1]].emplace_back(v[0]);
 
         vector<int> ans(len, -1);
-        function<void(int)> dfs = [&graph, &quiet, &dfs, &ans](int index)
-        {
+        function<void(int)> dfs = [&graph, &quiet, &dfs, &ans](int index) {
             if (ans[index] != -1)
                 return;
             ans[index] = index;
@@ -3151,12 +3145,12 @@ public:
         int day = atoi(strp + 8);
         if ((!(year % 4) && year % 100) || !(year % 400))
         {
-            int month_day_sum[] = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
+            array<int, 12> month_day_sum = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
             return month_day_sum[month - 1] + day;
         }
         else
         {
-            int month_day_sum[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+            array<int, 12> month_day_sum = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
             return month_day_sum[month - 1] + day;
         }
     }
@@ -3237,19 +3231,19 @@ public:
     bool isNStraightHand(vector<int> &hand, int groupSize)
     {
         auto size = hand.size();
-        if(size % groupSize)
+        if (size % groupSize)
             return false;
 
         sort(hand.begin(), hand.end());
 
         int cnt = 0;
         auto it = hand.begin();
-        while(it < hand.end())
+        while (it < hand.end())
         {
-            if(cnt < groupSize)
+            if (cnt < groupSize)
             {
                 auto next_it = upper_bound(hand.begin(), hand.end(), *it);
-                if(next_it == hand.end())
+                if (next_it == hand.end())
                     return false;
                 *it = -1;
                 it = next_it;
@@ -3270,7 +3264,7 @@ public:
         int sq = sqrt(num);
         for (int i = 1; i <= sq; ++i)
         {
-            if(num % i)
+            if (num % i)
                 continue;
 
             sum += i + num / i;
@@ -3308,7 +3302,7 @@ public:
         int nums = n;
         int delta = 1;
         bool revel = true;
-        while(nums > 1)
+        while (nums > 1)
         {
             if (revel || nums & 1)
                 l += delta;
@@ -3333,37 +3327,36 @@ public:
         {
             int month_day_sum[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
             delta_day += month_day_sum[month - 1] + day;
-
         }
 
         int week = delta_day % 7;
 
-        switch(week)
+        switch (week)
         {
-            case 1:
-                return "Friday";
-                break;
-            case 2:
-                return "Saturday";
-                break;
-            case 3:
-                return "Sunday";
-                break;
-            case 4:
-                return "Monday";
-                break;
-            case 5:
-                return "Tuesday";
-                break;
-            case 6:
-                return "Wednesday";
-                break;
-            case 0:
-                return "Thursday";
-                break;
-            default:
-                return "";
-                break;
+        case 1:
+            return "Friday";
+            break;
+        case 2:
+            return "Saturday";
+            break;
+        case 3:
+            return "Sunday";
+            break;
+        case 4:
+            return "Monday";
+            break;
+        case 5:
+            return "Tuesday";
+            break;
+        case 6:
+            return "Wednesday";
+            break;
+        case 0:
+            return "Thursday";
+            break;
+        default:
+            return "";
+            break;
         }
     }
 
@@ -3377,7 +3370,7 @@ public:
 
         for (auto it = begin; it < s.end(); ++it)
         {
-            if(*it != '?')
+            if (*it != '?')
                 continue;
             *it = 'a';
             while ((it != begin && *it == *(it + 1)) || (it != end - 1 && *it == *(it - 1)))
@@ -3397,7 +3390,9 @@ public:
             if (*it == '/')
                 continue;
             auto r = it;
-            while (++r < end && *r != '/') {}
+            while (++r < end && *r != '/')
+            {
+            }
             auto tmp = string(it, r);
             if (tmp == "..")
             {
@@ -3425,23 +3420,178 @@ public:
         uint16_t depth = 0;
         uint16_t max_depth = 0;
 
-        for(char ch : s)
+        for (char ch : s)
         {
-            if(ch == '(')
+            if (ch == '(')
             {
                 ++depth;
-                if(depth > max_depth)
+                if (depth > max_depth)
                     ++max_depth;
-
             }
-            else if(ch == ')')
+            else if (ch == ')')
                 --depth;
         }
         return max_depth;
     }
+
+    vector<int> grayCode(int n)
+    {
+
+        vector<int> res(1 << n);
+        auto _size = 1 << n;
+        for (int i = 0; i < _size; ++i)
+            res[i] = (i >> 1) ^ i;
+        return res;
+    }
+
+    char slowestKey(vector<int> &releaseTimes, string &keysPressed)
+    {
+        auto size = releaseTimes.size();
+        char res = keysPressed[0];
+        int res_time = releaseTimes[0];
+        for (int i = 1; i < size; ++i)
+        {
+            if (releaseTimes[i] - releaseTimes[i - 1] > res_time || (releaseTimes[i] - releaseTimes[i - 1] == res_time && keysPressed[i] > res))
+            {
+                res = keysPressed[i];
+                res_time = releaseTimes[i] - releaseTimes[i - 1];
+            }
+        }
+        return res;
+    }
+
+    bool isAdditiveNumber(const string &num)
+    {
+        auto size = num.size();
+        if (size < 3)
+            return false;
+
+        uint64_t num1, num2, num3;
+        uint16_t it1, it2, it3;
+        it1 = 0;
+        while (++it1 <= size / 2 + 1)
+        {
+            num1 = stoull(num.substr(0, it1));
+            it2 = it1;
+            while (++it2 <= size - it1)
+            {
+                if (num[it1] == '0' && it2 - it1 > 1)
+                    break;
+                num2 = stoull(num.substr(it1, it2 - it1));
+                // TODO: can prune
+                it3 = it2;
+                while (++it3 <= size)
+                {
+                    if (num[it2] == '0' && it3 - it2 > 1)
+                        break;
+                    num3 = stoll(num.substr(it2, it3 - it2));
+                    if (num3 == num1 + num2)
+                    {
+                        uint64_t next = num2 + num3;
+                        while (it3 < size)
+                        {
+                            auto next_str = to_string(next);
+                            if (next_str.size() + it3 > size)
+                                break;
+                            if (next_str != num.substr(it3, next_str.size()))
+                                break;
+                            it3 += next_str.size();
+                            num2 = num3;
+                            num3 = next;
+                            next += num2;
+                        }
+                        if (it3 == size)
+                            return true;
+                    }
+                    if (num3 > num1 + num2)
+                        break;
+                }
+            }
+            if (num[0] == '0')
+                break;
+        }
+        return false;
+    }
+
+    bool isEscapePossible(vector<vector<int>> &blocked, vector<int> &source, vector<int> &target)
+    {
+        auto blocked_size = blocked.size();
+        if (blocked_size < 2)
+            return true;
+        int width, length;
+        for (auto &v : blocked)
+        {
+            length = max(v[0], length);
+            width = max(v[1], width);
+        }
+        length = max(source[0], length);
+        width = max(source[1], width);
+
+        length = max(target[0], length);
+        width = max(target[1], width);
+
+        ++length;
+        ++width;
+
+        vector<vector<bool>> tab(length, vector<bool>(width, false));
+
+        return true;
+    }
+
+    bool increasingTriplet(vector<int> &nums)
+    {
+        if (nums.size() < 3)
+            return false;
+        int small = INT_MAX, mid = INT_MAX;
+        for (int i : nums)
+        {
+            if (i > mid)
+                return true;
+            if (i < small)
+                small = i;
+            else
+                mid = i;
+        }
+        return false;
+    }
+
+    int dominantIndex(vector<int> &nums)
+    {
+        int Max = 0;
+        for (int i = 0; i < nums.size(); ++i)
+        {
+            if (nums[i] > nums[Max])
+            {
+                if (nums[i] < 2 * nums[Max])
+                    return -1;
+                Max = i;
+            }
+        }
+        return Max;
+    }
+
+    int countVowelPermutation(int n)
+    {
+        array<array<uint32_t, 5>, 2> dp;
+        dp[0].fill(1);
+        auto begin = &dp[0];
+        auto end = &dp[1];
+        int mod = 1000000007;
+        for (int i = 1; i < n; ++i)
+        {
+            end->at(0) = (begin->at(1) + begin->at(2) + begin->at(4)) % mod;
+            end->at(1) = (begin->at(0) + begin->at(2)) % mod;
+            end->at(2) = (begin->at(1) + begin->at(3)) % mod;
+            end->at(3) = begin->at(2) % mod;
+            end->at(4) = (begin->at(2) + begin->at(3)) % mod;
+            swap(begin, end);
+        }
+
+        return accumulate(begin->begin(), begin->end(), 0LL) % mod;
+    }
 };
 
-                                   /*
+/*
 int __FAST_IO__ = []()
 {
     std::ios::sync_with_stdio(0);
