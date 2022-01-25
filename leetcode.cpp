@@ -3,6 +3,7 @@
 #include <cmath>
 #include <corecrt_math_defines.h>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -15,13 +16,13 @@
 #include <set>
 #include <sstream>
 #include <stack>
-#include <stdint.h>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 
 using namespace std;
 
@@ -3277,7 +3278,7 @@ public:
         int size = original.size();
 
         if (size != m * n)
-            return vector<vector<int>>();
+            return {};
         vector<vector<int>> res(m, vector<int>(n));
         auto row_it = res.begin();
         auto it = row_it->begin();
@@ -3320,12 +3321,12 @@ public:
 
         if ((!(year % 4) && year % 100) || !(year % 400))
         {
-            int month_day_sum[] = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
+            array<int, 12> month_day_sum = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
             delta_day += month_day_sum[month - 1] + day;
         }
         else
         {
-            int month_day_sum[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+            array<int, 12> month_day_sum = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
             delta_day += month_day_sum[month - 1] + day;
         }
 
@@ -3588,6 +3589,113 @@ public:
         }
 
         return accumulate(begin->begin(), begin->end(), 0LL) % mod;
+    }
+
+    bool containsNearbyDuplicate(vector<int> &nums, int k)
+    {
+        unordered_set<int> tab;
+        auto size = nums.size();
+        tab.reserve(k + 1);
+        for (int i = 0; i < size; ++i)
+        {
+            if (i > k)
+                tab.erase(nums[i - k - 1]);
+            if (tab.count(nums[i]))
+                return true;
+            tab.emplace(nums[i]);
+        }
+        return false;
+    }
+
+    bool stoneGameIX(vector<int> &stones)
+    {
+        array<int, 3> cnt{{0}};
+        for (int i : stones)
+            ++cnt[i % 3];
+        if (cnt[0] & 1)
+            return cnt[1] - cnt[2] > 2 || cnt[2] - cnt[1] > 2;
+        else
+            return cnt[1] >= 1 && cnt[2] >= 1;
+    }
+
+    int minJumps(const vector<int> &arr)
+    {
+        if (arr.size() == 1)
+            return 0;
+
+        unordered_map<int, vector<int>> same_val_index;
+        auto size = arr.size();
+        for (int i = 0; i < size; ++i)
+            same_val_index[arr[i]].push_back(i);
+        queue<pair<int, int>> que;
+        que.emplace(0, 0);
+        while (!que.empty())
+        {
+            auto it = que.front();
+            que.pop();
+            if (it.first == size - 2 || arr[it.first] == arr.back())
+                return it.second + 1;
+            if (same_val_index.count(arr[it.first]))
+            {
+                for (int i : same_val_index[arr[it.first]])
+                    if (i != it.first)
+                        que.emplace(i, it.second + 1);
+
+                same_val_index.erase(arr[it.first]);
+            }
+            if (it.first != 0 && same_val_index.count(arr[it.first - 1]))
+                que.emplace(it.first - 1, it.second + 1);
+            if (it.first < size - 1)
+                que.emplace(it.first + 1, it.second + 1);
+        }
+        return -1;
+    }
+
+    int secondMinimum(int n, vector<vector<int>> &edges, int time, int change)
+    {
+        vector<vector<int>> _edges(n);
+        for (auto &edge : edges)
+        {
+            _edges[edge[0] - 1].emplace_back(edge[1] - 1);
+            _edges[edge[1] - 1].emplace_back(edge[0] - 1);
+        }
+
+        vector<array<int, 2>> hit_times(n);
+
+        queue<array<int, 2>> que;
+        que.push({0, 0});
+        while (!que.empty() && hit_times[n - 1][1] == 0)
+        {
+            auto [it, cnt] = que.front();
+            que.pop();
+
+            for (auto i : _edges[it])
+                if (!hit_times[i][0])
+                {
+                    hit_times[i][0] = cnt + 1;
+                    que.push({i, cnt + 1});
+                }
+                else if (cnt + 1 > hit_times[i][0] && !hit_times[i][1])
+                {
+                    hit_times[i][1] = cnt + 1;
+                    que.push({i, cnt + 1});
+                }
+        }
+        int res = 0;
+        for (int i = 0; i < hit_times[n - 1][1]; ++i)
+            res += (res % (2 * change) < change ? 0 : (2 * change - res % (2 * change))) + time;
+        return res;
+    }
+
+    int numberOfMatches(int n)
+    {
+        int res = 0;
+        while (n != 1)
+        {
+            res += n / 2;
+            n = n / 2 + n & 1;
+        }
+        return res;
     }
 };
 
