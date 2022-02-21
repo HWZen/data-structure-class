@@ -8,6 +8,7 @@
 #include <cstring>
 #include <fstream>
 #include <functional>
+#include <intrin0.inl.h>
 #include <iostream>
 #include <map>
 #include <numeric>
@@ -16,6 +17,7 @@
 #include <set>
 #include <sstream>
 #include <stack>
+#include <stdint.h>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -23,6 +25,11 @@
 #include <utility>
 #include <vector>
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#define __builtin_popcount __popcnt
+#define __builtin_clz __lzcnt
+#endif
 
 using namespace std;
 
@@ -3697,6 +3704,284 @@ public:
         }
         return res;
     }
+
+    vector<string> uncommonFromSentences(const string& s1, const string& s2)
+    {
+        unordered_map<string, int> Map;
+        auto it_front = s1.begin();
+        auto it_back = it_front;
+        while (it_back != s1.end())
+        {
+            if (*(++it_back) == ' ')
+            {
+                ++Map[move(string(it_front,it_back))];
+                it_front = ++it_back;
+            }
+        }
+        ++Map[move(string(it_front, it_back))];
+
+        it_front = s2.begin();
+        it_back = it_front;
+        while (it_back != s2.end())
+        {
+            if (*(++it_back) == ' ')
+            {
+                ++Map[move(string(it_front, it_back))];
+                it_front = ++it_back;
+            }
+        }
+        ++Map[move(string(it_front, it_back))];
+
+        vector<string> res;
+        for (auto &p : Map)
+            if (p.second == 1)
+                res.emplace_back(p.first);
+        
+        return move(res);
+    }
+
+    int numberOfSteps(int num)
+    {
+        return num ? (31 - __builtin_clz(num) + __builtin_popcount(num)) : 0;
+    }
+
+    string longestNiceSubstring(string s)
+    {
+        int maxPos = 0, maxLen = 0;
+        auto check = [&](int typeNum) {
+            vector<int> lowerCnt(26);
+            vector<int> upperCnt(26);
+            int cnt = 0;
+            for (int l = 0, r = 0, total = 0; r < s.size(); ++r)
+            {
+                int idx = tolower(s[r]) - 'a';
+                if (islower(s[r]))
+                {
+                    ++lowerCnt[idx];
+                    if (lowerCnt[idx] == 1 && upperCnt[idx] > 0)
+                    {
+                        ++cnt;
+                    }
+                }
+                else
+                {
+                    ++upperCnt[idx];
+                    if (upperCnt[idx] == 1 && lowerCnt[idx] > 0)
+                    {
+                        ++cnt;
+                    }
+                }
+                total += (lowerCnt[idx] + upperCnt[idx]) == 1 ? 1 : 0;
+
+                while (total > typeNum)
+                {
+                    idx = tolower(s[l]) - 'a';
+                    total -= (lowerCnt[idx] + upperCnt[idx]) == 1 ? 1 : 0;
+                    if (islower(s[l]))
+                    {
+                        --lowerCnt[idx];
+                        if (lowerCnt[idx] == 0 && upperCnt[idx] > 0)
+                        {
+                            --cnt;
+                        }
+                    }
+                    else
+                    {
+                        --upperCnt[idx];
+                        if (upperCnt[idx] == 0 && lowerCnt[idx] > 0)
+                        {
+                            --cnt;
+                        }
+                    }
+                    ++l;
+                }
+                if (cnt == typeNum && r - l + 1 > maxLen)
+                {
+                    maxPos = l;
+                    maxLen = r - l + 1;
+                }
+            }
+        };
+
+        int mask = 0;
+        for (char &ch : s)
+        {
+            mask |= 1 << (tolower(ch) - 'a');
+        }
+        int types = __builtin_popcount(mask);
+        for (int i = 1; i <= types; ++i)
+        {
+            check(i);
+        }
+        return s.substr(maxPos, maxLen);
+    }
+
+    string reversePrefix(string word, char ch)
+    {
+        if (auto it = word.find(ch); it != string::npos)
+        {
+            std::reverse(word.begin(), word.begin() + it + 1);
+            return std::move(word);
+        }
+        else
+            return std::move(word);       
+    }
+
+    int findMinFibonacciNumbers(int k)
+    {
+
+        vector<int> fb({1, 1});
+        while (fb.back() <= k)
+            fb.emplace_back(fb.back() + *(fb.end() - 2));
+        int cnt = 0;
+        auto it = fb.end();
+        while (k)
+        {
+            it = upper_bound(fb.begin(), it, k);
+            if (it > fb.begin())
+                k -= *(it - 1);
+            else
+                cout << "can't found.\n";
+            ++cnt;
+        }
+        return cnt;
+    }
+
+    int numEnclaves(vector<vector<int>> &grid)
+    {
+        auto weighLen = grid[0].size();
+        auto heighLen = grid.size();
+        int cnt = 0;
+        std::function<void(int, int)> dfs = [&](int height, int weight) {
+            if (height < 0 || height >= heighLen || weight < 0 || weight >= weighLen || grid[height][weight] == 0)
+                return;
+
+            grid[height][weight] = 0;
+            if (cnt != -1)
+            {
+                if (height > 0 && height < heighLen - 1 && weight > 0 && weight < weighLen - 1)  
+                    ++cnt;
+                else
+                    cnt = -1;
+            }
+            
+            dfs(height - 1, weight);
+            dfs(height + 1, weight);
+            dfs(height, weight + 1);
+            dfs(height, weight -1);
+        };
+
+        int res = 0;
+        for (int i = 0; i < heighLen; ++i)
+            for (int j = 0; j < weighLen; ++j)
+                if (grid[i][j] == 1)
+                {
+                    dfs(i, j);
+                    res += cnt == -1 ? 0 : cnt;
+                    cnt = 0;
+                }
+
+
+        return res;
+    }
+
+    int singleNonDuplicate(vector<int> &nums)
+    {
+        auto size = nums.size();
+        auto begin = 0;
+        auto end = size;
+        auto left = begin;
+        auto right = end;
+        auto it = (left + right) / 2;
+        while (it != end)
+        {
+            if ((it == 0 || nums[it] != nums[it - 1]) && (it == end - 1 || nums[it] != nums[it + 1]))
+                return nums[it];
+
+            if (it != 0 && nums[it] == nums[it - 1])
+            {
+                if ((it - begin) & 1)
+                    left = it;
+                else
+                    right = it;
+            }
+            else
+            {
+                if ((it - begin) & 1)
+                    right = it;
+                else
+                    left = it;
+            }
+            it = (left + right) / 2;
+            
+
+        }
+        // error
+        return -1;
+    }
+
+    vector<int> luckyNumbers(vector<vector<int>> &matrix)
+    {
+        auto cols = matrix[0].size();
+        auto rows = matrix.size();
+        vector<int> minInRow;
+        minInRow.reserve(rows);
+
+
+        for (auto &row : matrix)
+            minInRow.push_back(*min_element(row.begin(), row.end()));
+
+        vector<int> res;
+        for (int col = 0; col < cols; ++col)
+        {
+            int it = 0;
+            int _max = -1;
+            for (int row = 0; row < rows; ++row)
+            {
+                if (matrix[row][col] > _max)
+                {
+                    it = row;
+                    _max = matrix[row][col];
+                }
+            }
+            if (_max == minInRow[it])
+                res.push_back(_max);
+        }
+        return res;  
+    }
+
+    string pushDominoes(string& dominoes)
+    {
+        auto end = dominoes.end();
+        auto left_it = dominoes.begin();
+        char left = 'L';
+        while (left_it < end)
+        {
+            auto right_it = left_it;
+            while (right_it < end && *right_it == '.')
+                ++right_it;
+            char right = right_it < end ? *right_it : 'R';
+            if (left == right)
+            {
+                for (auto it = left_it; it < right_it; ++it)
+                    if (*it == '.')
+                        *it = left;
+            }
+            else if (left == 'R' && right == 'L')
+            {
+                for (auto _begin = left_it, _end = right_it - 1; _begin < _end; ++_begin, --_end)
+                {
+                    *_begin = 'R';
+                    *_end = 'L';
+                }
+            }
+            left_it = right_it + 1;
+            left = right;
+        }
+        return dominoes;
+
+    }
+
 };
 
 /*
