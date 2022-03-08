@@ -34,15 +34,6 @@
 
 using namespace std;
 
-int a;
-
-auto cmp(const vector<int> &v, const int &tar) -> bool
-{
-    return v.at(0) < tar;
-}
-
-vector<int> *H;
-
 class Solution
 {
 public:
@@ -414,24 +405,25 @@ public:
         return min_sum;
     }
 
-    const array<string, 10> n2s = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
 
-    void backtracking(string source, vector<string> &date, string temp = string())
+
+    vector<string> letterCombinations(string &digits)
     {
-        if (source.length() == 0)
+        const array<string, 10> n2s = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+
+        function<void(string, vector<string>&, string)> backtracking = [&](string source, vector<string> & date, string temp)
         {
-            if (!temp.empty())
-                date.push_back(temp);
-            return;
-        }
-        for (char ch : n2s[source[0] - '0'])
-            backtracking(string(++source.begin(), source.end()), date, temp + ch);
-    }
-
-    vector<string> letterCombinations(string digits)
-    {
+            if (source.length() == 0)
+            {
+                if (!temp.empty())
+                    date.push_back(temp);
+                return;
+            }
+            for (char ch : n2s[source[0] - '0'])
+                backtracking(string(++source.begin(), source.end()), date, temp + ch);
+        };
         vector<string> res;
-        backtracking(std::move(digits), res);
+        backtracking(std::move(digits), res, {});
         return res;
     }
     struct ListNode
@@ -543,7 +535,7 @@ public:
     {
         if (matrix.at(0).at(0) >= target)
             return binary_search(matrix[0].begin(), matrix[0].end(), target);
-        auto col = lower_bound(matrix.begin(), matrix.end(), target, &cmp);
+        auto col = lower_bound(matrix.begin(), matrix.end(), target, [](const vector<int> &v, const int &tar) { return v.at(0) < tar; });
         col--;
         return binary_search((*col).begin(), (*col).end(), target);
     };
@@ -594,29 +586,30 @@ public:
         }
     };
 
-    vector<int> *Pnums;
-    void dfs(set<vector<int>> &res, vector<int> tmp, vector<int>::iterator it)
-    {
-        if (it == Pnums->end())
-            res.insert(tmp);
-        else
-        {
-            dfs(res, tmp, it + 1);
-            tmp.push_back(*it);
-            dfs(res, tmp, it + 1);
-        };
-    };
-    vector<vector<int>> set2vector(const set<vector<int>> &s)
-    {
-        vector<vector<int>> res;
-        res.reserve(s.size());
-        for (const vector<int> &tmp : s)
-            res.push_back(tmp);
-        return res;
-    };
+
     vector<vector<int>> subsetsWithDup(vector<int> &nums)
     {
-        Pnums = &nums;
+        auto set2vector = [](const set<vector<int>> &s)
+        {
+            vector<vector<int>> res;
+            res.reserve(s.size());
+            for (const vector<int> &tmp : s)
+                res.push_back(tmp);
+            return res;
+        };
+
+        function<void(set<vector<int>> &, vector<int>, vector<int>::iterator)> dfs = [&](set<vector<int>> & res, vector<int> tmp, vector<int>::iterator it)
+        {
+            if (it == nums.end())
+                res.insert(tmp);
+            else
+            {
+                dfs(res, tmp, it + 1);
+                tmp.push_back(*it);
+                dfs(res, tmp, it + 1);
+            };
+        };
+
         sort(nums.begin(), nums.end());
         set<vector<int>> res;
         dfs(res, vector<int>(), nums.begin());
@@ -662,25 +655,20 @@ public:
         return res;
     };
 
-    bool static trap_cmp(int l, int r)
-    {
-        return H->at(l) >= H->at(r);
-    };
-
     int trap(vector<int> &height)
     {
+        vector<int> *H;
         if (height.size() < 3)
             return 0;
-
-        H = &height;
+        
         vector<int> index;
         index.resize(height.size());
         for (int i = 0; i < height.size(); i++)
             index[i] = i;
 
-        bool (*cmp)(int l, int r) = Solution::trap_cmp;
-        sort(index.begin(), index.end(), cmp);
-
+        sort(index.begin(), index.end(), [&](int l, int r)
+             { return height.at(l) >= height.at(r); });
+        
         int res = 0;
         int j = index[0];
         int k = j;
@@ -707,23 +695,22 @@ public:
         return res;
     };
 
-    vector<vector<int>> DP;
-    string TXT1, TXT2;
-    void upDP(int i, int j)
-    {
-        if (TXT1[i] == TXT2[j])
-            DP[i][j] = max(DP[i - 1][j - 1] + 1, max(DP[i - 1][j], DP[i][j - 1]));
-        else
-            DP[i][j] = max(DP[i - 1][j], DP[i][j - 1]);
-    };
+
     int longestCommonSubsequence(string text1, string text2)
     {
+        vector<vector<int>> DP;
+        function<void(int,int)> upDP = [&](int i, int j)
+        {
+            if (text1[i] == text2[j])
+                DP[i][j] = max(DP[i - 1][j - 1] + 1, max(DP[i - 1][j], DP[i][j - 1]));
+            else
+                DP[i][j] = max(DP[i - 1][j], DP[i][j - 1]);
+        };
+
         if (text1.size() <= 1 && text2.size() <= 1)
             return text1[0] == text2[0];
         text1 = " " + text1;
         text2 = " " + text2;
-        TXT1 = text1;
-        TXT2 = text2;
         DP.resize(text1.size());
         for (auto &i : DP)
             i.resize(text2.size());
@@ -753,18 +740,19 @@ public:
         return res;
     }
 
-    vector<int> NUMS;
-    int dich(int l, int r)
-    {
-        if (NUMS[(l + r) / 2] > NUMS[(l + r) / 2 + 1])
-            return NUMS[(l + r) / 2 + 1];
-        if (NUMS[(l + r) / 2] > NUMS[r])
-            return dich((l + r) / 2, r);
-        else
-            return dich(l, (l + r) / 2);
-    }
     int findMin(vector<int> &nums)
     {
+        vector<int> NUMS;
+        function<int(int, int)> dich = [&](int l, int r)
+        {
+            if (NUMS[(l + r) / 2] > NUMS[(l + r) / 2 + 1])
+                return NUMS[(l + r) / 2 + 1];
+            if (NUMS[(l + r) / 2] > NUMS[r])
+                return dich((l + r) / 2, r);
+            else
+                return dich(l, (l + r) / 2);
+        };
+        
         if (nums.size() <= 1)
             return *nums.begin();
         if (*(nums.end() - 1) > *nums.begin())
@@ -1651,25 +1639,20 @@ public:
         }
     };
 
-    /*
-    vector<vector<int>> DP;
-    string TXT1, TXT2;
-    void upDP(int i, int j)
-    {
-        if (TXT1[i] == TXT2[j])
-            DP[i][j] = max(DP[i - 1][j - 1] + 1, max(DP[i - 1][j], DP[i][j - 1]));
-        else
-            DP[i][j] = max(DP[i - 1][j], DP[i][j - 1]);
-    };
-    */
     int minDistance(string text1, string text2)
     {
+        vector<vector<int>> DP;
+        function<void(int, int)> upDP = [&](int i, int j) {
+            if (text1[i] == text2[j])
+                DP[i][j] = max(DP[i - 1][j - 1] + 1, max(DP[i - 1][j], DP[i][j - 1]));
+            else
+                DP[i][j] = max(DP[i - 1][j], DP[i][j - 1]);
+        };
         if (text1.size() <= 1 && text2.size() <= 1)
             return text1[0] == text2[0];
         text1 = " " + text1;
         text2 = " " + text2;
-        TXT1 = text1;
-        TXT2 = text2;
+
         DP.resize(text1.size());
         for (auto &i : DP)
             i.resize(text2.size());
@@ -1687,14 +1670,15 @@ public:
         return text1.size() + text2.size() - 2 * max - 2;
     }
 
-    class pathsum
+
+    int pathSum(TreeNode *root, int targetSum)
     {
-    public:
-        int targetSum;
-        int res;
+        int res = 0;
         unordered_map<int, int> map;
-        void dfs(TreeNode *&root, int val)
-        {
+        map[0] = 1;
+
+        function<void(TreeNode * &root, int val)> dfs=[&](TreeNode * &root, int val)
+            {
             if (map.count(val - targetSum))
                 res += map[val - targetSum];
             ++map[val];
@@ -1703,17 +1687,10 @@ public:
             if (root->right)
                 dfs(root->right, val + root->right->val);
             --map[val];
-        }
-        pathsum(TreeNode *root, int targetsum) : targetSum(targetsum), res(0)
-        {
-            map[0] = 1;
-            dfs(root, root->val);
-        }
-    };
+        };
 
-    int pathSum(TreeNode *root, int targetSum)
-    {
-        return pathsum(root, targetSum).res;
+        dfs(root, root->val);
+        return res;
     }
 
     int getSum(int a, int b)
