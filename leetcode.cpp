@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <fstream>
 #include <functional>
 #include <intrin0.inl.h>
@@ -3982,6 +3983,322 @@ public:
 
     }
 
+    string reverseOnlyLetters(string &s)
+    {
+        stack<char> index;
+        for (auto ch : s)
+            if (isalpha(ch))
+                index.push(ch);
+        for (auto &ch : s)
+            if (isalpha(ch))
+            {
+                ch = index.top();
+                index.pop();
+            }
+        return s;
+    }
+
+    vector<int> findBall(vector<vector<int>> &grid)
+    {
+        int n = grid[0].size();
+        vector<int> ans(n);
+        for (int j = 0; j < n; ++j)
+        {
+            int col = j; // 球的初始列
+            for (auto &row : grid)
+            {
+                int dir = row[col];
+                col += dir; // 移动球
+                if (col < 0 || col == n || row[col] != dir)
+                { // 到达侧边或 V 形
+                    col = -1;
+                    break;
+                }
+            }
+            ans[j] = col; // col >= 0 为成功到达底部
+        }
+        return ans;
+    }
+
+    string complexNumberMultiply(string &num1, string &num2)
+    {
+        auto getNum = [](string &str)
+        {
+            auto it = str.begin();
+            while (*it != '+')
+                ++it;
+            return array<int, 2>{{stoi(string{str.begin(), it}), stoi(string{it + 1, str.end() - 1})}};
+        };
+        auto _num1 = getNum(num1);
+        auto _num2 = getNum(num2);
+        return to_string(_num1[0] * _num2[0] - _num1[1] * _num2[1]) + "+" + to_string(_num1[0] * _num2[1] + _num1[1] * _num2[0]) + "i";
+    }
+
+    int maximumDifference(vector<int> &nums)
+    {
+        int min = nums.front();
+        int res = 0;
+        auto size = nums.size();
+        for (int i = 1; i < size; ++i)
+        {
+            if (nums[i] < min)
+                min = nums[i];
+            else if (nums[i] - min > res)
+                res = nums[i] - min;
+        }
+        return res == 0 ? -1 : res;
+    }
+
+    string optimalDivision(vector<int> &nums)
+    {
+        if (nums.size() > 2)
+        {
+            auto end = nums.end();
+            auto it = nums.begin();
+            string res = to_string(*it++) + "/(";
+            while (it < end)
+                res+=to_string(*it++)+"/";
+            res.back() = ')';
+            return res;
+        }
+        else
+        {
+            string res;
+            for (auto i : nums)
+                res += to_string(i) + "/";
+            res.pop_back();
+            return res;
+        }
+    }
+
+    int maximumRequests(int n, vector<vector<int>> &requests)
+    {
+        vector<vector<int>> _to(n + 2);
+        vector<int> diff(n, 0);
+        for (auto &edge : requests)
+        {
+            ++diff[edge[0]];
+            --diff[edge[1]];
+            _to[edge[0]].push_back(edge[1]);
+        }
+
+        for (int i = 0; i < n; ++i)
+        {
+            if (diff[i] > 0)
+                for (int j = 0; j < diff[i]; ++j)
+                    _to[n].push_back(i);
+            else if (diff[i] < 0)
+                for (int j = 0; j < -diff[i]; ++j)
+                    _to[i].push_back(n + 1);
+        }
+
+        if (_to[n].size() != _to[n + 1].size())
+            throw "error size.";
+
+
+        function<int(list<int>, int &)> bfs = [&](list<int> froms, int &length)
+        {
+            list<int> next_froms;
+            for (int from : froms)
+            {
+                for (int &to : _to[from])
+                {
+                    if (to == n + 1)
+                    {
+                        to = -1;
+                        return from;
+                    }
+                    else if(to != -1)
+                        next_froms.push_back(to);
+                }
+            }
+
+            auto p = bfs(next_froms, ++length);
+        };
+        
+        
+    }
+
+    string convert(string &s, uint32_t numRows)
+    {
+        string res;
+        auto size = s.size();
+        auto begin = s.begin();
+        auto end = s.end();
+        res.reserve(size);
+        for (int line = 0; line < numRows; ++line)
+        {
+            for (auto it = begin; it < end; it += 2 * numRows - 2)
+            {
+                if (line == 0)
+                    res.push_back(*it);
+                else if (line == numRows - 1)
+                {
+                    if (it + line < end)
+                        res.push_back(*(it + line));
+                }
+                else
+                {
+                    if (it + line < end)
+                        res.push_back(*(it + line));
+                    if (it + 2 * numRows - 2 - line < end)
+                        res.push_back(*(it + 2 * numRows - 2 - line));
+                }
+            }
+        }
+        return res;
+    }
+
+    int addDigits(int num)
+    {
+        int res = 0;
+        while (num) {
+            res += num % 10;
+            num/=10;
+        }
+        if (res < 10)
+            return res;
+        else
+            return addDigits(res);
+    }
+
+    int addDigits(uint32_t num)
+    {
+        return (num - 1) % 9 + 1;
+    }
+
+    long long subArrayRanges(vector<int> &&nums)
+    {
+        using _stack = stack<int>;
+        auto size = nums.size();
+        vector<int> lMin(size), rMin(size), rMax(size), lMax(size);
+
+
+        _stack s;
+        for (int i = 0; i < size; ++i)
+        {
+            while (!s.empty() && nums[s.top()] >= nums[i])
+                s.pop();
+            lMin[i] = s.empty() ? -1 : s.top();
+            s.push(i);
+        }
+
+        _stack().swap(s);
+        for (int i = size - 1; i >= 0; --i)
+        {
+            while (!s.empty() && nums[s.top()] > nums[i])
+                s.pop();
+            rMin[i] = s.empty() ? size : s.top();
+            s.push(i);
+        }
+
+        _stack().swap(s);
+        for (int i = 0; i < size; ++i)
+        {
+            while (!s.empty() && nums[s.top()] <= nums[i])
+                s.pop();
+            lMax[i] = s.empty() ? -1 : s.top();
+            s.push(i);
+        }
+
+        _stack().swap(s);
+        for (int i = size - 1; i >= 0; --i)
+        {
+            while (!s.empty() && nums[s.top()] < nums[i])
+                s.pop();
+            rMax[i] = s.empty() ? size : s.top();
+            s.push(i);
+        }
+
+        int64_t res;
+        for (int i = 0; i < size; ++i)
+        {
+            res += static_cast<uint64_t>(nums[i]) * (i - lMax[i]) * (rMax[i] - i);
+            res -= static_cast<uint64_t>(nums[i]) * (i - lMin[i]) * (rMin[i] - i);
+        }
+        return res;
+    }
+
+    int findLUSlength(string &a, string &b)
+    {
+        return a != b ? max(a.length(), b.length()) : -1;
+    }
+
+    vector<int> goodDaysToRobBank(vector<int> &security, int time)
+    {
+        auto size = security.size();
+        if (2 * time + 1 > size)
+            return {};
+        vector<array<int, 2>> cnt(size);
+        cnt[0] = {0,0};
+        for (int i = 1; i < size; ++i)
+        {
+            cnt[i] = cnt[i - 1];
+            if (security[i] > security[i - 1])
+                ++cnt[i][0];
+            else if (security[i] < security[i - 1])
+                ++cnt[i][1];
+        }
+
+        vector<int> res;
+        for (int i = time; i < size - time; ++i)
+        {
+            if (cnt[i][0] == cnt[i - time][0] && cnt[i][1] == cnt[i + time][1])
+                res.push_back(i);
+        }
+        return res; 
+    }
+
+    string convertToBase7(int num)
+    {
+        string res;
+        if (num < 0)
+        {
+            num += 2 * num;
+            res.push_back('-');
+        }
+        while (num)
+        {
+            res.push_back(num % 7 + '0');
+            num /= 7;
+        }
+        std::reverse(res.begin(), res.end());
+        return res;
+    }
+
+    vector<int> platesBetweenCandles(string &s, vector<vector<int>> &queries)
+    {
+        auto size = s.size();
+        vector<int> prefixSum(size, 0);
+        vector<int> candleIndex;
+
+        for (int i = 0; i < size; ++i)
+        {
+            prefixSum[i] = prefixSum[i - 1 < 0 ? 0 : i - 1];
+            if (s[i] == '*')
+                ++prefixSum[i];
+            else if (s[i] == '|')
+                candleIndex.push_back(i);
+            else
+                throw std::exception();
+        }
+        if (candleIndex.size() < 2)
+            return vector(queries.size(), 0);
+        vector<int> res;
+        res.reserve(queries.size());
+        auto begin = candleIndex.begin();
+        auto end = candleIndex.end();
+        for (auto &querie : queries)
+        {
+            auto leftCandle = lower_bound(begin, end, querie[0]);
+            auto rightCandle = upper_bound(begin, end, querie[1]) - 1;
+            if (leftCandle >= end - 1 || rightCandle <= begin || leftCandle > rightCandle)
+                res.push_back(0);
+            else
+                res.push_back(prefixSum[*rightCandle] - prefixSum[*leftCandle]);
+        }
+        return res;
+    }
 };
 
 /*
