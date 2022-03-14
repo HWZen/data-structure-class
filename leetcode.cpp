@@ -4276,6 +4276,198 @@ public:
         }
         return res;
     }
+
+    class PreorderClass
+    {
+    public:
+        class Node
+        {
+        public:
+            int val;
+            vector<Node *> children;
+
+            Node() = default;
+
+            Node(int _val)
+            {
+                val = _val;
+            }
+
+            Node(int _val, vector<Node *> _children)
+            {
+                val = _val;
+                children = std::move(_children);
+            }
+        };
+
+        vector<int> preorder(Node *root)
+        {
+            vector<int> res;
+            function<void(Node *)> dfs = [&](Node *node)
+            {
+                if (!node)
+                    return;
+                res.push_back(node->val);
+                for (auto next : node->children)
+                    dfs(next);
+            };
+
+            dfs(root);
+            return res;
+        }
+    };
+
+    int countHighestScoreNodes(vector<int> &parents)
+    {
+        auto size = parents.size();
+        vector<vector<int>> children(size);
+        for (int node = 0; node < size; ++node)
+        {
+            if (parents[node] != -1)
+                children[parents[node]].push_back(node);
+        }
+
+        uint64_t maxScore = 0, cnt = 0;
+
+        function<int(int)> dfs = [&](int node)
+        {
+            uint64_t score = 1;
+            int parentScore = size - 1;
+            for (int child : children[node])
+            {
+                int num = dfs(child);
+                score *= num;
+                parentScore -= num;
+            }
+
+            if (node != 0)
+                score *= parentScore;
+
+            if (score > maxScore)
+            {
+                maxScore = score;
+                cnt = 1;
+            }
+            else if (score == maxScore)
+                ++cnt;
+            return size - parentScore;
+        };
+
+        dfs(0);
+
+        return cnt;
+    }
+
+    class PostorderClass
+    {
+    public:
+        class Node
+        {
+        public:
+            int val;
+            vector<Node *> children;
+
+            Node() = default;
+
+            Node(int _val)
+            {
+                val = _val;
+            }
+
+            Node(int _val, vector<Node *> _children)
+            {
+                val = _val;
+                children = std::move(_children);
+            }
+        };
+
+        vector<int> postorder(Node *root)
+        {
+            vector<int> res;
+            function<void(Node *)> dfs = [&](Node *pnode)
+            {
+                if (!pnode)
+                    return;
+                for (auto child : pnode->children)
+                    dfs(child);
+                res.push_back(pnode->val);
+            };
+            dfs(root);
+            return res;
+        }
+    };
+
+    bool validUtf8(vector<int> &data)
+    {
+        array<const int, 4> startCode = {0b11000000, 0b11100000, 0b11110000, 0b11111000};
+        const int alternateCode = 0b10000000;
+
+        auto end = data.end();
+        for (auto it = data.begin(); it < end; ++it)
+        {
+            if (*it >= startCode[3])
+                return false;
+            else if (*it >= startCode[2])
+            {
+                for (int i = 0; i < 3; ++i)
+                {
+                    ++it;
+                    if (it >= end || *it < alternateCode || *it >= startCode[0])
+                        return false;
+                    
+                }
+            }
+            else if (*it >= startCode[1])
+            {
+                for (int i = 0; i < 2; ++i)
+                {
+                    ++it;
+                    if (it >= end || *it < alternateCode || *it >= startCode[0])
+                        return false;
+                }
+            }
+            else if (*it >= startCode[0])
+            {
+                for (int i = 0; i < 1; ++i)
+                {
+                    ++it;
+                    if (it >= end || *it < alternateCode || *it >= startCode[0])
+                        return false;
+                }
+            }
+            else if (*it >= alternateCode)
+                return false;
+
+        }
+        return true;
+    }
+
+    vector<string> findRestaurant(vector<string> &list1, vector<string> &list2)
+    {
+        unordered_map<string, int> map1;
+        unordered_map<string, int> map2;
+        auto list1size = list1.size();
+        for (int i = 0; i < list1size; ++i)
+            map1.insert({std::move(list1[i]), i});
+        
+        auto list2size = list2.size();
+
+        for (int i = 0; i < list2size; ++i)
+            if (map1.count(list2[i]))
+                map2.insert({std::move(list2[i]), map1[list2[i]] + i});
+
+        vector<string> res;
+        auto minimun = INT_MAX;
+        for (auto &p : map2)
+            minimun = min(p.second, minimun);
+        for (auto &p : map2)
+        {
+            if (p.second == minimun)
+                res.emplace_back(p.first);
+        }
+        
+        return res;     
+    }
 };
 
 /*
