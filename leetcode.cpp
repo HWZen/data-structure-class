@@ -1,7 +1,12 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <climits>
+#ifdef _MSC_VER
 #include <corecrt_math_defines.h>
+#include <vcruntime.h>
+#include <intrin0.inl.h>
+#endif
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -9,8 +14,9 @@
 #include <exception>
 #include <fstream>
 #include <functional>
-#include <intrin0.inl.h>
 #include <iostream>
+#include <iterator>
+#include <list>
 #include <map>
 #include <numeric>
 #include <queue>
@@ -25,6 +31,8 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <memory>
+
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -2671,7 +2679,7 @@ public:
 
                 vector<int> res({*it % _m, *it / _m});
                 Map.erase(it);
-                return std::move(res);
+                return res;
             }
 
             void reset()
@@ -3981,18 +3989,18 @@ public:
         vector<int> ans(n);
         for (int j = 0; j < n; ++j)
         {
-            int col = j; // ÇòµÄ³õÊ¼ÁÐ
+            int col = j; // ï¿½ï¿½Ä³ï¿½Ê¼ï¿½ï¿??
             for (auto &row : grid)
             {
                 int dir = row[col];
-                col += dir; // ÒÆ¶¯Çò
+                col += dir; // ï¿½Æ¶ï¿½ï¿½ï¿½
                 if (col < 0 || col == n || row[col] != dir)
-                { // µ½´ï²à±ß»ò V ÐÎ
+                { // ï¿½ï¿½ï¿½ï¿½ï¿½ß»ï¿½ V ï¿½ï¿½
                     col = -1;
                     break;
                 }
             }
-            ans[j] = col; // col >= 0 Îª³É¹¦µ½´ïµ×²¿
+            ans[j] = col; // col >= 0 Îªï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿??
         }
         return ans;
     }
@@ -4467,6 +4475,337 @@ public:
         }
         
         return res;     
+    }
+
+    int countMaxOrSubsets(vector<int> &nums)
+    {
+        int Max = 0;
+        int cnt = 0;
+        auto size = nums.size();
+        function<void(int, int)> dfs = [&](int it, int orVal)
+        {
+            if (it == size)
+            {
+                if (Max < orVal)
+                {
+                    Max = orVal;
+                    cnt = 1;
+                }
+                else if (Max == orVal)
+                    ++cnt;
+            }
+
+            dfs(it + 1, orVal | nums[it]);
+            dfs(it + 1, orVal);
+        };
+        dfs(0, 0);
+        return cnt;
+    }
+
+#if 1
+    class AllOne
+    {
+    public:
+        
+        
+        AllOne() = default;
+
+        void inc(const string& key)
+        {
+            if (index.count(key))
+            {
+                index[key]->inc(); 
+            }
+            else
+            {
+                if(!index.empty())
+                    index.insert({key, new MyList(key, min)});
+                else
+                {
+                    index[key] = new MyList(key);
+                    min = index[key];
+                    max = min;
+                }
+            }
+            updateMinMax();
+        }
+
+        void dec(const string& key)
+        {
+            auto node = index[key];
+            if (--node->cnt() <= 0)
+            {
+                if (index.size() == 1)
+                {
+                    min = nullptr;
+                    max = nullptr;
+                }
+                else
+                {
+                    if (min == node)
+                        min = node->next() ? node->next() : (node->prev() ? node->prev() : nullptr);
+                    if (max == node)
+                        max = node->prev() ? node->prev() : (node->next() ? node->next() : nullptr);
+                }
+                
+                
+                delete node;
+                index.erase(key);
+            }
+            else
+                while (node->prev() && node->prev()->cnt() > node->cnt())
+                    node->moveFront();
+
+            updateMinMax();
+        }
+
+        string getMaxKey()
+        {
+            if (max)
+                return max->str();
+            else
+                return {};
+        }
+
+        string getMinKey()
+        {
+            if (min)
+                return min->str();
+            else
+                return {};
+        }
+
+        class MyList
+        {
+        
+        public:
+            MyList() = default;
+            using PListNode = MyList *;
+            MyList(string &&str, PListNode root = nullptr):_str(str)
+            {
+                if (root)
+                    root->PrevAdd(this);
+            }
+            MyList(string str, PListNode root = nullptr) : _str(std::move(str))
+            {
+                if (root)
+                    root->PrevAdd(this);
+            }
+
+            void PrevAdd(PListNode node)
+            {
+                if (!node)
+                    throw "node is nullptr";
+                node->_next = this;
+                if (!_prev)
+                {
+                    _prev = node;
+                }
+                else
+                {
+                    node->_prev = _prev;
+                    _prev->_next = node;
+                    _prev = node;   
+                }
+            }
+
+            void NextAdd(PListNode node)
+            {
+                if (_next)
+                {
+                    _next->PrevAdd(node);
+                    return;
+                }
+                if (!node)
+                    throw "node is nullptr";
+                node->_prev = this;
+                _next = node;
+            }
+
+            void moveFront()
+            {
+                if (!_prev)
+                    return;
+                bool has_prev_prev = _prev->_prev;
+                if(has_prev_prev)
+                    _prev->_prev->_next = this;
+                if(_next)
+                    _next->_prev = _prev;
+                auto tmp = _prev->_prev;
+                _prev->_prev = this;
+                _prev->_next = _next;
+                _next = _prev;
+                _prev = tmp;
+            }
+
+            void moveBack()
+            {
+                if (!_next)
+                    return;
+                _next->moveFront();
+            }
+
+            ~MyList()
+            {
+                if (_prev)
+                    _prev->_next = _next;
+                if (_next)
+                    _next->_prev = _prev;
+            }
+
+            void inc()
+            {
+                ++_cnt;
+                while (_next && _next->_cnt < _cnt)
+                    moveBack();
+                    
+            }
+
+            string &str() { return _str; }
+            int &cnt() { return _cnt; }
+            const PListNode &prev() { return _prev; }
+            const PListNode &next() { return _next; }
+            
+        private:
+            string _str{};
+            int _cnt{1};
+            PListNode _prev{};
+            PListNode _next{};
+            
+        };
+
+        void updateMinMax()
+        {
+            while (min->prev())
+                min = min->prev();
+            while (max->next())
+                max = max->next();
+        }
+
+
+
+    private:
+        using PListNode = MyList *;
+        unordered_map<string, PListNode> index;
+        PListNode min;
+        PListNode max;
+        
+
+    };
+
+    /**
+     * Your AllOne object will be instantiated and called as such:
+     * AllOne* obj = new AllOne();
+     * obj->inc(key);
+     * obj->dec(key);
+     * string param_3 = obj->getMaxKey();
+     * string param_4 = obj->getMinKey();
+     */
+#else
+
+    class AllOne
+    {
+        list<pair<unordered_set<string>, int>> lst;
+        unordered_map<string, list<pair<unordered_set<string>, int>>::iterator> nodes;
+
+    public:
+        AllOne() {}
+
+        void inc(string key)
+        {
+            if (nodes.count(key))
+            {
+                auto cur = nodes[key], nxt = next(cur);
+                if (nxt == lst.end() || nxt->second > cur->second + 1)
+                {
+                    unordered_set<string> s({key});
+                    nodes[key] = lst.emplace(nxt, s, cur->second + 1);
+                }
+                else
+                {
+                    nxt->first.emplace(key);
+                    nodes[key] = nxt;
+                }
+                cur->first.erase(key);
+                if (cur->first.empty())
+                {
+                    lst.erase(cur);
+                }
+            }
+            else
+            { // key ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                if (lst.empty() || lst.begin()->second > 1)
+                {
+                    unordered_set<string> s({key});
+                    lst.emplace_front(s, 1);
+                }
+                else
+                {
+                    lst.begin()->first.emplace(key);
+                }
+                nodes[key] = lst.begin();
+            }
+        }
+
+        void dec(string key)
+        {
+            auto cur = nodes[key];
+            if (cur->second == 1)
+            { // key ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ³ï¿½ nodes
+                nodes.erase(key);
+            }
+            else
+            {
+                auto pre = prev(cur);
+                if (cur == lst.begin() || pre->second < cur->second - 1)
+                {
+                    unordered_set<string> s({key});
+                    nodes[key] = lst.emplace(cur, s, cur->second - 1);
+                }
+                else
+                {
+                    pre->first.emplace(key);
+                    nodes[key] = pre;
+                }
+            }
+            cur->first.erase(key);
+            if (cur->first.empty())
+            {
+                lst.erase(cur);
+            }
+        }
+
+        string getMaxKey()
+        {
+            return lst.empty() ? "" : *lst.rbegin()->first.begin();
+        }
+
+        string getMinKey()
+        {
+            return lst.empty() ? "" : *lst.begin()->first.begin();
+        }
+    };
+#endif
+
+    string longestWord(vector<string> &words)
+    {
+        sort(words.begin(), words.end(), [](const string &l, const string &r){return l.size() != r.size()? l.size() > r.size() : l < r;});
+        unordered_set<string> index(words.begin(), words.end());
+        for (auto &ref_str : words)
+        {
+            auto str = ref_str;
+            str.pop_back();
+            while (!str.empty())
+            {
+                if (!index.count(str))
+                    break;
+                else
+                    str.pop_back();
+            }
+            if(str.empty())
+                return ref_str;
+        }
+        return {};
     }
 };
 
