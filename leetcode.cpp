@@ -3989,7 +3989,7 @@ public:
         vector<int> ans(n);
         for (int j = 0; j < n; ++j)
         {
-            int col = j; // ��ĳ�ʼ��??
+            int col = j; // ��ĳ�ʼ��??
             for (auto &row : grid)
             {
                 int dir = row[col];
@@ -4000,7 +4000,7 @@ public:
                     break;
                 }
             }
-            ans[j] = col; // col >= 0 Ϊ�ɹ�����ײ�??
+            ans[j] = col; // col >= 0 Ϊ�ɹ�����ײ�??
         }
         return ans;
     }
@@ -4806,6 +4806,213 @@ public:
                 return ref_str;
         }
         return {};
+    }
+
+    class Bank
+    {
+    public:
+        Bank(vector<long long> &balance):size(data.size()), data(std::move(balance)){}
+
+        bool transfer(int account1, int account2, long long money)
+        {
+            --account1;
+            --account2;
+            if (!assertIndex(account1) || !assertIndex(account2))
+                return false;
+            if (data[account1] < money)
+                return false;
+            data[account1] -= money;
+            data[account2] += money;
+            return true;
+        }
+
+        bool deposit(int account, long long money)
+        {
+            --account;
+            if (!assertIndex(account))
+                return false;
+            data[account] += money;
+            return true;
+        }
+
+        bool withdraw(int account, long long money)
+        {
+            --account;
+            if (assertIndex(account) && data[account] >= money)
+            {
+                data[account] -= money;
+                return true;
+            }
+            return false;
+        }
+
+    private:
+        bool assertIndex(int i)
+        {
+            return i >= 0 && i < size;
+        }
+        vector<long long> data;
+        size_t size;
+    };
+
+    /**
+ * Your Bank object will be instantiated and called as such:
+ * Bank* obj = new Bank(balance);
+ * bool param_1 = obj->transfer(account1,account2,money);
+ * bool param_2 = obj->deposit(account,money);
+ * bool param_3 = obj->withdraw(account,money);
+ */
+
+    string tree2str(TreeNode *root)
+    {
+        string res;
+        function<void(TreeNode *)> dfs = [&](TreeNode *node)
+        {
+            res += to_string(node->val);
+            if (!node->left && !node->right)
+                return;
+            res += "(";
+            if (node->left)
+                dfs(node->left);
+            res += ")";
+
+            if (node->right)
+            {
+                res += "(";
+                dfs(node->right);
+                res += ")";
+            }
+        };
+
+        dfs(root);
+        return res;
+    }
+
+    bool findTarget(TreeNode *root, int k)
+    {
+        unordered_set<int> hashTab;
+        function<void(TreeNode *)> bfs = [&](TreeNode *node)
+        {
+            if (!node)
+                return;
+            bfs(node->left);
+            bfs(node->right);
+            hashTab.insert(node->val);
+        };
+
+        bfs(root);
+        for (auto i : hashTab)
+        {
+            if (hashTab.count(k - i) && k - i != i)
+                return true;
+        }
+        return false;
+    }
+
+    bool winnerOfGame(string colors)
+    {
+        array<int, 2> ABtimes{0};
+        char cur = 0;
+        int cnt = 1;
+        for (char ch : colors)
+        {
+            if (ch != cur)
+            {
+                if (cur == 0)
+                {
+                    cur = ch;
+                    continue;
+                }
+
+                ABtimes[cur - 'A'] += max(0, cnt - 2);
+
+                cur = ch;
+                cnt = 1;
+            }
+            else
+                ++cnt;
+        }
+        ABtimes[cur - 'A'] += max(0, cnt - 2);
+        return ABtimes[0] > ABtimes[1];
+    }
+
+    int findKthNumber(int n, int k)
+    {
+
+        function<int(int, int)> getSteps = [](int curr, int n) {
+            int steps = 0;
+            long first = curr;
+            long last = curr;
+            while (first <= n)
+            {
+                steps += std::min(last, (long)n) - first + 1;
+                first = first * 10;
+                last = last * 10 + 9;
+            }
+            return steps;
+
+        };
+        int curr = 1;
+        k--;
+        while (k > 0)
+        {
+            int steps = getSteps(curr, n);
+            if (steps <= k)
+            {
+                k -= steps;
+                curr++;
+            }
+            else
+            {
+                curr = curr * 10;
+                k--;
+            }
+        }
+        return curr;
+    }
+
+    vector<vector<int>> imageSmoother(vector<vector<int>> &img)
+    {
+        int m = img.size();
+        int n = img[0].size();
+
+        auto indexCheck = [&](int y, int x)
+        {
+            return y >= 0 && y < m && x >= 0 && x < n;
+        };
+
+        vector<vector<int>> res(m, vector<int>(n));
+        for (int y{}; y < m; ++y)
+        {
+            for (int x{}; x < n; ++x)
+            {
+                int sum{}, cnt{};
+                for (int _y = -1; _y <= 1; ++_y)
+                {
+                    for (int _x = -1; _x <= 1; ++_x)
+                    {
+                        if (indexCheck(y + _y, x + _x))
+                        {
+                            sum += img[y + _y][x + _x];
+                            ++cnt;
+                        }
+                    }
+                }
+                res[y][x] = sum / cnt;
+            }
+        }
+        return res;
+    }
+
+    int trailingZeroes(int n)
+    {
+        int res{};
+        while (n)
+        {
+            n /= 5;
+            res += n;
+        }
+        return res;
     }
 };
 
