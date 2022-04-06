@@ -5014,6 +5014,400 @@ public:
         }
         return res;
     }
+
+    int calPoints(vector<string> &ops)
+    {
+        vector<int> res;
+        res.reserve(ops.size());
+
+        for (auto &str : ops)
+        {
+            if (str == "C")
+                res.pop_back();
+            else if (str == "D")
+                res.push_back(res.back() * 2);
+            else if (str == "+")
+                res.push_back(*(res.end() - 2) + *(res.end() - 1));
+            else
+                res.push_back(std::stoi(str));
+            
+        }
+
+        return std::accumulate(res.begin(), res.end(), 0);
+    }
+
+    vector<int> missingRolls(vector<int> &rolls, int mean, int n)
+    {
+        auto mn = rolls.size() + n;
+        auto sum = mn * mean;
+        auto diff = sum - std::accumulate(rolls.begin(), rolls.end(), 0);
+        double diffAvg = (double)(diff) / n;
+        if (diffAvg > 6 || diffAvg < 1)
+            return {};
+        vector<int> res;
+        res.reserve(n);
+        int adj = diff - static_cast<long long>(n) * (int)diffAvg;
+        for (int i{}; i < adj; ++i)
+            res.emplace_back((int)diffAvg + 1);
+        for (int i{adj}; i < n; ++i)
+            res.emplace_back((int)diffAvg);
+        return res;
+    }
+
+    bool hasAlternatingBits(int n)
+    {
+        long nn = n ^ (n >> 1);
+        return !(nn & (nn + 1));
+    }
+
+    int maxConsecutiveAnswers(string key, int k)
+    {
+        auto size = key.size();
+        int res{};
+
+        for (int l{}, r{}, cnt{}; r < size; ++r)
+        {
+            if (key[r] != 'T')
+                ++cnt;
+            while (cnt > k)
+                if (key[l++] != 'T')
+                    --cnt;
+            res = max(res, r - l + 1);                    
+        }
+
+        for (int l{}, r{}, cnt{}; r < size; ++r)
+        {
+            if (key[r] != 'F')
+                ++cnt;
+            while (cnt > k)
+                if (key[l++] != 'F')
+                    --cnt;
+            res = max(res, r - l + 1);
+        }
+
+        return res;
+    }
+
+    vector<int> busiestServers(int k, const vector<int> &arrival, const vector<int> &load)
+    {
+        priority_queue<int, vector<int>, greater<>> freeServer;
+        for (int i{}; i < k; ++i)
+            freeServer.push(i);
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> busyServer;
+        vector<int> serverCnt(k, 0);
+        auto requestNUms = arrival.size();
+        for (int i{}; i < requestNUms; ++i)
+        {
+            while (!busyServer.empty() && busyServer.top().first <= arrival[i])
+            {
+                auto id = busyServer.top().second;
+                busyServer.pop();
+                freeServer.push(i + ((id - i) % k + k) % k);
+            }
+            if (freeServer.empty())
+                continue;
+            auto it = freeServer.top() % k;
+            freeServer.pop();
+            ++serverCnt[it];
+            busyServer.push({arrival[i] + load[i], it});
+        }
+        auto maxCnt = *max_element(serverCnt.begin(), serverCnt.end());
+        vector<int> res;
+        
+        for (int i{}; i < k; ++i)
+            if (serverCnt[i] == maxCnt)
+                res.push_back(i);
+        return res;
+    }
+
+    vector<int> selfDividingNumbers(int left, int right)
+    {
+
+        auto [tab, cnt] = [] () constexpr
+        {
+            int cnt{};
+            array<int, 500> tab;
+            for (int i{1}; i <= 10000; ++i)
+            {
+                int j = i;
+                while (j)
+                {
+                    if (j % 10 == 0)
+                        break;
+                    if (i % (j % 10))
+                        break;
+                    j /= 10;
+                }
+                if (!j)
+                {
+                    tab[cnt++] =i;
+                }
+            }
+            return pair(tab,cnt);
+        }();
+
+        return {lower_bound(tab.begin(), tab.begin() + cnt - 1, left), lower_bound(tab.begin(), tab.begin() + cnt - 1, right)};
+    }
+
+    bool canReorderDoubled(auto &&arr)
+    {
+        struct comp
+        {
+            bool operator()(int l, int r) const
+            {
+                if (l < 0 && r < 0)
+                    return l > r;
+                else
+                    return l < r;
+            }
+        };
+        multiset<int, comp> tab(arr.begin(), arr.end());
+
+        if (tab.count(0) & 1)
+            return false;
+        if (tab.count(0))
+            tab.erase(0);
+        while (!tab.empty())
+        {
+
+
+            if (auto it = tab.find(*tab.begin() * 2); it == tab.end())
+                return false;
+            else
+            {
+                tab.erase(it);
+                tab.erase(tab.begin());
+            }
+        }
+        return true;
+    }
+
+
+    int strongPasswordChecker(string password)
+    {
+        int n = password.size();
+        bool has_lower = false, has_upper = false, has_digit = false;
+        for (char ch : password)
+        {
+            if (islower(ch))
+            {
+                has_lower = true;
+            }
+            else if (isupper(ch))
+            {
+                has_upper = true;
+            }
+            else if (isdigit(ch))
+            {
+                has_digit = true;
+            }
+        }
+        int categories = has_lower + has_upper + has_digit;
+
+        if (n < 6)
+        {
+            return max(6 - n, 3 - categories);
+        }
+        else if (n <= 20)
+        {
+            int replace = 0;
+            int cnt = 0;
+            char cur = '#';
+
+            for (char ch : password)
+            {
+                if (ch == cur)
+                {
+                    ++cnt;
+                }
+                else
+                {
+                    replace += cnt / 3;
+                    cnt = 1;
+                    cur = ch;
+                }
+            }
+            replace += cnt / 3;
+            return max(replace, 3 - categories);
+        }
+        else
+        {
+            // 替换次数和删除次数
+            int replace = 0, remove = n - 20;
+            // k mod 3 = 1 的组数，即删除 2 个字符可以减少 1 次替换操作
+            int rm2 = 0;
+            int cnt = 0;
+            char cur = '#';
+
+            for (char ch : password)
+            {
+                if (ch == cur)
+                {
+                    ++cnt;
+                }
+                else
+                {
+                    if (remove > 0 && cnt >= 3)
+                    {
+                        if (cnt % 3 == 0)
+                        {
+                            // 如果是 k % 3 = 0 的组，那么优先删除 1 个字符，减少 1 次替换操作
+                            --remove;
+                            --replace;
+                        }
+                        else if (cnt % 3 == 1)
+                        {
+                            // 如果是 k % 3 = 1 的组，那么存下来备用
+                            ++rm2;
+                        }
+                        // k % 3 = 2 的组无需显式考虑
+                    }
+                    replace += cnt / 3;
+                    cnt = 1;
+                    cur = ch;
+                }
+            }
+            if (remove > 0 && cnt >= 3)
+            {
+                if (cnt % 3 == 0)
+                {
+                    --remove;
+                    --replace;
+                }
+                else if (cnt % 3 == 1)
+                {
+                    ++rm2;
+                }
+            }
+            replace += cnt / 3;
+
+            // 使用 k % 3 = 1 的组的数量，由剩余的替换次数、组数和剩余的删除次数共同决定
+            int use2 = min({replace, rm2, remove / 2});
+            replace -= use2;
+            remove -= use2 * 2;
+            // 由于每有一次替换次数就一定有 3 个连续相同的字符（k / 3 决定），因此这里可以直接计算出使用 k % 3 = 2 的组的数量
+            int use3 = min({replace, remove / 3});
+            replace -= use3;
+            remove -= use3 * 3;
+            return (n - 20) + max(replace, 3 - categories);
+        }
+    }
+
+    char nextGreatestLetter(vector<char> &letters, char target)
+    {
+        auto resIt = upper_bound(letters.begin(), letters.end(), target);
+        return resIt == letters.end() ? letters.front() : *resIt;
+    }
+
+    class NumArray
+    {
+    public:
+        NumArray(vector<int> &nums)
+        {
+            size = nums.size();
+            tree.resize(size + 1);
+            rawData = move(nums);
+            for (int i{}; i < size; ++i)
+                update(i, rawData[i], true);
+        }
+
+        void update(int index, int val, bool init = false)
+        {
+            int delta = val - (init ? 0 : rawData[index]);
+            auto it = index + 1;
+            while (it < tree.size())
+            {
+                tree[it] += delta;
+                it += lowBit(it);
+            }
+            rawData[index] = val;            
+        }
+
+        int sumRange(int left, int right)
+        {
+            return getSum(right) - getSum(left - 1);
+        }
+
+    private:
+        int lowBit(int x)
+        {
+            return x & -x;
+        }
+        int getSum(int it)
+        {
+            ++it;
+            int res{};
+            while (it)
+            {
+                res += tree[it];
+                it -= lowBit(it);
+            }
+            return res;
+        }
+        size_t size;
+        vector<int> tree;
+        vector<int> rawData;
+    };
+
+    int countPrimeSetBits(int left, int right)
+    {
+        auto isPrime = [](int x)
+        {
+            return 1 << __builtin_popcount(x) & 0b10100010100010101100;
+        };
+
+        int res{};
+        for (int x{left}; x <= right; ++x)
+            if (isPrime(x))
+                ++res;
+        return res;
+    }
+
+    vector<int> findMinHeightTrees(int n, vector<vector<int>> &edges)
+    {
+        if (n == 1)
+            return {0};
+        vector<vector<int>> graph(n);
+        vector<int> degree(n, 0);
+        for (auto &edge : edges)
+        {
+            graph[edge[0]].push_back(edge[1]);
+            graph[edge[1]].push_back(edge[0]);
+            ++degree[edge[0]];
+            ++degree[edge[1]];
+        }
+
+        queue<int> que;
+        for (int i{}; i < n; ++i)
+        {
+            if (degree[i] == 1)
+                que.push(i);
+        }
+
+        int cnt{n};
+        while (cnt > 2)
+        {
+            auto size = que.size();
+            cnt -= size;
+
+            for (int i{}; i < size; ++i)
+            {
+                int node = que.front();
+                que.pop();
+                for (auto child : graph[node])
+                    if (--degree[child] == 1)
+                        que.push(child);
+            }
+        }
+
+        vector<int> res;
+        while (!que.empty())
+        {
+            res.push_back(que.front());
+            que.pop();
+        }
+        return res;
+    }
 };
 
 /*
