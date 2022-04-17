@@ -47,6 +47,26 @@ class Solution
 public:
     Solution() = default;
 
+    class Node
+    {
+    public:
+        int val;
+        vector<Node *> children;
+
+        Node() = default;
+
+        Node(int _val)
+        {
+            val = _val;
+        }
+
+        Node(int _val, vector<Node *> _children)
+        {
+            val = _val;
+            children = std::move(_children);
+        }
+    };
+
     struct TreeNode
     {
         int val{};
@@ -551,6 +571,8 @@ public:
     class NestedInteger
     {
     public:
+        NestedInteger() = default;
+        NestedInteger(int val);
         // Return true if this NestedInteger holds a single integer, rather than a nested list.
         bool isInteger() const;
 
@@ -560,6 +582,10 @@ public:
         // Return the nested list that this NestedInteger holds, if it holds a nested list
         // The result is undefined if this NestedInteger holds a single integer
         [[nodiscard]] const vector<NestedInteger> &getList() const;
+
+        void setInteger(int value);
+
+        void add(const NestedInteger &ni);
     };
 
     class NestedIterator
@@ -5408,8 +5434,229 @@ public:
         }
         return res;
     }
-};
 
+
+    bool rotateString(string& s, const string& goal)
+    {
+        return s.size() == goal.size() && (s+s).find(goal) !=string::npos;
+
+        if (s.size() != goal.size())
+            return false;
+        hash<string> hashPrese{};
+        auto strHas = hashPrese(goal);
+
+        auto size = s.size();
+        for (int i{}; i < size; ++i)
+        {
+            if (hashPrese(s) == strHas)
+                return true;
+            s.push_back(s.front());
+            s.erase(0, 1);
+        }
+        return false;
+    }
+
+    vector<vector<int>> levelOrder(Node *root)
+    {
+        queue<Node *> que;
+        que.push(root);
+        vector<vector<int>> res;
+        while (!que.empty()) {
+            auto size = que.size();
+            vector<int> tmp(size);
+            for (int i{}; i < size; ++i)
+            {
+                tmp[i] = que.front()->val;
+                for (auto node : que.front()->children)
+                    que.push(node);
+                que.pop();
+            }
+            res.push_back(std::move(tmp));
+        }
+        return res;
+    }
+
+    bool reachingPoints(int sx, int sy, int tx, int ty)
+    {
+        while (tx > sx && ty > sy)
+        {
+            if (tx == ty)
+                break;
+            if (tx > ty)
+                tx %= ty;
+            else
+                ty %= tx;
+        }
+        if (tx == sx && ty == sy)
+            return true;
+        if (tx == sx)
+            return ty > sy && (ty - sy) % sx == 0;
+        else if (ty == sy)
+            return tx > sx && (tx - sx) % sy == 0;
+        else
+            return false;
+    }
+
+    int uniqueMorseRepresentations(vector<string> &words)
+    {
+        static array<string, 26> alphaTab{".-","-...","-.-.","-..",".","..-.","--.","....","..",".---","-.-",".-..","--","-.","---",".--.","--.-",".-.","...","-","..-","...-",".--","-..-","-.--","--.."};
+        unordered_set<string> tab;
+        for (auto &word : words)
+        {
+            string tmp;
+            for (char ch : word)
+                tmp += alphaTab[ch - 'a'];
+            tab.insert(tmp);
+        }
+        return tab.size();
+    }
+
+    int countNumbersWithUniqueDigits(int n)
+    {
+        array<int, 9> tab{{1, 10, 91, 739, 5275, 32491, 168571, 712891, 2345851}};
+        return tab[n];
+    }
+
+    vector<int> numberOfLines(vector<int> &widths, string s){
+        int res{};
+        int cur{};
+        for (char ch : s)
+        {
+            cur += widths[ch - 'a'];
+            if (cur > 100)
+            {
+                ++res;
+                cur = widths[ch - 'a'];
+            }
+        }
+        ++res;
+        return {res, cur};
+    }
+
+    class RandomizedSet
+    {
+    public:
+        /** Initialize your data structure here. */
+        RandomizedSet()
+        {
+        }
+
+        /** Inserts a value to the set. Returns true if the set did not already contain the specified element. */
+        bool insert(int val)
+        {
+            if (set.find(val) != set.end())
+                return false;
+            set.insert(val);
+            return true;
+        }
+
+        /** Removes a value from the set. Returns true if the set contained the specified element. */
+        bool remove(int val)
+        {
+            if (set.find(val) == set.end())
+                return false;
+            set.erase(val);
+            return true;
+        }
+
+        /** Get a random element from the set. */
+        int getRandom()
+        {
+            auto it = set.begin();
+            advance(it, rand() % set.size());
+            return *it;
+        }
+
+    private:
+        unordered_set<int> set;
+    };
+
+    int maximumWealth(vector<vector<int>> &accounts)
+    {
+        int res{};
+        for (auto &account : accounts)
+            res = max(res, accumulate(account.begin(), account.end(), 0));
+        return res;
+    }
+
+    NestedInteger deserialize(const string &s)
+    {
+        function<NestedInteger(int &)> bfs = [&](int &i) -> NestedInteger {
+            if (s[i] == '[')
+            {
+                ++i;
+                NestedInteger res;
+                while (s[i] != ']')
+                {
+                    res.add(bfs(i));
+                    if (s[i] == ',')
+                        ++i;
+                }
+                ++i;
+                return res;
+            }
+            else
+            {
+                int start{i};
+                while (i < s.size() && s[i] != ',' && s[i] != ']')
+                    ++i;
+                return {stoi(s.substr(start, i - start))};
+            }
+        };
+
+        int i{0};
+        return bfs(i);
+    }
+
+    int largestPalindrome(int n)
+    {
+        if(n == 1)
+            return 9;
+        uint64_t halfPalindrome = pow(10, n) - 1;
+        for(auto left = halfPalindrome; left > 0; --left)
+        {
+            string str = to_string(left);
+            uint64_t palindrome = stoull(str + string(str.rbegin(), str.rend()));
+            for(auto l = halfPalindrome; l * l >= palindrome; --l)
+            {
+                if (palindrome % l == 0)
+                    return palindrome % 1337;
+            }
+        }
+        return 0;
+    }
+
+    string mostCommonWord(string &paragraph, vector<string> &banned)
+    {
+        string dots = "!?',;.";
+        for (auto &ch : paragraph)
+        {
+            if (dots.find(ch) != string::npos)
+                ch = ' ';
+            if(ch >= 'A' && ch <= 'Z')
+                ch += 'a' - 'A';
+        }
+        stringstream ss(paragraph);
+        unordered_set<string> ban(banned.begin(), banned.end());
+        unordered_map<string, int> ans;
+        for (string word; ss >> word;)
+        {
+            if (ban.find(word) == ban.end())
+                ++ans[word];
+        }
+        int max{};
+        string res;
+        for (auto &p : ans)
+        {
+            if (p.second > max)
+            {
+                max = p.second;
+                res = p.first;
+            }
+        }
+        return res;
+    }
+};
 /*
 int __FAST_IO__ = []()
 {
@@ -5419,3 +5666,5 @@ int __FAST_IO__ = []()
     return 0;
 }();
 */
+
+
