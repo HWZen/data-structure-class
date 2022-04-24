@@ -5656,6 +5656,247 @@ public:
         }
         return res;
     }
+
+    vector<int> lexicalOrder(int n)
+    {
+        vector<int> res;
+        function<void(int)> dfs = [&](int num)
+        {
+            if (num > n)
+                return;
+            res.push_back(num);
+            for (int i = 0; i < 10; ++i)
+                dfs(num * 10 + i);
+        };
+        for(int i = 1; i < 10; ++i)
+            dfs(i);
+        return res;
+    }
+
+    vector<int> shortestToChar(string &s, char c){
+        vector<int> cIndex;
+        for (int i{};i<s.size();++i)
+            if(s[i] == c)
+                cIndex.push_back(i);
+        vector<int> res(s.size(), INT_MAX);
+        for (int i{};i<s.size();++i)
+        {
+            for (auto &index : cIndex)
+            {
+                if (abs(index - i) < res[i])
+                    res[i] = abs(index - i);
+            }
+        }
+        return res;
+    }
+
+    int lengthLongestPath(string &input)
+    {
+        int res{};
+        int cur{};
+        stack<int> stk;
+        auto size = input.size();;
+
+        for (int it{}; it < size;)
+        {
+            if (input[it] == '.')
+            {
+                ++cur;
+                while (it < size && input[it] != '\n')
+                {
+                    ++it;
+                    ++cur;
+                }
+                if (stk.empty())
+                    res = max(res, cur);
+                else
+                    res = max(res, cur + stk.top());
+            }
+            else if (input[it] == '\n')
+            {
+                int level{};
+                ++it;
+                while(it < size && input[it] == '\t')
+                {
+                    ++it;
+                    ++level;
+                }
+
+                if(stk.size() < level)
+                    stk.push(cur + 1 + (stk.empty() ? 0 : stk.top()));
+                else if(stk.size() > level)
+                {
+                    while(stk.size() > level)
+                        stk.pop();
+                }
+                
+                cur = 0;
+            }
+            else
+            {
+                ++cur;
+                ++it;
+            }
+        }
+        return res;
+    }
+
+    string toGoatLatin(string &sentence)
+    {
+        stringstream ss(sentence);
+        string str;
+        string res;
+        int cnt{1};
+        while (ss >> str)
+        {
+            switch (str[0])
+            {
+                case 'a':
+                case 'A':
+                case 'e':
+                case 'E':
+                case 'i':
+                case 'I':
+                case 'o':
+                case 'O':
+                case 'u':
+                case 'U':
+                    break;
+                default:
+                    str.push_back(str[0]);
+                    str.erase(str.begin());
+            }
+            str += "ma";
+            for (int i{}; i < cnt; ++i)
+                str += "a";
+            res += str + " ";
+            ++cnt;
+        }
+        return res.substr(0, res.size() - 1);
+    }
+
+    int maxRotateFunction(vector<int> &nums)
+    {
+        auto size = nums.size();
+        int res{};
+        int sum{};
+        for(int i = 0; i < size; ++i)
+        {
+            res += i * nums[i];
+            sum += nums[i];
+        }
+
+        int last{res};
+        for (int i{1}; i < size; ++i)
+        {
+            last = last + sum - size * nums[size - i];
+            res = max(res, last);
+        }
+        return res;
+    }
+
+    vector<vector<int>> outerTrees(vector<vector<int>> &trees)
+    {
+        if (trees.size() == 1)
+            return trees;
+        vector<vector<int>> res;
+        using point = vector<int>;
+        point p0 = trees[0];
+        for (auto &tree : trees)
+            if(tree[1] < p0[1])
+                p0 = tree;
+
+        for(auto &tree : trees)
+        {
+            tree[0] -= p0[0];
+            tree[1] -= p0[1];
+        }
+
+        function cmp = [](point &p1, point &p2)
+        {
+            if(p1[0] == 0 && p1[1] == 0)
+                return false;
+            if (p2[0] == 0 && p2[1] == 0)
+                return true;
+            auto alpha1 = atan2(p1[1], p1[0]);
+            auto alpha2 = atan2(p2[1], p2[0]);
+            if(alpha1 > alpha2)
+                return true;
+            else if(fabs(alpha1 - alpha2) < 1e-6)
+            {
+                if(p1[0] * p1[0] + p1[1] * p1[1] > p2[0] * p2[0] + p2[1] * p2[1])
+                    return true;
+            }
+            return false;
+        };
+
+        sort(trees.begin(), trees.end(), cmp);
+        vector<point>::reverse_iterator rit;
+        for(rit = trees.rend() - 1; rit >= trees.rbegin(); --rit)
+        {
+            auto vectorAngle0 = atan2(trees[0][1], trees[0][0]);
+            auto &tree = *rit;
+            auto vectorAngle1 = atan2(tree[1], tree[0]);
+            if(fabs(vectorAngle0 - vectorAngle1) > 1e-6)
+                break;
+        }
+        auto temp = vector<point>(rit + 1, trees.rend());
+        for(int i{};i<temp.size();++i)
+            trees[i] = temp[i];
+
+        res.push_back(trees.back());
+        trees.pop_back();
+        res.push_back(trees.back());
+        trees.pop_back();
+
+        while (!trees.empty())
+        {
+            double vectorAngle0, vectorAngle1;
+            do
+            {
+                vectorAngle0 = atan2(res.back()[1] - (res.end() - 2)->at(1), res.back()[0] - (res.end() - 2)->at(0));
+                vectorAngle1 = atan2(trees.back()[1] - res.back()[1], trees.back()[0] - res.back()[0]);
+                vectorAngle0 = vectorAngle0 < 0 ? 2 * M_PI + vectorAngle0 : vectorAngle0;
+                vectorAngle1 = vectorAngle1 < 0 ? 2 * M_PI + vectorAngle1 : vectorAngle1;
+                if (vectorAngle0 > vectorAngle1)
+                    res.pop_back();
+            } while (vectorAngle0 > vectorAngle1);
+            res.push_back(trees.back());
+            trees.pop_back();
+        }
+        for (auto &tree : res)
+        {
+            tree[0] += p0[0];
+            tree[1] += p0[1];
+        }
+        return res;
+    }
+
+    int binaryGap(int n)
+    {
+        int res{};
+        int cur{};
+        bool flag{};
+        while (n)
+        {
+            if (n & 1)
+            {
+                if (flag)
+                {
+                    res = max(res, cur + 1);
+                    cur = 0;
+                }
+                flag = true;
+            }
+            else
+            {
+                if (flag)
+                    ++cur;
+            }
+            n >>= 1;
+        }
+        return res;
+    }
 };
 /*
 int __FAST_IO__ = []()
