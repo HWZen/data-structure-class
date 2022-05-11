@@ -5897,6 +5897,483 @@ public:
         }
         return res;
     }
+
+    class RandomPickIndex
+    {
+    public:
+        vector<int> &nums;
+        RandomPickIndex(vector<int> &nums):nums(nums)
+        {
+        }
+
+        int pick(int target)
+        {
+            int res{};
+            int cnt{};
+            for (int i{}; i < nums.size(); ++i)
+            {
+                if (nums[i] == target)
+                {
+                    if (rand() % (++cnt) == 0)
+                        res = i;
+                }
+            }
+            return res;
+        }
+    };
+
+    int projectionArea(vector<vector<int>> &grid)
+    {
+        int x{}, y{}, z{};
+        for (int x = 0; x < grid.size(); ++x)
+        {
+            int y_max{};
+            for (int y{}; y < grid[0].size(); ++y)
+            {
+                if (grid[x][y])
+                    ++z;
+                if (grid[x][y] > y_max)
+                    y_max = grid[x][y];
+            }
+            y += y_max;
+        }
+
+        for (int y = 0; y < grid[0].size(); ++y)
+        {
+            int x_max{};
+            for (int x{}; x < grid.size(); ++x)
+            {
+                if (grid[x][y] > x_max)
+                    x_max = grid[x][y];
+            }
+            x += x_max;
+        }
+        return x + y + z;
+    }
+
+    vector<vector<int>> pacificAtlantic(vector<vector<int>> &heights)
+    {
+
+        struct ArrayHash {
+            size_t operator()(const array<int, 2>& a) const {
+                size_t seed = (uint32_t)a[0];
+                seed <<= 32;
+                seed += (uint32_t)a[1];
+                return seed;
+            }
+        };
+
+        using point = array<int, 2>;
+        unordered_set<point, ArrayHash> atlantic;
+        unordered_set<point, ArrayHash> pacific;
+        unordered_set<point, ArrayHash> *ocean;
+
+        array<array<int,2>, 4> directions{{{0,1},{0,-1},{1,0},{-1,0}}};
+
+        function<void(int x, int y)> dfs = [&](int x, int y)
+        {
+            ocean->insert({x, y});
+
+            for (auto [nx, ny] : directions)
+            {
+                nx += x;
+                ny += y;
+                if (nx < 0 || nx >= heights.size() || ny < 0 || ny >= heights[0].size() || ocean->count({nx, ny}) || heights[nx][ny] < heights[x][y])
+                    continue;
+                dfs(nx, ny);
+            }
+        };
+
+        ocean = &atlantic;
+        for (int y{}; y < heights[0].size(); ++y)
+            dfs(0, y);
+        for (int x{}; x < heights.size(); ++x)
+            dfs(x, 0);
+        ocean = &pacific;
+        for (int y{}; y < heights[0].size(); ++y)
+            dfs(heights.size() - 1, y);
+        for (int x{}; x < heights.size(); ++x)
+            dfs(x, heights[0].size() - 1);
+
+        vector<vector<int>> res;
+        for (int x{}; x < heights.size(); ++x)
+            for(int y{}; y < heights[0].size(); ++y)
+                if(atlantic.count({x, y}) && pacific.count({x, y}))
+                    res.push_back({x, y});
+        return res;
+    }
+
+    vector<int> sortArrayByParity(vector<int> &nums)
+    {
+        sort(nums.begin(), nums.end(), [](int l, int r)
+             {
+                if(!(l & 1) && r & 1)
+                    return true;
+                if (l & 1 && !(r & 1))
+                    return false;
+                return l < r; });
+        return nums;
+    }
+
+    class Construct
+    {
+    public:
+        class Node
+        {
+        public:
+            bool val;
+            bool isLeaf;
+            Node *topLeft;
+            Node *topRight;
+            Node *bottomLeft;
+            Node *bottomRight;
+
+            Node()
+            {
+                val = false;
+                isLeaf = false;
+                topLeft = NULL;
+                topRight = NULL;
+                bottomLeft = NULL;
+                bottomRight = NULL;
+            }
+
+            Node(bool _val, bool _isLeaf)
+            {
+                val = _val;
+                isLeaf = _isLeaf;
+                topLeft = NULL;
+                topRight = NULL;
+                bottomLeft = NULL;
+                bottomRight = NULL;
+            }
+
+            Node(bool _val, bool _isLeaf, Node *_topLeft, Node *_topRight, Node *_bottomLeft, Node *_bottomRight)
+            {
+                val = _val;
+                isLeaf = _isLeaf;
+                topLeft = _topLeft;
+                topRight = _topRight;
+                bottomLeft = _bottomLeft;
+                bottomRight = _bottomRight;
+            }
+        };
+
+        Node *construct(vector<vector<int>> &grid)
+        {
+            if (grid.empty())
+                return nullptr;
+            int size = grid.size();
+            vector<vector<int>> pre(size + 1, vector<int>(size + 1));
+            for (int i{1}; i <= size; ++i)
+                for (int j{1}; j <= size; ++j)
+                    pre[i][j] = pre[i - 1][j] + pre[i][j - 1] - pre[i - 1][j - 1] + grid[i - 1][j - 1];
+    
+
+            auto getSum = [&](int r0, int c0, int r1, int c1) {
+                return pre[r1][c1] - pre[r1][c0] - pre[r0][c1] + pre[r0][c0];
+            };
+
+            function<Node *(int, int, int, int)> dfs = [&](int r0, int c0, int r1, int c1) {
+                int total = getSum(r0, c0, r1, c1);
+                if (total == 0)
+                    return new Node(false, true);
+                
+                if (total == (r1 - r0) * (c1 - c0))
+                    return new Node(true, true);
+                
+                return new Node(
+                    true,
+                    false,
+                    dfs(r0, c0, (r0 + r1) / 2, (c0 + c1) / 2),
+                    dfs(r0, (c0 + c1) / 2, (r0 + r1) / 2, c1),
+                    dfs((r0 + r1) / 2, c0, r1, (c0 + c1) / 2),
+                    dfs((r0 + r1) / 2, (c0 + c1) / 2, r1, c1));
+            };
+            return dfs(0, 0, size, size);
+        }
+    };
+
+    int smallestRangeI(vector<int> &nums, int k)
+    {
+        int _min{nums[0]}, _max{nums[0]};
+        for (int i{1}; i < nums.size(); ++i)
+        {
+            _min = min(_min, nums[i]);
+            _max = max(_max, nums[i]);
+        }
+        if (_max - _min <= k * 2)
+            return 0;
+        return _max - _min - k * 2;
+    }
+
+    vector<int> getAllElements(TreeNode *root1, TreeNode *root2)
+    {
+        
+        vector<int> v1, v2;
+        vector<int> *p;
+        function<void(TreeNode *)> dfs = [&](TreeNode *root)
+        {
+            if (!root)
+                return;
+            dfs(root->left);
+            p->push_back(root->val);
+            dfs(root->right);
+        };
+        p = &v1;
+        dfs(root1);
+        p = &v2;
+        dfs(root2);
+
+        vector<int> res;
+        auto it1 = v1.begin();
+        auto it2 = v2.begin();
+        while (it1 != v1.end() && it2 != v2.end())
+        {
+            if (*it1 < *it2)
+            {
+                res.push_back(*it1);
+                ++it1;
+            }
+            else
+            {
+                res.push_back(*it2);
+                ++it2;
+            }
+        }
+        while (it1 != v1.end())
+        {
+            res.push_back(*it1);
+            ++it1;
+        }
+        while (it2 != v2.end())
+        {
+            res.push_back(*it2);
+            ++it2;
+        }
+        return res;
+    }
+
+    vector<string> reorderLogFiles(vector<string> &logs)
+    {
+        stable_sort(logs.begin(), logs.end(), [&](const string &log1, const string &log2) {
+            int pos1 = log1.find_first_of(' ');
+            int pos2 = log2.find_first_of(' ');
+            bool isDigit1 = isdigit(log1[pos1 + 1]);
+            bool isDigit2 = isdigit(log2[pos2 + 1]);
+            if (isDigit1 && isDigit2)
+            {
+                return false;
+            }
+            if (!isDigit1 && !isDigit2)
+            {
+                string s1 = log1.substr(pos1);
+                string s2 = log2.substr(pos2);
+                if (s1 != s2)
+                {
+                    return s1 < s2;
+                }
+                return log1 < log2;
+            }
+            return isDigit1 ? false : true;
+        });
+        return logs;
+    }
+
+    int findTheWinner(int n, int k)
+    {
+        if(n==1)
+            return 1;
+        return (k + findTheWinner(n - 1, k) - 1) % n + 1;
+    }
+
+    int numSubarrayProductLessThanK(vector<int> &nums, int k)
+    {
+        int res{0};
+        int slipWindowsBegin{0};
+        int slipWindowsEnd{0};
+        int product{1};
+        auto size = nums.size();
+        while (slipWindowsEnd < size)
+        {
+            product *= nums[slipWindowsEnd];
+            while (product >= k && slipWindowsBegin <= slipWindowsEnd)
+            {
+                product /= nums[slipWindowsBegin];
+                ++slipWindowsBegin;
+            }
+            res += slipWindowsEnd - slipWindowsBegin + 1;
+            ++slipWindowsEnd;
+        }
+        return res;
+    }
+
+    class MyQueue
+    {
+    public:
+        MyQueue() = default;
+        MyQueue(size_t size) : data_(size) {}
+
+        void push(int x)
+        {
+            if (size_ == 0)
+            {
+                front_ = 0;
+                tail_ = 0;
+                size_ = 1;
+                data_[0] = x;
+                return;
+            }
+            if (size_ == data_.size())
+            {
+                data_.resize(size_ * 2);
+                if (tail_ < front_)
+                {
+                    for (size_t i = tail_; i < size_; i++)
+                    {
+                        data_[i + size_] = data_[i];
+                    }
+                }
+
+            }
+            tail_ = (tail_ + 1) % data_.size();
+            data_[tail_] = x;
+            ++size_;
+        }
+
+        int pop()
+        {
+            if (size_ == 0)
+            {
+                throw runtime_error("empty queue");
+            }
+            int x = data_[front_];
+            front_ = (front_ + 1) % data_.size();
+            --size_;
+            return x;
+        }
+
+        int front()
+        {
+            if (size_ == 0)
+            {
+                throw runtime_error("empty queue");
+            }
+            return data_[front_];
+        }
+
+        bool empty()
+        {
+            return size_ == 0;
+        }
+
+        int back()
+        {
+            if (size_ == 0)
+            {
+                throw runtime_error("empty queue");
+            }
+            return data_[tail_];
+        }
+
+        size_t size()
+        {
+            return size_;
+        }
+
+    private:
+        vector<int> data_{vector<int>(3001)};
+        int front_ = 0;
+        int tail_ = 0;
+        int size_ = 0;
+    };
+
+    class RecentCounter
+    {
+    public:
+        MyQueue date;
+        RecentCounter() = default;
+        int ping(int t)
+        {
+            date.push(t);
+            while(date.front() < t - 3000)
+                date.pop();
+            return date.size();
+        }
+    };
+
+    vector<int> findDuplicates(vector<int> &nums)
+    {
+        unordered_set<int> res;
+        unordered_set<int> s;
+        for (int i : nums)
+        {
+            if(s.count(i))
+                res.insert(i);
+            else
+                s.insert(i);
+        }
+        return {res.begin(), res.end()};
+    }
+
+    vector<int> diStringMatch(string &s)
+    {
+        vector<int> res(s.size() + 1);
+        int min{0};
+        int max = s.size();
+        for(int i = 0; i < s.size(); i++)
+        {
+            if(s[i] == 'I')
+                res[i] = min++;            
+            else
+                res[i] = max--;
+        }
+        if (s.back() == 'I')
+            res.back() = min;
+        else
+            res.back() = max;
+        return res;
+    }
+
+    class Codec
+    {
+    public:
+        // Encodes a tree to a single string.
+        string serialize(TreeNode *root)
+        {
+            if (root == nullptr)
+                return "";
+            string res = to_string(root->val);
+            res += '[';
+            res += serialize(root->left);
+            res += ']';
+            res += '[';
+            res += serialize(root->right);
+            res += ']';
+            return res;
+        }
+
+        // Decodes your encoded data to tree.
+        TreeNode *deserialize(string &data, int *pit = nullptr)
+        {
+            if (data.empty())
+                return nullptr;
+            if (!pit)
+                pit = new int(0);
+            auto &it = *pit;
+            if (data[it] == ']')
+                return nullptr;
+            int pos = data.find('[', it);
+            int val = stoi(data.substr(it, pos - it));
+            auto node = new TreeNode(val);
+            it = pos + 1;
+            node->left = deserialize(data, pit);
+            it += 2;
+            node->right = deserialize(data, pit);
+            ++it;
+            return node;
+        }
+    };
 };
 /*
 int __FAST_IO__ = []()
