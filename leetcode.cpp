@@ -6374,15 +6374,61 @@ public:
             return node;
         }
     };
+
+    int minDeletionSize(vector<string> &strs)
+    {
+        auto cols = strs[0].size();
+        auto rows = strs.size();
+        int res{};
+        for (int i{}; i < cols; ++i)
+        {
+            for (int j{1}; j < rows; ++j)
+            {
+                if (strs[j][i] < strs[j - 1][i])
+                {
+                    ++res;
+                    break;
+                }
+            }
+        }
+        return res;
+    }
+
+    bool oneEditAway(string &first, string &second)
+    {
+        int delta = first.size() - second.size();
+        if(abs(delta) > 1)
+            return false;
+        bool changed{false};
+        for(size_t it1{}, it2{}; it1 < first.size() && it2 < second.size(); ++it1, ++it2)
+        {
+            if(first[it1] != second[it2])
+            {
+                if(changed)
+                    return false;
+                changed = true;
+                if (delta > 0)
+                {
+                    ++it1;
+                    if (first[it1] != second[it2])
+                        return false;
+                }
+                else if (delta < 0)
+                {
+                    ++it2;
+                    if(first[it1] != second[it2])
+                        return false;
+                }
+            }
+        }
+        return true;
+    }
 };
 /*
-int __FAST_IO__ = []()
+auto __FAST_IO__{ []() noexcept
 {
-    std::ios::sync_with_stdio(0);
-    std::cin.tie(0);
-    std::cout.tie(0);
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr); std::cout.tie(nullptr);
     return 0;
-}();
+}() };
 */
-
-
