@@ -6423,6 +6423,35 @@ public:
         }
         return true;
     }
+
+    double largestTriangleArea(vector<vector<int>> &points)
+    {
+        double res{};
+        for(size_t i{}; i < points.size(); ++i)
+        {
+            for(size_t j{i + 1}; j < points.size(); ++j)
+            {
+                for(size_t k{j + 1}; k < points.size(); ++k)
+                {
+                    res = max(res, 0.5 * abs(points[i][0] * points[j][1] + points[j][0] * points[k][1] + points[k][0] * points[i][1] - points[i][0] * points[k][1] - points[j][0] * points[i][1] - points[k][0] * points[j][1]));
+                }
+            }
+        }
+        return res;
+    }
+
+    TreeNode *inorderSuccessor(TreeNode *root, TreeNode *p)
+    {
+        if(!root)
+            return nullptr;
+        if(root->val <= p->val)
+            return inorderSuccessor(root->right, p);
+        else
+        {
+            auto left = inorderSuccessor(root->left, p);
+            return left ? left : root;
+        }
+    }
 };
 /*
 auto __FAST_IO__{ []() noexcept
