@@ -6485,6 +6485,43 @@ public:
         return res > m ? -1 : res;
     }
 
+    bool isAlienSorted(vector<string> &words, string order)
+    {
+        array<int, 26> pos;
+        for(int i = 0; i < 26; ++i)
+            pos[order[i] - 'a'] = i;
+        for(int i = 0; i < words.size() - 1; ++i)
+        {
+            if(words[i] == words[i + 1])
+                continue;
+            int j;
+            for(j = 0; j < min(words[i].size(), words[i + 1].size()); ++j)
+            {
+                if(words[i][j] != words[i + 1][j])
+                {
+                    if(pos[words[i][j] - 'a'] > pos[words[i + 1][j] - 'a'])
+                        return false;
+                    break;
+                }
+            }
+            if( j == min(words[i].size(), words[i + 1].size()) && words[i].size() > words[i + 1].size())
+                return false;
+        }
+        return true;
+    }
+
+    int minMoves2(vector<int> &nums)
+    {
+        sort(nums.begin(), nums.end());
+        int res{};
+        int x = nums[nums.size() / 2];
+        for(int i{}; i < nums.size(); ++i)
+        {
+            res += abs(nums[i] - x);
+        }
+        return res;
+        
+    }
 };
 /*
 auto __FAST_IO__{ []() noexcept
