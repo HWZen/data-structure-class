@@ -1,11 +1,13 @@
 #include <algorithm>
 #include <array>
-#include <cmath>
 #include <climits>
+#include <cmath>
+
 #ifdef _MSC_VER
 #include <corecrt_math_defines.h>
-#include <vcruntime.h>
 #include <intrin0.inl.h>
+#include <vcruntime.h>
+
 #endif
 #include <cstddef>
 #include <cstdint>
@@ -18,6 +20,7 @@
 #include <iterator>
 #include <list>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <queue>
 #include <random>
@@ -31,8 +34,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <memory>
-
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -81,12 +82,14 @@ public:
     public:
         void trimLeftTrailingSpaces(string &input)
         {
-            input.erase(input.begin(), find_if(input.begin(), input.end(), [](int ch) { return !isspace(ch); }));
+            input.erase(input.begin(), find_if(input.begin(), input.end(), [](int ch)
+                                               { return !isspace(ch); }));
         }
 
         void trimRightTrailingSpaces(string &input)
         {
-            input.erase(find_if(input.rbegin(), input.rend(), [](int ch) { return !isspace(ch); })
+            input.erase(find_if(input.rbegin(), input.rend(), [](int ch)
+                                { return !isspace(ch); })
                             .base(),
                         input.end());
         }
@@ -259,7 +262,7 @@ public:
         return true;
     }
 
-    //TODO:
+    // TODO:
     bool isMatch(string s, string p)
     {
         string::iterator s_it = s.begin();
@@ -433,13 +436,11 @@ public:
         return min_sum;
     }
 
-
-
     vector<string> letterCombinations(string &digits)
     {
         const array<string, 10> n2s = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
 
-        function<void(string, vector<string>&, string)> backtracking = [&](string source, vector<string> & date, string temp)
+        function<void(string, vector<string> &, string)> backtracking = [&](string source, vector<string> &date, string temp)
         {
             if (source.length() == 0)
             {
@@ -563,7 +564,8 @@ public:
     {
         if (matrix.at(0).at(0) >= target)
             return binary_search(matrix[0].begin(), matrix[0].end(), target);
-        auto col = lower_bound(matrix.begin(), matrix.end(), target, [](const vector<int> &v, const int &tar) { return v.at(0) < tar; });
+        auto col = lower_bound(matrix.begin(), matrix.end(), target, [](const vector<int> &v, const int &tar)
+                               { return v.at(0) < tar; });
         col--;
         return binary_search((*col).begin(), (*col).end(), target);
     };
@@ -620,7 +622,6 @@ public:
         }
     };
 
-
     vector<vector<int>> subsetsWithDup(vector<int> &nums)
     {
         auto set2vector = [](const set<vector<int>> &s)
@@ -632,7 +633,7 @@ public:
             return res;
         };
 
-        function<void(set<vector<int>> &, vector<int>, vector<int>::iterator)> dfs = [&](set<vector<int>> & res, vector<int> tmp, vector<int>::iterator it)
+        function<void(set<vector<int>> &, vector<int>, vector<int>::iterator)> dfs = [&](set<vector<int>> &res, vector<int> tmp, vector<int>::iterator it)
         {
             if (it == nums.end())
                 res.insert(tmp);
@@ -694,7 +695,7 @@ public:
         vector<int> *H;
         if (height.size() < 3)
             return 0;
-        
+
         vector<int> index;
         index.resize(height.size());
         for (int i = 0; i < height.size(); i++)
@@ -702,7 +703,7 @@ public:
 
         sort(index.begin(), index.end(), [&](int l, int r)
              { return height.at(l) >= height.at(r); });
-        
+
         int res = 0;
         int j = index[0];
         int k = j;
@@ -729,11 +730,10 @@ public:
         return res;
     };
 
-
     int longestCommonSubsequence(string text1, string text2)
     {
         vector<vector<int>> DP;
-        function<void(int,int)> upDP = [&](int i, int j)
+        function<void(int, int)> upDP = [&](int i, int j)
         {
             if (text1[i] == text2[j])
                 DP[i][j] = max(DP[i - 1][j - 1] + 1, max(DP[i - 1][j], DP[i][j - 1]));
@@ -786,7 +786,7 @@ public:
             else
                 return dich(l, (l + r) / 2);
         };
-        
+
         if (nums.size() <= 1)
             return *nums.begin();
         if (*(nums.end() - 1) > *nums.begin())
@@ -1409,7 +1409,8 @@ public:
         vector<int> index(profits.size(), 0);
         for (int i = 0; i < index.size(); ++i)
             index[i] = i;
-        sort(index.begin(), index.end(), [&](int left, int right) { return capital[left] < capital[right]; });
+        sort(index.begin(), index.end(), [&](int left, int right)
+             { return capital[left] < capital[right]; });
         priority_queue<int> q;
         auto it = index.begin();
         do
@@ -1676,7 +1677,8 @@ public:
     int minDistance(string text1, string text2)
     {
         vector<vector<int>> DP;
-        function<void(int, int)> upDP = [&](int i, int j) {
+        function<void(int, int)> upDP = [&](int i, int j)
+        {
             if (text1[i] == text2[j])
                 DP[i][j] = max(DP[i - 1][j - 1] + 1, max(DP[i - 1][j], DP[i][j - 1]));
             else
@@ -1704,15 +1706,14 @@ public:
         return text1.size() + text2.size() - 2 * max - 2;
     }
 
-
     int pathSum(TreeNode *root, int targetSum)
     {
         int res = 0;
         unordered_map<int, int> map;
         map[0] = 1;
 
-        function<void(TreeNode * &root, int val)> dfs=[&](TreeNode * &root, int val)
-            {
+        function<void(TreeNode * &root, int val)> dfs = [&](TreeNode *&root, int val)
+        {
             if (map.count(val - targetSum))
                 res += map[val - targetSum];
             ++map[val];
@@ -1834,9 +1835,9 @@ public:
     }
 
     /*
- * Below is the interface for Iterator, which is already defined for you.
- * **DO NOT** modify the interface for Iterator.
- */
+     * Below is the interface for Iterator, which is already defined for you.
+     * **DO NOT** modify the interface for Iterator.
+     */
     class Iterator
     {
         typename vector<int>::const_iterator end;
@@ -2800,7 +2801,8 @@ public:
         vector<int> index(score.size());
         for (int i = 0; i < index.size(); ++i)
             index[i] = i;
-        sort(index.begin(), index.end(), [&score](int l, int r) -> bool { return score[l] > score[r]; });
+        sort(index.begin(), index.end(), [&score](int l, int r) -> bool
+             { return score[l] > score[r]; });
         vector<string> res(index.size());
         for (int i = 0; i < index.size(); ++i)
         {
@@ -2919,41 +2921,42 @@ public:
         int originalColor = grid[row][col];
 
         function<void(int, int)>
-            dfs = [&grid, &edge, &dfs, &visited, &m, &n, &originalColor](int x, int y) {
-                visited[x][y] = true;
-                bool is_edge = false;
-                if (x > 0 && grid[x - 1][y] == originalColor)
-                {
-                    if (!visited[x - 1][y])
-                        dfs(x - 1, y);
-                }
-                else
-                    is_edge = true;
-                if (y < n - 1 && grid[x][y + 1] == originalColor)
-                {
-                    if (!visited[x][y + 1])
-                        dfs(x, y + 1);
-                }
-                else
-                    is_edge = true;
-                if (x < m - 1 && grid[x + 1][y] == originalColor)
-                {
-                    if (!visited[x + 1][y])
-                        dfs(x + 1, y);
-                }
-                else
-                    is_edge = true;
-                if (y > 0 && grid[x][y - 1] == originalColor)
-                {
-                    if (!visited[x][y - 1])
-                        dfs(x, y - 1);
-                }
-                else
-                    is_edge = true;
+            dfs = [&grid, &edge, &dfs, &visited, &m, &n, &originalColor](int x, int y)
+        {
+            visited[x][y] = true;
+            bool is_edge = false;
+            if (x > 0 && grid[x - 1][y] == originalColor)
+            {
+                if (!visited[x - 1][y])
+                    dfs(x - 1, y);
+            }
+            else
+                is_edge = true;
+            if (y < n - 1 && grid[x][y + 1] == originalColor)
+            {
+                if (!visited[x][y + 1])
+                    dfs(x, y + 1);
+            }
+            else
+                is_edge = true;
+            if (x < m - 1 && grid[x + 1][y] == originalColor)
+            {
+                if (!visited[x + 1][y])
+                    dfs(x + 1, y);
+            }
+            else
+                is_edge = true;
+            if (y > 0 && grid[x][y - 1] == originalColor)
+            {
+                if (!visited[x][y - 1])
+                    dfs(x, y - 1);
+            }
+            else
+                is_edge = true;
 
-                if (is_edge)
-                    edge.insert(pair<int, int>(x, y));
-            };
+            if (is_edge)
+                edge.insert(pair<int, int>(x, y));
+        };
         dfs(row, col);
         for (auto p : edge)
             grid[p.first][p.second] = color;
@@ -3022,7 +3025,8 @@ public:
 
     int scheduleCourse(vector<vector<int>> &courses)
     {
-        sort(courses.begin(), courses.end(), [](const vector<int> &l, const vector<int> &r) { return l[1] < r[1]; });
+        sort(courses.begin(), courses.end(), [](const vector<int> &l, const vector<int> &r)
+             { return l[1] < r[1]; });
         priority_queue<int> q;
 
         int sum = 0;
@@ -3051,7 +3055,8 @@ public:
             graph[v[1]].emplace_back(v[0]);
 
         vector<int> ans(len, -1);
-        function<void(int)> dfs = [&graph, &quiet, &dfs, &ans](int index) {
+        function<void(int)> dfs = [&graph, &quiet, &dfs, &ans](int index)
+        {
             if (ans[index] != -1)
                 return;
             ans[index] = index;
@@ -3717,7 +3722,7 @@ public:
         return res;
     }
 
-    vector<string> uncommonFromSentences(const string& s1, const string& s2)
+    vector<string> uncommonFromSentences(const string &s1, const string &s2)
     {
         unordered_map<string, int> Map;
         auto it_front = s1.begin();
@@ -3726,7 +3731,7 @@ public:
         {
             if (*(++it_back) == ' ')
             {
-                ++Map[move(string(it_front,it_back))];
+                ++Map[move(string(it_front, it_back))];
                 it_front = ++it_back;
             }
         }
@@ -3748,7 +3753,7 @@ public:
         for (auto &p : Map)
             if (p.second == 1)
                 res.emplace_back(p.first);
-        
+
         return move(res);
     }
 
@@ -3760,7 +3765,8 @@ public:
     string longestNiceSubstring(string s)
     {
         int maxPos = 0, maxLen = 0;
-        auto check = [&](int typeNum) {
+        auto check = [&](int typeNum)
+        {
             vector<int> lowerCnt(26);
             vector<int> upperCnt(26);
             int cnt = 0;
@@ -3836,7 +3842,7 @@ public:
             return std::move(word);
         }
         else
-            return std::move(word);       
+            return std::move(word);
     }
 
     int findMinFibonacciNumbers(int k)
@@ -3864,23 +3870,24 @@ public:
         auto weighLen = grid[0].size();
         auto heighLen = grid.size();
         int cnt = 0;
-        std::function<void(int, int)> dfs = [&](int height, int weight) {
+        std::function<void(int, int)> dfs = [&](int height, int weight)
+        {
             if (height < 0 || height >= heighLen || weight < 0 || weight >= weighLen || grid[height][weight] == 0)
                 return;
 
             grid[height][weight] = 0;
             if (cnt != -1)
             {
-                if (height > 0 && height < heighLen - 1 && weight > 0 && weight < weighLen - 1)  
+                if (height > 0 && height < heighLen - 1 && weight > 0 && weight < weighLen - 1)
                     ++cnt;
                 else
                     cnt = -1;
             }
-            
+
             dfs(height - 1, weight);
             dfs(height + 1, weight);
             dfs(height, weight + 1);
-            dfs(height, weight -1);
+            dfs(height, weight - 1);
         };
 
         int res = 0;
@@ -3892,7 +3899,6 @@ public:
                     res += cnt == -1 ? 0 : cnt;
                     cnt = 0;
                 }
-
 
         return res;
     }
@@ -3925,8 +3931,6 @@ public:
                     left = it;
             }
             it = (left + right) / 2;
-            
-
         }
         // error
         return -1;
@@ -3938,7 +3942,6 @@ public:
         auto rows = matrix.size();
         vector<int> minInRow;
         minInRow.reserve(rows);
-
 
         for (auto &row : matrix)
             minInRow.push_back(*min_element(row.begin(), row.end()));
@@ -3959,10 +3962,10 @@ public:
             if (_max == minInRow[it])
                 res.push_back(_max);
         }
-        return res;  
+        return res;
     }
 
-    string pushDominoes(string& dominoes)
+    string pushDominoes(string &dominoes)
     {
         auto end = dominoes.end();
         auto left_it = dominoes.begin();
@@ -3991,7 +3994,6 @@ public:
             left = right;
         }
         return dominoes;
-
     }
 
     string reverseOnlyLetters(string &s)
@@ -4068,7 +4070,7 @@ public:
             auto it = nums.begin();
             string res = to_string(*it++) + "/(";
             while (it < end)
-                res+=to_string(*it++)+"/";
+                res += to_string(*it++) + "/";
             res.back() = ')';
             return res;
         }
@@ -4106,7 +4108,6 @@ public:
         if (_to[n].size() != _to[n + 1].size())
             throw "error size.";
 
-
         function<int(list<int>, int &)> bfs = [&](list<int> froms, int &length)
         {
             list<int> next_froms;
@@ -4119,15 +4120,13 @@ public:
                         to = -1;
                         return from;
                     }
-                    else if(to != -1)
+                    else if (to != -1)
                         next_froms.push_back(to);
                 }
             }
 
             auto p = bfs(next_froms, ++length);
         };
-        
-        
     }
 
     string convert(string &s, uint32_t numRows)
@@ -4163,9 +4162,10 @@ public:
     int addDigits(int num)
     {
         int res = 0;
-        while (num) {
+        while (num)
+        {
             res += num % 10;
-            num/=10;
+            num /= 10;
         }
         if (res < 10)
             return res;
@@ -4183,7 +4183,6 @@ public:
         using _stack = stack<int>;
         auto size = nums.size();
         vector<int> lMin(size), rMin(size), rMax(size), lMax(size);
-
 
         _stack s;
         for (int i = 0; i < size; ++i)
@@ -4241,7 +4240,7 @@ public:
         if (2 * time + 1 > size)
             return {};
         vector<array<int, 2>> cnt(size);
-        cnt[0] = {0,0};
+        cnt[0] = {0, 0};
         for (int i = 1; i < size; ++i)
         {
             cnt[i] = cnt[i - 1];
@@ -4257,7 +4256,7 @@ public:
             if (cnt[i][0] == cnt[i - time][0] && cnt[i][1] == cnt[i + time][1])
                 res.push_back(i);
         }
-        return res; 
+        return res;
     }
 
     string convertToBase7(int num)
@@ -4448,7 +4447,6 @@ public:
                     ++it;
                     if (it >= end || *it < alternateCode || *it >= startCode[0])
                         return false;
-                    
                 }
             }
             else if (*it >= startCode[1])
@@ -4471,7 +4469,6 @@ public:
             }
             else if (*it >= alternateCode)
                 return false;
-
         }
         return true;
     }
@@ -4483,7 +4480,7 @@ public:
         auto list1size = list1.size();
         for (int i = 0; i < list1size; ++i)
             map1.insert({std::move(list1[i]), i});
-        
+
         auto list2size = list2.size();
 
         for (int i = 0; i < list2size; ++i)
@@ -4499,8 +4496,8 @@ public:
             if (p.second == minimun)
                 res.emplace_back(p.first);
         }
-        
-        return res;     
+
+        return res;
     }
 
     int countMaxOrSubsets(vector<int> &nums)
@@ -4532,19 +4529,17 @@ public:
     class AllOne
     {
     public:
-        
-        
         AllOne() = default;
 
-        void inc(const string& key)
+        void inc(const string &key)
         {
             if (index.count(key))
             {
-                index[key]->inc(); 
+                index[key]->inc();
             }
             else
             {
-                if(!index.empty())
+                if (!index.empty())
                     index.insert({key, new MyList(key, min)});
                 else
                 {
@@ -4556,7 +4551,7 @@ public:
             updateMinMax();
         }
 
-        void dec(const string& key)
+        void dec(const string &key)
         {
             auto node = index[key];
             if (--node->cnt() <= 0)
@@ -4573,8 +4568,7 @@ public:
                     if (max == node)
                         max = node->prev() ? node->prev() : (node->next() ? node->next() : nullptr);
                 }
-                
-                
+
                 delete node;
                 index.erase(key);
             }
@@ -4603,11 +4597,11 @@ public:
 
         class MyList
         {
-        
+
         public:
             MyList() = default;
             using PListNode = MyList *;
-            MyList(string &&str, PListNode root = nullptr):_str(str)
+            MyList(string &&str, PListNode root = nullptr) : _str(str)
             {
                 if (root)
                     root->PrevAdd(this);
@@ -4631,7 +4625,7 @@ public:
                 {
                     node->_prev = _prev;
                     _prev->_next = node;
-                    _prev = node;   
+                    _prev = node;
                 }
             }
 
@@ -4653,9 +4647,9 @@ public:
                 if (!_prev)
                     return;
                 bool has_prev_prev = _prev->_prev;
-                if(has_prev_prev)
+                if (has_prev_prev)
                     _prev->_prev->_next = this;
-                if(_next)
+                if (_next)
                     _next->_prev = _prev;
                 auto tmp = _prev->_prev;
                 _prev->_prev = this;
@@ -4684,20 +4678,18 @@ public:
                 ++_cnt;
                 while (_next && _next->_cnt < _cnt)
                     moveBack();
-                    
             }
 
             string &str() { return _str; }
             int &cnt() { return _cnt; }
             const PListNode &prev() { return _prev; }
             const PListNode &next() { return _next; }
-            
+
         private:
             string _str{};
             int _cnt{1};
             PListNode _prev{};
             PListNode _next{};
-            
         };
 
         void updateMinMax()
@@ -4708,15 +4700,11 @@ public:
                 max = max->next();
         }
 
-
-
     private:
         using PListNode = MyList *;
         unordered_map<string, PListNode> index;
         PListNode min;
         PListNode max;
-        
-
     };
 
     /**
@@ -4815,7 +4803,8 @@ public:
 
     string longestWord(vector<string> &words)
     {
-        sort(words.begin(), words.end(), [](const string &l, const string &r){return l.size() != r.size()? l.size() > r.size() : l < r;});
+        sort(words.begin(), words.end(), [](const string &l, const string &r)
+             { return l.size() != r.size() ? l.size() > r.size() : l < r; });
         unordered_set<string> index(words.begin(), words.end());
         for (auto &ref_str : words)
         {
@@ -4828,7 +4817,7 @@ public:
                 else
                     str.pop_back();
             }
-            if(str.empty())
+            if (str.empty())
                 return ref_str;
         }
         return {};
@@ -4837,7 +4826,7 @@ public:
     class Bank
     {
     public:
-        Bank(vector<long long> &balance):size(data.size()), data(std::move(balance)){}
+        Bank(vector<long long> &balance) : size(data.size()), data(std::move(balance)) {}
 
         bool transfer(int account1, int account2, long long money)
         {
@@ -4882,12 +4871,12 @@ public:
     };
 
     /**
- * Your Bank object will be instantiated and called as such:
- * Bank* obj = new Bank(balance);
- * bool param_1 = obj->transfer(account1,account2,money);
- * bool param_2 = obj->deposit(account,money);
- * bool param_3 = obj->withdraw(account,money);
- */
+     * Your Bank object will be instantiated and called as such:
+     * Bank* obj = new Bank(balance);
+     * bool param_1 = obj->transfer(account1,account2,money);
+     * bool param_2 = obj->deposit(account,money);
+     * bool param_3 = obj->withdraw(account,money);
+     */
 
     string tree2str(TreeNode *root)
     {
@@ -4965,7 +4954,8 @@ public:
     int findKthNumber(int n, int k)
     {
 
-        function<int(int, int)> getSteps = [](int curr, int n) {
+        function<int(int, int)> getSteps = [](int curr, int n)
+        {
             int steps = 0;
             long first = curr;
             long last = curr;
@@ -4976,7 +4966,6 @@ public:
                 last = last * 10 + 9;
             }
             return steps;
-
         };
         int curr = 1;
         k--;
@@ -5056,7 +5045,6 @@ public:
                 res.push_back(*(res.end() - 2) + *(res.end() - 1));
             else
                 res.push_back(std::stoi(str));
-            
         }
 
         return std::accumulate(res.begin(), res.end(), 0);
@@ -5098,7 +5086,7 @@ public:
             while (cnt > k)
                 if (key[l++] != 'T')
                     --cnt;
-            res = max(res, r - l + 1);                    
+            res = max(res, r - l + 1);
         }
 
         for (int l{}, r{}, cnt{}; r < size; ++r)
@@ -5139,7 +5127,7 @@ public:
         }
         auto maxCnt = *max_element(serverCnt.begin(), serverCnt.end());
         vector<int> res;
-        
+
         for (int i{}; i < k; ++i)
             if (serverCnt[i] == maxCnt)
                 res.push_back(i);
@@ -5149,7 +5137,7 @@ public:
     vector<int> selfDividingNumbers(int left, int right)
     {
 
-        auto [tab, cnt] = [] () constexpr
+        auto [tab, cnt] = []() constexpr
         {
             int cnt{};
             array<int, 500> tab;
@@ -5166,11 +5154,12 @@ public:
                 }
                 if (!j)
                 {
-                    tab[cnt++] =i;
+                    tab[cnt++] = i;
                 }
             }
-            return pair(tab,cnt);
-        }();
+            return pair(tab, cnt);
+        }
+        ();
 
         return {lower_bound(tab.begin(), tab.begin() + cnt - 1, left), lower_bound(tab.begin(), tab.begin() + cnt - 1, right)};
     }
@@ -5196,7 +5185,6 @@ public:
         while (!tab.empty())
         {
 
-
             if (auto it = tab.find(*tab.begin() * 2); it == tab.end())
                 return false;
             else
@@ -5207,7 +5195,6 @@ public:
         }
         return true;
     }
-
 
     int strongPasswordChecker(string password)
     {
@@ -5346,7 +5333,7 @@ public:
                 tree[it] += delta;
                 it += lowBit(it);
             }
-            rawData[index] = val;            
+            rawData[index] = val;
         }
 
         int sumRange(int left, int right)
@@ -5435,10 +5422,9 @@ public:
         return res;
     }
 
-
-    bool rotateString(string& s, const string& goal)
+    bool rotateString(string &s, const string &goal)
     {
-        return s.size() == goal.size() && (s+s).find(goal) !=string::npos;
+        return s.size() == goal.size() && (s + s).find(goal) != string::npos;
 
         if (s.size() != goal.size())
             return false;
@@ -5461,7 +5447,8 @@ public:
         queue<Node *> que;
         que.push(root);
         vector<vector<int>> res;
-        while (!que.empty()) {
+        while (!que.empty())
+        {
             auto size = que.size();
             vector<int> tmp(size);
             for (int i{}; i < size; ++i)
@@ -5499,7 +5486,7 @@ public:
 
     int uniqueMorseRepresentations(vector<string> &words)
     {
-        static array<string, 26> alphaTab{".-","-...","-.-.","-..",".","..-.","--.","....","..",".---","-.-",".-..","--","-.","---",".--.","--.-",".-.","...","-","..-","...-",".--","-..-","-.--","--.."};
+        static array<string, 26> alphaTab{".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", ".---", "-.-", ".-..", "--", "-.", "---", ".--.", "--.-", ".-.", "...", "-", "..-", "...-", ".--", "-..-", "-.--", "--.."};
         unordered_set<string> tab;
         for (auto &word : words)
         {
@@ -5517,7 +5504,8 @@ public:
         return tab[n];
     }
 
-    vector<int> numberOfLines(vector<int> &widths, string s){
+    vector<int> numberOfLines(vector<int> &widths, string s)
+    {
         int res{};
         int cur{};
         for (char ch : s)
@@ -5581,7 +5569,8 @@ public:
 
     NestedInteger deserialize(const string &s)
     {
-        function<NestedInteger(int &)> bfs = [&](int &i) -> NestedInteger {
+        function<NestedInteger(int &)> bfs = [&](int &i) -> NestedInteger
+        {
             if (s[i] == '[')
             {
                 ++i;
@@ -5610,14 +5599,14 @@ public:
 
     int largestPalindrome(int n)
     {
-        if(n == 1)
+        if (n == 1)
             return 9;
         uint64_t halfPalindrome = pow(10, n) - 1;
-        for(auto left = halfPalindrome; left > 0; --left)
+        for (auto left = halfPalindrome; left > 0; --left)
         {
             string str = to_string(left);
             uint64_t palindrome = stoull(str + string(str.rbegin(), str.rend()));
-            for(auto l = halfPalindrome; l * l >= palindrome; --l)
+            for (auto l = halfPalindrome; l * l >= palindrome; --l)
             {
                 if (palindrome % l == 0)
                     return palindrome % 1337;
@@ -5633,7 +5622,7 @@ public:
         {
             if (dots.find(ch) != string::npos)
                 ch = ' ';
-            if(ch >= 'A' && ch <= 'Z')
+            if (ch >= 'A' && ch <= 'Z')
                 ch += 'a' - 'A';
         }
         stringstream ss(paragraph);
@@ -5668,18 +5657,19 @@ public:
             for (int i = 0; i < 10; ++i)
                 dfs(num * 10 + i);
         };
-        for(int i = 1; i < 10; ++i)
+        for (int i = 1; i < 10; ++i)
             dfs(i);
         return res;
     }
 
-    vector<int> shortestToChar(string &s, char c){
+    vector<int> shortestToChar(string &s, char c)
+    {
         vector<int> cIndex;
-        for (int i{};i<s.size();++i)
-            if(s[i] == c)
+        for (int i{}; i < s.size(); ++i)
+            if (s[i] == c)
                 cIndex.push_back(i);
         vector<int> res(s.size(), INT_MAX);
-        for (int i{};i<s.size();++i)
+        for (int i{}; i < s.size(); ++i)
         {
             for (auto &index : cIndex)
             {
@@ -5695,7 +5685,8 @@ public:
         int res{};
         int cur{};
         stack<int> stk;
-        auto size = input.size();;
+        auto size = input.size();
+        ;
 
         for (int it{}; it < size;)
         {
@@ -5716,20 +5707,20 @@ public:
             {
                 int level{};
                 ++it;
-                while(it < size && input[it] == '\t')
+                while (it < size && input[it] == '\t')
                 {
                     ++it;
                     ++level;
                 }
 
-                if(stk.size() < level)
+                if (stk.size() < level)
                     stk.push(cur + 1 + (stk.empty() ? 0 : stk.top()));
-                else if(stk.size() > level)
+                else if (stk.size() > level)
                 {
-                    while(stk.size() > level)
+                    while (stk.size() > level)
                         stk.pop();
                 }
-                
+
                 cur = 0;
             }
             else
@@ -5751,20 +5742,20 @@ public:
         {
             switch (str[0])
             {
-                case 'a':
-                case 'A':
-                case 'e':
-                case 'E':
-                case 'i':
-                case 'I':
-                case 'o':
-                case 'O':
-                case 'u':
-                case 'U':
-                    break;
-                default:
-                    str.push_back(str[0]);
-                    str.erase(str.begin());
+            case 'a':
+            case 'A':
+            case 'e':
+            case 'E':
+            case 'i':
+            case 'I':
+            case 'o':
+            case 'O':
+            case 'u':
+            case 'U':
+                break;
+            default:
+                str.push_back(str[0]);
+                str.erase(str.begin());
             }
             str += "ma";
             for (int i{}; i < cnt; ++i)
@@ -5780,7 +5771,7 @@ public:
         auto size = nums.size();
         int res{};
         int sum{};
-        for(int i = 0; i < size; ++i)
+        for (int i = 0; i < size; ++i)
         {
             res += i * nums[i];
             sum += nums[i];
@@ -5803,10 +5794,10 @@ public:
         using point = vector<int>;
         point p0 = trees[0];
         for (auto &tree : trees)
-            if(tree[1] < p0[1])
+            if (tree[1] < p0[1])
                 p0 = tree;
 
-        for(auto &tree : trees)
+        for (auto &tree : trees)
         {
             tree[0] -= p0[0];
             tree[1] -= p0[1];
@@ -5814,17 +5805,17 @@ public:
 
         function cmp = [](point &p1, point &p2)
         {
-            if(p1[0] == 0 && p1[1] == 0)
+            if (p1[0] == 0 && p1[1] == 0)
                 return false;
             if (p2[0] == 0 && p2[1] == 0)
                 return true;
             auto alpha1 = atan2(p1[1], p1[0]);
             auto alpha2 = atan2(p2[1], p2[0]);
-            if(alpha1 > alpha2)
+            if (alpha1 > alpha2)
                 return true;
-            else if(fabs(alpha1 - alpha2) < 1e-6)
+            else if (fabs(alpha1 - alpha2) < 1e-6)
             {
-                if(p1[0] * p1[0] + p1[1] * p1[1] > p2[0] * p2[0] + p2[1] * p2[1])
+                if (p1[0] * p1[0] + p1[1] * p1[1] > p2[0] * p2[0] + p2[1] * p2[1])
                     return true;
             }
             return false;
@@ -5832,16 +5823,16 @@ public:
 
         sort(trees.begin(), trees.end(), cmp);
         vector<point>::reverse_iterator rit;
-        for(rit = trees.rend() - 1; rit >= trees.rbegin(); --rit)
+        for (rit = trees.rend() - 1; rit >= trees.rbegin(); --rit)
         {
             auto vectorAngle0 = atan2(trees[0][1], trees[0][0]);
             auto &tree = *rit;
             auto vectorAngle1 = atan2(tree[1], tree[0]);
-            if(fabs(vectorAngle0 - vectorAngle1) > 1e-6)
+            if (fabs(vectorAngle0 - vectorAngle1) > 1e-6)
                 break;
         }
         auto temp = vector<point>(rit + 1, trees.rend());
-        for(int i{};i<temp.size();++i)
+        for (int i{}; i < temp.size(); ++i)
             trees[i] = temp[i];
 
         res.push_back(trees.back());
@@ -5902,7 +5893,7 @@ public:
     {
     public:
         vector<int> &nums;
-        RandomPickIndex(vector<int> &nums):nums(nums)
+        RandomPickIndex(vector<int> &nums) : nums(nums)
         {
         }
 
@@ -5954,8 +5945,10 @@ public:
     vector<vector<int>> pacificAtlantic(vector<vector<int>> &heights)
     {
 
-        struct ArrayHash {
-            size_t operator()(const array<int, 2>& a) const {
+        struct ArrayHash
+        {
+            size_t operator()(const array<int, 2> &a) const
+            {
                 size_t seed = (uint32_t)a[0];
                 seed <<= 32;
                 seed += (uint32_t)a[1];
@@ -5968,7 +5961,7 @@ public:
         unordered_set<point, ArrayHash> pacific;
         unordered_set<point, ArrayHash> *ocean;
 
-        array<array<int,2>, 4> directions{{{0,1},{0,-1},{1,0},{-1,0}}};
+        array<array<int, 2>, 4> directions{{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}};
 
         function<void(int x, int y)> dfs = [&](int x, int y)
         {
@@ -5997,8 +5990,8 @@ public:
 
         vector<vector<int>> res;
         for (int x{}; x < heights.size(); ++x)
-            for(int y{}; y < heights[0].size(); ++y)
-                if(atlantic.count({x, y}) && pacific.count({x, y}))
+            for (int y{}; y < heights[0].size(); ++y)
+                if (atlantic.count({x, y}) && pacific.count({x, y}))
                     res.push_back({x, y});
         return res;
     }
@@ -6068,20 +6061,21 @@ public:
             for (int i{1}; i <= size; ++i)
                 for (int j{1}; j <= size; ++j)
                     pre[i][j] = pre[i - 1][j] + pre[i][j - 1] - pre[i - 1][j - 1] + grid[i - 1][j - 1];
-    
 
-            auto getSum = [&](int r0, int c0, int r1, int c1) {
+            auto getSum = [&](int r0, int c0, int r1, int c1)
+            {
                 return pre[r1][c1] - pre[r1][c0] - pre[r0][c1] + pre[r0][c0];
             };
 
-            function<Node *(int, int, int, int)> dfs = [&](int r0, int c0, int r1, int c1) {
+            function<Node *(int, int, int, int)> dfs = [&](int r0, int c0, int r1, int c1)
+            {
                 int total = getSum(r0, c0, r1, c1);
                 if (total == 0)
                     return new Node(false, true);
-                
+
                 if (total == (r1 - r0) * (c1 - c0))
                     return new Node(true, true);
-                
+
                 return new Node(
                     true,
                     false,
@@ -6109,7 +6103,7 @@ public:
 
     vector<int> getAllElements(TreeNode *root1, TreeNode *root2)
     {
-        
+
         vector<int> v1, v2;
         vector<int> *p;
         function<void(TreeNode *)> dfs = [&](TreeNode *root)
@@ -6156,7 +6150,8 @@ public:
 
     vector<string> reorderLogFiles(vector<string> &logs)
     {
-        stable_sort(logs.begin(), logs.end(), [&](const string &log1, const string &log2) {
+        stable_sort(logs.begin(), logs.end(), [&](const string &log1, const string &log2)
+                    {
             int pos1 = log1.find_first_of(' ');
             int pos2 = log2.find_first_of(' ');
             bool isDigit1 = isdigit(log1[pos1 + 1]);
@@ -6175,14 +6170,13 @@ public:
                 }
                 return log1 < log2;
             }
-            return isDigit1 ? false : true;
-        });
+            return isDigit1 ? false : true; });
         return logs;
     }
 
     int findTheWinner(int n, int k)
     {
-        if(n==1)
+        if (n == 1)
             return 1;
         return (k + findTheWinner(n - 1, k) - 1) % n + 1;
     }
@@ -6234,7 +6228,6 @@ public:
                         data_[i + size_] = data_[i];
                     }
                 }
-
             }
             tail_ = (tail_ + 1) % data_.size();
             data_[tail_] = x;
@@ -6296,7 +6289,7 @@ public:
         int ping(int t)
         {
             date.push(t);
-            while(date.front() < t - 3000)
+            while (date.front() < t - 3000)
                 date.pop();
             return date.size();
         }
@@ -6308,7 +6301,7 @@ public:
         unordered_set<int> s;
         for (int i : nums)
         {
-            if(s.count(i))
+            if (s.count(i))
                 res.insert(i);
             else
                 s.insert(i);
@@ -6321,10 +6314,10 @@ public:
         vector<int> res(s.size() + 1);
         int min{0};
         int max = s.size();
-        for(int i = 0; i < s.size(); i++)
+        for (int i = 0; i < s.size(); i++)
         {
-            if(s[i] == 'I')
-                res[i] = min++;            
+            if (s[i] == 'I')
+                res[i] = min++;
             else
                 res[i] = max--;
         }
@@ -6397,14 +6390,14 @@ public:
     bool oneEditAway(string &first, string &second)
     {
         int delta = first.size() - second.size();
-        if(abs(delta) > 1)
+        if (abs(delta) > 1)
             return false;
         bool changed{false};
-        for(size_t it1{}, it2{}; it1 < first.size() && it2 < second.size(); ++it1, ++it2)
+        for (size_t it1{}, it2{}; it1 < first.size() && it2 < second.size(); ++it1, ++it2)
         {
-            if(first[it1] != second[it2])
+            if (first[it1] != second[it2])
             {
-                if(changed)
+                if (changed)
                     return false;
                 changed = true;
                 if (delta > 0)
@@ -6416,7 +6409,7 @@ public:
                 else if (delta < 0)
                 {
                     ++it2;
-                    if(first[it1] != second[it2])
+                    if (first[it1] != second[it2])
                         return false;
                 }
             }
@@ -6427,11 +6420,11 @@ public:
     double largestTriangleArea(vector<vector<int>> &points)
     {
         double res{};
-        for(size_t i{}; i < points.size(); ++i)
+        for (size_t i{}; i < points.size(); ++i)
         {
-            for(size_t j{i + 1}; j < points.size(); ++j)
+            for (size_t j{i + 1}; j < points.size(); ++j)
             {
-                for(size_t k{j + 1}; k < points.size(); ++k)
+                for (size_t k{j + 1}; k < points.size(); ++k)
                 {
                     res = max(res, 0.5 * abs(points[i][0] * points[j][1] + points[j][0] * points[k][1] + points[k][0] * points[i][1] - points[i][0] * points[k][1] - points[j][0] * points[i][1] - points[k][0] * points[j][1]));
                 }
@@ -6442,9 +6435,9 @@ public:
 
     TreeNode *inorderSuccessor(TreeNode *root, TreeNode *p)
     {
-        if(!root)
+        if (!root)
             return nullptr;
-        if(root->val <= p->val)
+        if (root->val <= p->val)
             return inorderSuccessor(root->right, p);
         else
         {
@@ -6453,29 +6446,36 @@ public:
         }
     }
 
-    int minStickers(vector<string>& stickers, string target)
+    int minStickers(vector<string> &stickers, string target)
     {
         int m = target.size();
         vector<int> dp(1 << m, -1);
         dp[0] = 0;
-        function<int(int)> helper = [&](int mask) {
-            if (dp[mask] != -1) {
+        function<int(int)> helper = [&](int mask)
+        {
+            if (dp[mask] != -1)
+            {
                 return dp[mask];
             }
             dp[mask] = m + 1;
-            for (auto & sticker : stickers) {
+            for (auto &sticker : stickers)
+            {
                 int left = mask;
                 vector<int> cnt(26);
-                for (char & c : sticker) {
+                for (char &c : sticker)
+                {
                     cnt[c - 'a']++;
                 }
-                for (int i = 0; i < m; i++) {
-                    if ((mask >> i & 1) && cnt[target[i] - 'a'] > 0) {
+                for (int i = 0; i < m; i++)
+                {
+                    if ((mask >> i & 1) && cnt[target[i] - 'a'] > 0)
+                    {
                         cnt[target[i] - 'a']--;
                         left ^= 1 << i;
                     }
                 }
-                if (left < mask) {
+                if (left < mask)
+                {
                     dp[mask] = min(dp[mask], helper(left) + 1);
                 }
             }
@@ -6488,23 +6488,23 @@ public:
     bool isAlienSorted(vector<string> &words, string order)
     {
         array<int, 26> pos;
-        for(int i = 0; i < 26; ++i)
+        for (int i = 0; i < 26; ++i)
             pos[order[i] - 'a'] = i;
-        for(int i = 0; i < words.size() - 1; ++i)
+        for (int i = 0; i < words.size() - 1; ++i)
         {
-            if(words[i] == words[i + 1])
+            if (words[i] == words[i + 1])
                 continue;
             int j;
-            for(j = 0; j < min(words[i].size(), words[i + 1].size()); ++j)
+            for (j = 0; j < min(words[i].size(), words[i + 1].size()); ++j)
             {
-                if(words[i][j] != words[i + 1][j])
+                if (words[i][j] != words[i + 1][j])
                 {
-                    if(pos[words[i][j] - 'a'] > pos[words[i + 1][j] - 'a'])
+                    if (pos[words[i][j] - 'a'] > pos[words[i + 1][j] - 'a'])
                         return false;
                     break;
                 }
             }
-            if( j == min(words[i].size(), words[i + 1].size()) && words[i].size() > words[i + 1].size())
+            if (j == min(words[i].size(), words[i + 1].size()) && words[i].size() > words[i + 1].size())
                 return false;
         }
         return true;
@@ -6515,12 +6515,21 @@ public:
         sort(nums.begin(), nums.end());
         int res{};
         int x = nums[nums.size() / 2];
-        for(int i{}; i < nums.size(); ++i)
+        for (int i{}; i < nums.size(); ++i)
         {
             res += abs(nums[i] - x);
         }
         return res;
-        
+    }
+
+    int repeatedNTimes(vector<int> &nums)
+    {
+        unordered_map<int, int> hashTab;
+        auto n = nums.size() / 2;
+        for (auto &num : nums)
+            if (++hashTab[num] == n)
+                return num;
+        return -1;
     }
 };
 /*
