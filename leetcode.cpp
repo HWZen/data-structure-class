@@ -2,6 +2,7 @@
 #include <array>
 #include <climits>
 #include <cmath>
+#include <string_view>
 
 #ifdef _MSC_VER
 #include <corecrt_math_defines.h>
@@ -34,6 +35,8 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <concepts>
+#include <regex>
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -6530,6 +6533,95 @@ public:
             if (++hashTab[num] == n)
                 return num;
         return -1;
+    }
+
+    vector<int> findRightInterval(vector<vector<int>> &intervals)
+    {
+        unordered_map<int, int> indexTab;
+        for (int i = 0; i < intervals.size(); ++i)
+            indexTab[intervals[i][0]] = i;
+        sort(intervals.begin(), intervals.end(),[](const vector<int> &left, const vector<int> &right)
+        {
+            return left[0] < right[0];
+        });
+        vector<int> res(intervals.size());
+        for (int i = 0; i < intervals.size(); ++i)
+        {
+            auto index = indexTab[intervals[i][0]];
+            auto it = lower_bound(intervals.begin(), intervals.end(), intervals[i][1], [](const vector<int> &left, int right)
+                                   { return left[0] < right; });
+            if(it != intervals.end())
+                res[index] = indexTab[it->front()];
+            else
+                res[index] = -1;
+        }
+        return res;
+    }
+
+    int findClosest(vector<string> &words, string &word1, string &word2)
+    {
+        int word1index{-1};
+        int word2index{-1};
+        int res{INT_MAX};
+        for (int i = 0; i < words.size(); ++i)
+        {
+            if (words[i] == word1)
+            {
+                word1index = i;
+                if (word2index != -1)
+                {
+                    res = min(res, abs(word1index - word2index));
+                    if(res == 1)
+                        return res;
+                }
+            }
+            if (words[i] == word2)
+            {
+                word2index = i;
+                if (word1index != -1)
+                {
+                    res = min(res, abs(word1index - word2index));
+                    if(res == 1)
+                        return res;
+                }
+            }
+        }
+        return res;
+    }
+
+    string removeOuterParentheses(string &s)
+    {
+        int st{};
+        int firstLevalBacketIndex{};
+        string res;
+        for(int i = 0; i < s.size(); ++i)
+        {
+            if(s[i] == '(')
+            {
+                st++;
+                if(st == 1)
+                    firstLevalBacketIndex = i;
+            }
+            else
+            {
+                st--;
+                if(st == 0)
+                    res += s.substr(firstLevalBacketIndex + 1, i - firstLevalBacketIndex - 1);
+            }
+        }
+        return res;
+    }
+
+    string validIPAddress(string & queryIP)
+    {
+
+        auto isIpv4 = std::regex("^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][1-9]?|0)(\\.|$))(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][1-9]?|0)$");
+        auto isIpv6 = std::regex("^(([0-9a-fA-F]{4,4})(:|$)){8}$");
+        if(regex_match(queryIP, isIpv4))
+            return "IPv4";
+        if (regex_match(queryIP, isIpv6))
+            return "IPv6";
+        return "Neither";
     }
 };
 /*
