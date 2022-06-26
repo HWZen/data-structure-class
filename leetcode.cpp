@@ -37,6 +37,7 @@
 #include <vector>
 #include <concepts>
 #include <regex>
+#include <span>
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -45,7 +46,7 @@
 #endif
 
 using namespace std;
-
+namespace daily{
 class Solution
 {
 public:
@@ -56,6 +57,8 @@ public:
     public:
         int val;
         vector<Node *> children;
+
+        Node *next;
 
         Node() = default;
 
@@ -6623,7 +6626,577 @@ public:
             return "IPv6";
         return "Neither";
     }
+
+    int sumRootToLeaf(TreeNode *root)
+    {
+        int res{};
+        function<void(TreeNode *, uint16_t)> dfs = [&](TreeNode *node, uint32_t sum)
+        {
+            if (!node)
+                return;
+            sum = sum * 2 + node->val;
+            if (!node->left && !node->right)
+                res += sum;
+            dfs(node->left, sum);
+            dfs(node->right, sum);
+        };
+        dfs(root, 0);
+        return res;
+    }
+
+    bool makesquare(vector<int> &matchsticks)
+    {
+        int sum = accumulate(matchsticks.begin(), matchsticks.end(), 0);
+        if (sum % 4)
+            return false;
+        int sideLen = sum / 4;
+        int nums = matchsticks.size();
+        vector<int> dp(1 << nums, -1);
+        dp[0] = 0;
+        for (int i{1}; i < (1 << nums); ++i)
+        {
+            for(int j{0}; j < nums; ++j)
+            {
+                int s1 = 1 << j;
+                if (!(s1 & i))
+                    continue;
+                if (dp[i & ~s1] >= 0 && matchsticks[j] + dp[i & ~s1] <= sideLen)
+                {
+                    dp[i] = (matchsticks[j] + dp[i & ~s1]) % sideLen;
+                    break;
+                }            
+            }
+        }
+        return dp[(1 << nums) - 1] == 0;
+    }
+
+    TreeNode *deleteNode(TreeNode *root, int key)
+    {
+        if (!root)
+            return nullptr;
+        if (root->val > key && root->left)
+            root->left = deleteNode(root->left, key);
+        else if (root->val < key && root->right)
+            root->right = deleteNode(root->right, key);
+        else if (root->val == key)
+        {
+            if (!root->left)
+                return root->right;
+            if (!root->right)
+                return root->left;
+            TreeNode *minNode = root->right;
+            while (minNode->left)
+                minNode = minNode->left;
+            root->val = minNode->val;
+            root->right = deleteNode(root->right, minNode->val);
+        }
+        return root;
+    }
+
+    class RandomPoinInCircle
+    {
+    public:
+        class Solution
+        {
+        private:
+            mt19937 gen{random_device{}()};
+            uniform_real_distribution<double> dis;
+            double xc, yc, r;
+
+        public:
+            Solution(double radius, double x_center, double y_center) : dis(-radius, radius), xc(x_center), yc(y_center), r(radius) {}
+
+            vector<double> randPoint()
+            {
+                double x, y;
+                do {
+                    x = dis(gen);
+                    y = dis(gen);
+                } while (x * x + y * y > r * r);
+                return {xc + x, yc + y};
+            }
+        };
+    };
+
+    int minEatingSpeed(vector<int> &piles, int h)
+    {
+        int l{1};
+        int r{*max_element(piles.begin(), piles.end())};
+        while (l < r)
+        {
+            int m = (l + r) / 2;
+            int cnt{0};
+            for (int pile : piles)
+            {
+                cnt += pile / m;
+                if (pile % m)
+                    cnt++;
+            }
+            if (cnt > h)
+                l = m + 1;
+            else
+                r = m;
+        }
+        return l;
+    }
+
+    bool isBoomerang(vector<vector<int>> &points)
+    {
+        auto &point1 = points[0];
+        auto &point2 = points[1];
+        auto &point3 = points[2];
+        point2[0] -= point1[0];
+        point2[1] -= point1[1];
+        point3[0] -= point1[0];
+        point3[1] -= point1[1];
+        point1[0] = point1[1] = 0;
+        return point2[0] * point3[1] - point2[1] * point3[0] != 0;
+    }
+
+    class RandomPointInRectangles
+    {
+    public:
+        class Solution {
+        public:
+            Solution(vector<vector<int>> &rects): rects(rects)
+            {
+                rectAreas.reserve(rects.size() + 1);
+                rectAreas.push_back(0);
+                for (auto &rect : rects)
+                    rectAreas.push_back((rect[2] - rect[0]) * (rect[3] - rect[1]) + rectAreas.back());
+                
+                dis = new uniform_int_distribution<int>(0, rectAreas.back());
+            }
+
+            vector<int> pick()
+            {
+                auto area = dis->operator()(gen);
+                int index = lower_bound(rectAreas.begin(), rectAreas.end(), area) - rectAreas.begin();
+                if (index == 0)
+                    index = 1;
+                area = rectAreas[index] - area;
+                if(area == 0)
+                    return {rects[index - 1][0], rects[index - 1][1]};
+                auto &rect = rects[index - 1];
+                auto x = rect[0] + area / (rect[3] - rect[1]);
+                auto y = rect[1] + area % (rect[3] - rect[1]);
+                return {x, y};
+            }
+
+        private:
+            vector<vector<int>> &rects;
+            vector<int> rectAreas;
+            mt19937 gen{random_device{}()};
+            uniform_int_distribution<int> *dis;
+        };
+    };
+
+    int minFlipsMonoIncr(string &s)
+    {
+        int res{};
+        int zeroCnt{};
+        int oneCnt{};
+        for (char c : s)
+        {
+            if (c == '0' && oneCnt > 0)
+                ++zeroCnt;
+            else if(c == '1')
+                ++oneCnt;
+                
+
+            if(oneCnt > 0 && zeroCnt > oneCnt)
+            {
+                res += oneCnt;
+                zeroCnt = 0;
+                oneCnt = 0;
+            }
+        }
+        return res + zeroCnt;
+    }
+
+    vector<string> findAndReplacePattern(vector<string> &words, string &pattern)
+    {
+        vector<string> res;
+        auto size = pattern.size();
+        for(auto &word : words)
+        {
+            if(word.size() != size)
+                continue;
+            if (size == 1)
+            {
+                res.push_back(word);
+                continue;
+            }
+            int wIter{0};
+            int pIter{0};
+            unordered_map<char, char> map;
+            unordered_map<char, char> map2;
+            while (wIter < size)
+            {
+                if (map.find(word[wIter]) == map.end())
+                {
+                    if(map2.find(pattern[pIter]) != map2.end())
+                        break;
+                    map[word[wIter]] = pattern[pIter];
+                    map2[pattern[pIter]] = word[wIter];
+                }
+                else if (map[word[wIter]] != pattern[pIter])
+                    break;
+                ++pIter;
+                ++wIter;
+            }
+            if (wIter == size)
+                res.push_back(word);
+        }
+        return res;
+    }
+
+    vector<int> findDiagonalOrder(vector<vector<int>> &mat)
+    {
+        vector<int> res;
+        res.reserve(mat.size() * mat[0].size());
+        int width = mat[0].size();
+        int height = mat.size();
+        for (int i{}; i < width + height - 1; ++i)
+        {
+            if (i & 1)
+            {
+                int x = i < width ? 0 : i - width + 1;
+                int y = i < width ? 1 : width - 1;
+                while (x < height && y >= 0)
+                    res.emplace_back(mat[x++][y--]);
+            }
+            else
+            {
+                int x = i < height ? i : height - 1;
+                int y = i < height ? 0 : i - height + 1;
+                while (x >= 0 && y < width)
+                    res.emplace_back(mat[x--][y++]);
+            }
+        }
+        return res;
+    }
+
+    int findPairs(vector<int> &nums, int k)
+    {
+        unordered_set<int> traversed;
+        unordered_set<int> res;
+        for (auto num : nums)
+        {
+            if (traversed.count(num - k))
+                res.insert(num - k);
+            if (traversed.count(num + k))
+                res.insert(num);
+            traversed.insert(num);
+        }
+        return res.size();
+    }
+
+    void duplicateZeros(vector<int> &arr)
+    {
+        auto size = arr.size();
+        auto topIt = arr.begin();
+        size_t top{0};
+        while (topIt <= arr.end() && top < size)
+        {
+            top += *topIt == 0 ? 2 : 1;
+            ++topIt;
+        }
+        if(topIt == arr.end())
+            return;
+        --topIt;
+
+        auto end = arr.end() - 1;
+        if (top > size && *topIt == 0)
+        {
+            *end-- = 0;
+            --topIt;
+        }
+        while (topIt >= arr.begin())
+        {
+            if (*topIt == 0)
+            {
+                *end-- = 0;
+                *end-- = 0;
+            }
+            else
+                *end-- = *topIt;
+            --topIt;
+        }
+    }
+
+    Node *insert(Node *head, int insertVal)
+    {
+        if (head == nullptr)
+        {
+            auto tmp = new Node(insertVal);
+            tmp->next = tmp;
+            return tmp;
+        }
+
+        auto it = head->next;
+        while (it != head)
+        {
+            if ((it->val <= insertVal && (it->next->val >= insertVal || it->val > it->next->val)) || (it->val > it->next->val && it->next->val > insertVal))
+            {
+                auto tmp = new Node(insertVal);
+                tmp->next = it->next;
+                it->next = tmp;
+                return head;
+            }
+            it = it->next;
+        }
+        auto tmp = new Node(insertVal);
+        tmp->next = head->next;
+        head->next = tmp;
+        return head;
+    }
+    vector<int> findFrequentTreeSum(TreeNode *root)
+    {
+        unordered_map<int, int> m;
+        function<int(TreeNode *)> dfs = [&](TreeNode *root)
+        {
+            if (root == nullptr)
+                return 0;
+            int sum = root->val + dfs(root->left) + dfs(root->right);
+            ++m[sum];
+            return sum;
+        };
+        dfs(root);
+        vector<int> res;
+        int max{};
+        for (auto &[key, value] : m)
+        {
+            if (value > max)
+            {
+                max = value;
+                res.clear();
+                res.emplace_back(key);
+            }
+            else if (value == max)
+                res.emplace_back(key);
+        }
+        return res;
+    }
+
+    int minCost(vector<vector<int>> &costs)
+    {
+        array<vector<int>, 3> dp{vector<int>(costs.size()), vector<int>(costs.size()), vector<int>(costs.size())};
+        dp[0][0] = costs[0][0];
+        dp[1][0] = costs[0][1];
+        dp[2][0] = costs[0][2];
+
+        for (size_t i{1}; i < costs.size(); ++i)
+        {
+            dp[0][i] = min(dp[1][i - 1], dp[2][i - 1]) + costs[i][0];
+            dp[1][i] = min(dp[0][i - 1], dp[2][i - 1]) + costs[i][1];
+            dp[2][i] = min(dp[0][i - 1], dp[1][i - 1]) + costs[i][2];
+        }
+
+        return min({dp[0].back(), dp[1].back(), dp[2].back()});
+    }
+
+    class RandInBlacklist
+    {
+    public:
+        class Solution
+        {
+            int m_nums;
+            unordered_map<int, int> m_blacklistMap;
+
+        public:
+            Solution(int n, vector<int> &blacklist) : m_nums(n - blacklist.size())
+            {
+                unordered_set<int> black;
+                for (auto i : blacklist)
+                    if (i >= m_nums)
+                        black.insert(i);
+
+                auto it = m_nums - 1;
+                for (auto i : blacklist)
+                {
+                    if (i < m_nums)
+                    {
+                        while (black.count(++it)){}
+                        m_blacklistMap[i] = it;
+                    }
+                }
+            }
+            int pick()
+            {
+                int res = rand() % m_nums;
+                return (m_blacklistMap.count(res) ? m_blacklistMap[res] : res);
+            }
+        };
+    };
 };
+}
+
+namespace 剑指offer
+{
+
+class Solution
+{
+    int findRepeatNumber(vector<int> &nums)
+    {
+        unordered_set<int> numSet;
+        for (auto &i : nums)
+        {
+            if (numSet.count(i))
+                return i;
+            else
+                numSet.insert(i);
+        }
+        return -1;
+    }
+
+    bool findNumberIn2DArray(vector<vector<int>> &matrix, int target)
+    {
+        if (matrix.size() < 1)
+            return false;
+
+        auto x_size = matrix.size();
+        auto y_size = matrix[0].size();
+
+        size_t it[2]{0, y_size - 1};
+
+        while (it[0] >=0 && it[0] < x_size && it[1] >= 0 && it[1] < y_size && matrix[it[0]][it[1]] != target)
+        {
+            if (matrix[it[0]][it[1]] > target)
+                --it[1];
+            else
+                ++it[0];
+        }
+
+        return it[0] >= 0 && it[0] < x_size && it[1] >= 0 && it[1] < y_size;
+    }
+
+    string replaceSpace(string &s)
+    {
+        std::regex reg(" ");
+        return std::regex_replace(s,reg,"%20");
+    }
+
+    struct ListNode
+    {
+        int val;
+        ListNode *next;
+        ListNode(int x) : val(x), next(NULL) {}
+    };
+
+    
+    
+    struct TreeNode {
+        int val;
+        TreeNode *left;
+        TreeNode *right;
+        TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+    };
+     
+
+    vector<int>& reversePrint(ListNode *head)
+    {
+        if (head)
+        {
+            auto &res = reversePrint(head->next);
+            res.emplace_back(head->val);
+            return res;
+        }
+        else
+            return *(new vector<int>);
+    }
+
+    TreeNode *buildTree(vector<int> &_preorder, vector<int> &_inorder)
+    {
+        struct vector_viewer
+        {
+            size_t begin{};
+            size_t end{};
+        };
+
+        function<TreeNode *(vector_viewer, vector_viewer)> core = [&](vector_viewer preorder, vector_viewer inorder)
+        {
+            auto res = new TreeNode(_preorder[preorder.begin]);
+
+            size_t resIndex{UINT64_MAX};
+            for (auto it{inorder.begin}; it < inorder.end; ++it)
+            {
+                if (_inorder[it] == res->val)
+                {
+                    resIndex = it;
+                    break;
+                }
+            }
+
+            auto leftNums = resIndex - inorder.begin;
+            auto rightNums = inorder.end - resIndex - 1;
+
+            if (leftNums > 0)
+                res->left = core({preorder.begin + 1, preorder.begin + 1 + leftNums}, {inorder.begin, resIndex});
+            if (rightNums > 0)
+                res->right = core({preorder.begin + 1 + leftNums, preorder.end}, {resIndex + 1, inorder.end});
+            return res;
+        };
+
+        return core({0, _preorder.size()}, {0, _inorder.size()});
+
+    }
+
+    class CQueue
+    {
+        stack<int> m_dataStack;
+        stack<int> m_popStack;
+    public:
+        CQueue()
+        {
+        }
+
+        void appendTail(int value)
+        {
+            m_dataStack.push(value);
+        }
+
+        int deleteHead()
+        {
+            if (!m_popStack.empty())
+            {
+                auto res = m_popStack.top();
+                m_popStack.pop();
+                return res;
+            }
+            else if (!m_dataStack.empty())
+            {
+                while (!m_dataStack.empty())
+                {
+                    m_popStack.push(m_dataStack.top());
+                    m_dataStack.pop();
+                }
+                auto res = m_popStack.top();
+                m_popStack.pop();
+                return res;
+            }
+            else
+                return -1;
+
+        }
+    };
+
+    int numWays(int n)
+    {
+        if (n <= 2)
+            return n;
+        vector<int> dp(n);
+        dp[0] = 1;
+        dp[1] = 2;
+        for (int i{2}; i < n; ++i)
+            dp[i] = (dp[i - 1] + dp[i - 2]) % 1000000007;
+        return dp[n - 1];
+    }
+};
+    
+}
+
+
 /*
 auto __FAST_IO__{ []() noexcept
 {
