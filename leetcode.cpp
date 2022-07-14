@@ -3,6 +3,7 @@
 #include <climits>
 #include <cmath>
 #include <string_view>
+#include <type_traits>
 
 #ifdef _MSC_VER
 #include <corecrt_math_defines.h>
@@ -7029,6 +7030,197 @@ public:
             }
         };
     };
+
+    int minRefuelStops(int target, int startFuel, vector<vector<int>> &stations)
+    {
+        int carPos{0};
+        int cnt{0};
+        std::priority_queue<int, vector<int>, std::less<int>> q;
+        auto stationIt = stations.begin();
+        while (carPos < target) {
+            if (target - carPos <= startFuel)
+                return cnt;
+            if (stationIt == stations.end())
+            {
+                while (!q.empty() && target - carPos > startFuel)
+                {
+                    startFuel += q.top();
+                    ++cnt;
+                    q.pop();
+                }
+                if (target - carPos > startFuel)
+                    return -1;
+                else
+                    return cnt;
+            }
+
+            if ((*stationIt)[0] - carPos > startFuel)
+            {
+                while (!q.empty() && (*stationIt)[0] - carPos > startFuel)
+                {
+                    startFuel += q.top();
+                    ++cnt;
+                    q.pop();
+                }
+                if ((*stationIt)[0] - carPos > startFuel)
+                    return -1;
+            }
+            startFuel -= (*stationIt)[0] - carPos;
+            carPos = (*stationIt)[0];
+            q.push((*stationIt)[1]);
+            ++stationIt;
+        }
+        return -1;
+
+    }
+
+    int nextGreaterElement(int n)
+    {
+        // auto s = to_string(n);
+        // return !next_permutation(s.begin(), s.end()) || stol(s) > INT_MAX ? -1 : stoi(s);
+    }
+
+    class MyCalendar
+    {
+        set<pair<int,int>> books;
+    public:
+        MyCalendar() = default;
+
+        bool book(int start, int end)
+        {
+            auto it = books.lower_bound({end, 0});
+            if (it == books.begin() || (--it)->second <= start)
+            {
+                books.emplace(start, end);
+                return true;
+            }
+            return false;
+        }
+    };
+
+    int minCostToMoveChips(vector<int> &position)
+    {
+        int odd{};
+        int even{};
+        for (int i : position)
+            if (i & 1)
+                ++odd;
+            else
+                ++even;
+
+        return min(odd,even);
+    }
+
+    class MagicDictionary
+    {
+        class DictTree
+        {
+        public:
+            char ch{};
+            bool isEnd{};
+            unordered_map<char, DictTree*> next;
+        };
+        DictTree root;
+
+    public:
+        MagicDictionary() = default;
+
+        void buildDict(vector<string> &dictionary)
+        {
+            for (auto &word : dictionary)
+            {
+                auto pnode = &root;
+                for (char ch : word)
+                {
+                    if (pnode->next.count(ch) == 0)
+                        pnode->next[ch] = new DictTree;
+                    pnode = pnode->next[ch];
+                }
+                pnode->isEnd = true;
+            }
+
+        }
+
+        bool search(string &searchWord)
+        {
+            function<bool(DictTree *, int, bool)> dfs = [&](DictTree *node, int index, bool modified)
+            {
+                if (index == searchWord.size())
+                    return modified && node->isEnd;
+                if (node->next.count(searchWord[index]))
+                    if (dfs(node->next[searchWord[index]], index + 1, modified))
+                        return true;
+                if (modified)
+                    return false;
+                for (auto &[ch, nextNode] : node->next)
+                    if (searchWord[index] != ch && dfs(nextNode, index + 1, true))
+                        return true;
+                return false;
+            };
+
+            return dfs(&root, 0, false);
+        }
+    };
+
+    int oddCells(int m, int n, vector<vector<int>> &indices)
+    {
+        unordered_map<int, int> cols;
+        unordered_map<int, int> rows;
+
+        for (auto &p : indices)
+        {
+            ++rows[p[0]];
+            ++cols[p[1]];
+        }
+
+        int oddCols{}, oddRows{};
+        for (auto &[col, cnt] : cols)
+            if (cnt & 1)
+                ++oddCols;
+
+        for (auto &[col, cnt] : rows)
+            if (cnt & 1)
+                ++oddRows;
+
+        return oddRows * (n - oddCols) + oddCols * (m - oddRows);
+    }
+
+    vector<int> asteroidCollision(vector<int> &asteroids)
+    {
+        vector<int> st;
+        vector<int> res;
+        for (int aster : asteroids)
+        {
+            if (aster > 0)
+            {
+                st.emplace_back(aster);
+                continue;
+            }
+
+            if (st.empty())
+            {
+                res.emplace_back(aster);
+                continue;
+            }
+
+            while (!st.empty() && st.back() < aster)
+                st.pop_back();
+
+            if (st.empty())
+            {
+                res.emplace_back(aster);
+                continue;
+            }
+
+            if (st.back() == -aster)
+            {
+                st.pop_back();
+                continue;
+            }
+        }
+
+        res.insert(res.end(), st.begin(), st.end());
+    }
 };
 }
 
@@ -7191,6 +7383,141 @@ class Solution
         for (int i{2}; i < n; ++i)
             dp[i] = (dp[i - 1] + dp[i - 2]) % 1000000007;
         return dp[n - 1];
+    }
+
+    int minArray(vector<int> &numbers)
+    {
+        int l = 0, r = numbers.size() - 1;
+        int mid = (r - l) / 2 + l;
+
+        while (r > l)
+        {
+            if (numbers[mid] < numbers[r])
+                r = mid;
+            else if (numbers[mid] > numbers[r])
+                l = mid + 1;
+            else
+                --r;
+            mid = (r - l) / 2 + l;
+        }
+
+        return numbers[l];
+    }
+
+    bool exist(vector<vector<char>> &board_raw, string &word)
+    {
+        auto board = board_raw;
+        function<bool(int x, int y, string::iterator wordIt)> bfs = [&](int x, int y, string::iterator wordIt)
+        {
+            if (x >= board.size() || y >= board[0].size() || x < 0 || y < 0)
+                return false;
+            if (board[x][y] != *wordIt)
+                return false;
+            auto tmp = board[x][y];
+            board[x][y] = 0;
+            if (wordIt == word.end() - 1)
+                return true;
+            ++wordIt;
+            if (bfs(x + 1, y, wordIt) || bfs(x, y + 1, wordIt) || bfs(x - 1, y, wordIt) || bfs(x, y - 1, wordIt))
+                return true;
+            board[x][y] = tmp;
+            return false;
+        };
+
+        for (int x{}; x < board_raw.size(); ++x)
+            for (int y{}; y < board_raw[0].size(); ++y)
+                if (board_raw[x][y] == word.front())
+                {
+                    if (bfs(x, y, word.begin()))
+                        return true;
+                    else
+                        board = board_raw;
+                }
+
+        return false;
+    }
+
+    int movingCount(int m, int n, int k)
+    {
+        auto fun = [](int num)
+        {
+            int res{};
+            while (num)
+            {
+                res += num % 10;
+                num /= 10;
+            }
+            return res;
+        };
+
+        vector<vector<int8_t>> tab(m, vector<int8_t>(n));
+        tab[0][0] = 1;
+
+        int res{1};
+        for (int i{}; i < m; ++i)
+        {
+            for (int j{}; j < n; ++j)
+            {
+                if (i + j == 0 || fun(n) + fun(m) > k)
+                    continue;
+                if (i - 1 > 0)
+                    tab[i][j] |= tab[i - 1][j];
+                if (j - 1 > 0)
+                    tab[i][j] |= tab[i][j - 1];
+                if (tab[i][j])
+                    ++res;
+            }
+        }
+        return res;
+
+    }
+
+    int cuttingRope(int n)
+    {
+        if (n == 2)
+            return 1;
+        if (n == 3)
+            return 2;
+
+        int _3powNums = n / 3;
+        int _residue = n % 3;
+        if (_residue == 1)
+        {
+            --_3powNums;
+            _residue = 4;
+        }
+        return (int)pow(3, _3powNums) * (_residue == 0 ? 1 : _residue);
+    }
+
+    int cuttingRopePro(int n)
+    {
+        if (n == 2)
+            return 1;
+        if (n == 3)
+            return 2;
+
+        int _3powNums = n / 3;
+        int _residue = n % 3;
+        if (_residue == 1)
+        {
+            --_3powNums;
+            _residue = 4;
+        }
+
+        uint64_t res{1};
+        for (int i{}; i < _3powNums; ++i)
+        {
+            res *= 3;
+            res %= 1000000007;
+        }
+        res *= (_residue == 0 ? 1 : _residue);
+        res %= 1000000007;
+        return res;
+    }
+
+    int hammingWeight(uint32_t n)
+    {
+        return __builtin_popcount(n);
     }
 };
     
