@@ -7220,6 +7220,181 @@ public:
         }
 
         res.insert(res.end(), st.begin(), st.end());
+        return res;
+    }
+
+    class WordFilter
+    {
+        vector<string> &m_words;
+    public:
+        WordFilter(vector<string> &words):m_words(words)
+        {
+        }
+
+        int f(const string &pref, const string &&suff)
+        {
+            std::regex reg{pref + ".*+" + suff};
+            for (int i = m_words.size() - 1; i > 0; --i)
+                if (regex_match(m_words[i], reg))
+                    return i;
+            return -1;
+        }
+    };
+
+    class logicalORofQuardTree
+    {
+        // Definition for a QuadTree node.
+        class Node
+        {
+        public:
+            bool val;
+            bool isLeaf;
+            Node *topLeft;
+            Node *topRight;
+            Node *bottomLeft;
+            Node *bottomRight;
+
+            Node()
+            {
+                val = false;
+                isLeaf = false;
+                topLeft = NULL;
+                topRight = NULL;
+                bottomLeft = NULL;
+                bottomRight = NULL;
+            }
+
+            Node(bool _val, bool _isLeaf)
+            {
+                val = _val;
+                isLeaf = _isLeaf;
+                topLeft = NULL;
+                topRight = NULL;
+                bottomLeft = NULL;
+                bottomRight = NULL;
+            }
+
+            Node(bool _val, bool _isLeaf, Node *_topLeft, Node *_topRight, Node *_bottomLeft, Node *_bottomRight)
+            {
+                val = _val;
+                isLeaf = _isLeaf;
+                topLeft = _topLeft;
+                topRight = _topRight;
+                bottomLeft = _bottomLeft;
+                bottomRight = _bottomRight;
+            }
+        };
+
+        Node *intersect(Node *quadTree1, Node *quadTree2)
+        {
+            if (quadTree1->isLeaf)
+            {
+                if (quadTree1->val)
+                    return quadTree1;
+                else
+                    return quadTree2;
+            }
+
+            if (quadTree2->isLeaf)
+            {
+                if (quadTree2->val)
+                    return quadTree2;
+                else
+                    return quadTree1;
+            }
+
+            auto res{new Node};
+            res->topLeft = intersect(quadTree1->topLeft, quadTree2->topLeft);
+            res->topRight = intersect(quadTree1->topRight, quadTree2->topRight);
+            res->bottomLeft = intersect(quadTree1->bottomLeft, quadTree2->bottomLeft);
+            res->bottomRight = intersect(quadTree1->bottomRight, quadTree2->bottomRight);
+
+            if (res->topLeft->isLeaf && res->topRight->isLeaf && res->bottomLeft->isLeaf && res->bottomRight->isLeaf && (res->bottomLeft->val == res->topLeft->val && res->topRight->val == res->topLeft->val && res->topRight->val == res->bottomRight->val))
+            {
+                res = new Node(res->topLeft->val, true);
+            }
+
+            return res;
+        }
+    };
+
+    int arrayNesting(vector<int> &nums)
+    {
+        vector<unordered_set<int>> circles;
+
+        int res{0};
+        for (auto it{nums.begin()}; it < nums.end(); ++it)
+        {
+            if (*it == -1)
+                continue;
+            auto it2 = nums[*it];
+            auto iit = *it;
+            nums[*it] = -1;
+            int circleCnt{1};
+            while (it2 != iit)
+            {
+                ++circleCnt;
+                int tmp = it2;
+                it2 = nums[it2];
+                nums[tmp] = -1;
+            }
+            res = max(res, circleCnt);
+        }
+        return res;
+    }
+
+    vector<vector<int>> shiftGrid(vector<vector<int>> &grid, int k)
+    {
+        if (k == 0)
+            return grid;
+        int tmp = grid.back().back();
+        auto m{grid.size()};
+        auto n{grid.back().size()};
+        std::pair<size_t, size_t> point;
+
+        for (int x = m - 1; x >= 0; --x)
+        {
+            for (int y = n - 1; y >= 0; --y)
+            {
+                if (y == n - 1)
+                {
+                    if (x == m - 1)
+                        continue;
+                    grid[x + 1][0] = grid[x][y];
+                }
+                else
+                    grid[x][y + 1] = grid[x][y];
+            }
+        }
+
+        grid[0][0] = tmp;
+
+        return shiftGrid(grid, k - 1);
+    }
+
+    TreeNode *pruneTree(TreeNode *root)
+    {
+        function<bool(TreeNode *)> dfs = [&](TreeNode *node)
+        {
+            if (node == nullptr)
+                return false;
+            auto leftRes = dfs(node->left);
+            auto rightRes = dfs(node->right);
+
+            if (!leftRes)
+                node->left = nullptr;
+            if (!rightRes)
+                node->right = nullptr;
+
+            if (!leftRes && !rightRes && !node->val)
+                return false;
+            else
+                return true;
+        };
+
+        if (!dfs(root))
+            root = nullptr;
+        return root;
     }
 };
 }
@@ -7519,8 +7694,32 @@ class Solution
     {
         return __builtin_popcount(n);
     }
+
+    class MovingAverage
+    {
+        const int m_ciSize;
+        queue<int> m_q{};
+        int m_iSum{0};
+
+    public:
+        /** Initialize your data structure here. */
+        MovingAverage(int size) : m_ciSize(size)
+        {
+        }
+
+        double next(int val)
+        {
+            m_q.push(val);
+            m_iSum += val;
+            if (m_q.size() > m_ciSize)
+            {
+                m_iSum -= m_q.front();
+                m_q.pop();
+            }
+            return (double)m_iSum / (double)m_q.size();
+        }
+    };
 };
-    
 }
 
 
