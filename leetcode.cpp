@@ -7396,6 +7396,154 @@ public:
             root = nullptr;
         return root;
     }
+
+    int distanceBetweenBusStops(vector<int> &distance, int start, int destination)
+    {
+        int res{0};
+        for (int i{start}; i != destination; i = (i + 1 == distance.size() ? 0 : i + 1))
+        {
+            res += distance[i];
+        }
+
+        int tmp{0};
+        for (int i{destination}; i != start; i = (i + 1 == distance.size() ? 0 : i + 1))
+        {
+            tmp += distance[i];
+            if (tmp > res)
+                break;
+        }
+        return min(res, tmp);
+    }
+
+    class CBTInserter
+    {
+        vector<TreeNode *> binaryHeap;
+
+    public:
+        CBTInserter(TreeNode *root)
+        {
+            queue<TreeNode *> q;
+            q.push(root);
+            while (!q.empty())
+            {
+                auto node = q.front();
+                q.pop();
+                binaryHeap.emplace_back(node);
+                if (node->left)
+                    q.push(node->left);
+                if (node->right)
+                    q.push(node->right);
+            }
+        }
+
+        int insert(int val)
+        {
+            auto node = new TreeNode(val);
+            binaryHeap.emplace_back(node);
+            auto fatherIndex = (binaryHeap.size() / 2) - 1;
+            bool isRight = binaryHeap.size() & 1;
+            if (isRight)
+                binaryHeap[fatherIndex]->right = node;
+            else
+                binaryHeap[fatherIndex]->left = node;
+            return binaryHeap[fatherIndex]->val;
+        }
+
+        TreeNode *get_root()
+        {
+            return binaryHeap.front();
+        }
+    };
+
+    class Skiplist
+    {
+    public:
+        static inline const int MAX_LEVEL = 16;
+        struct Node
+        {
+            int val;
+            vector<Node *> forward;
+            Node(int _val, int _maxLevel = MAX_LEVEL) : val(_val), forward(_maxLevel, nullptr) {}
+        };
+
+    private:
+        Node *head;
+        int level;
+        mt19937 gen{random_device{}()};
+        uniform_real_distribution<double> dis;
+
+    public:
+        Skiplist() : head(new Node(-1)), level(0), dis(0, 1) {}
+
+        int randomLevel()
+        {
+            int lv = 1;
+            while (dis(gen) < 0.25 && lv < MAX_LEVEL)
+                lv++;
+            return lv;
+        }
+
+        Node *lower_bound(int target, vector<Node *> *update = nullptr)
+        {
+            auto it = head;
+            for (int i{level - 1}; i >= 0; --i)
+            {
+                while (it->forward[i] && it->forward[i]->val < target)
+                    it = it->forward[i];
+                if (update)
+                    update->at(i) = it;
+            }
+            return it;
+        }
+        bool search(int target)
+        {
+            auto it = lower_bound(target);
+
+            it = it->forward[0];
+            if (it && it->val == target)
+                return true;
+            return false;
+        }
+
+        void add(int num)
+        {
+            vector<Node *> update(MAX_LEVEL, head);
+
+            auto it = lower_bound(num, &update);
+
+            int lv = randomLevel();
+            level = max(level, lv);
+            auto newNode = new Node(num, lv);
+            for (int i{}; i < lv; ++i)
+            {
+                newNode->forward[i] = update[i]->forward[i];
+                update[i]->forward[i] = newNode;
+            }
+        }
+
+        bool erase(int num)
+        {
+            vector<Node *> update(MAX_LEVEL, nullptr);
+
+            auto it = lower_bound(num, &update);
+
+            it = it->forward[0];
+            if (!it || it->val != num)
+                return false;
+            for (int i{}; i < level; ++i)
+            {
+                if (update[i]->forward[i] != it)
+                    break;
+                update[i]->forward[i] = it->forward[i];
+            }
+            delete it;
+
+            while (level > 1 && head->forward[level - 1] == nullptr)
+                --level;
+
+            return true;
+        }
+    };
 };
 }
 
@@ -7404,6 +7552,12 @@ namespace 剑指offer
 
 class Solution
 {
+    /**
+     * @brief 
+     * 
+     * @param nums 
+     * @return int 
+     */
     int findRepeatNumber(vector<int> &nums)
     {
         unordered_set<int> numSet;
@@ -7719,6 +7873,32 @@ class Solution
             return (double)m_iSum / (double)m_q.size();
         }
     };
+
+    double myPow(double x, int n)
+    {
+        if (x == 0.0)
+            return 0.0;
+        if (n == 0)
+            return 1;
+        if (n == 1)
+            return x;
+        if (n > 0)
+        {
+            auto tmp = x;
+            return myPow(x * x, n / 2) * ((n & 1) ? x : 1);
+        }
+        else
+            return 1 / myPow(x, -n);
+    }
+
+    vector<int> printNumbers(int n)
+    {
+        size_t size = pow(10, n) - 0.5;
+        vector<int> res(size);
+        int i{0};
+        for (auto &it : res)
+            it = ++i;
+    }
 };
 }
 
