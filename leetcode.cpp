@@ -7544,6 +7544,50 @@ public:
             return true;
         }
     };
+
+    string fractionAddition(string expression)
+    {
+        auto it = expression.begin();
+        int64_t numeratorSum{1}, denominatorSum{0};
+        while (it < expression.end())
+        {
+            int denominator{0}, sign{1};
+            switch (*it)
+            {
+            case '-':
+                sign = -1;
+            case '+':
+                ++it;
+                break;
+            default:
+                break;
+            }
+            while (it < expression.end() && isdigit(*it))
+            {
+                denominator *= 10;
+                denominator += *it - '0';
+                ++it;
+            }
+
+            denominator *= sign;
+
+            ++it;
+            int numerator{0};
+            while (it < expression.end() && isdigit(*it))
+            {
+                numerator *= 10;
+                numerator += *it - '0';
+                ++it;
+            }
+
+            denominatorSum = denominatorSum * (int64_t)numerator + (int64_t)denominator * numeratorSum;
+            numeratorSum = numeratorSum * numerator;
+        }
+        if (denominatorSum == 0)
+            return "0/1";
+        auto g = gcd(abs(numeratorSum), denominatorSum);
+        return to_string(denominatorSum / g) + "/" + to_string(numeratorSum / g);
+    }
 };
 }
 
@@ -7898,6 +7942,21 @@ class Solution
         int i{0};
         for (auto &it : res)
             it = ++i;
+        return res;
+    }
+
+    ListNode *deleteNode(ListNode *head, int val)
+    {
+        if (head->val == val)
+            return head->next;
+        auto it = head;
+        while (it->next && it->next->val != val)
+        {
+            it = it->next;
+        }
+        if (it->next)
+            it->next = it->next->next;
+        return head;
     }
 };
 }
