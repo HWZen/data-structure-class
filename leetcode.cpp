@@ -7588,6 +7588,46 @@ public:
         auto g = gcd(abs(numeratorSum), denominatorSum);
         return to_string(denominatorSum / g) + "/" + to_string(numeratorSum / g);
     }
+
+    vector<int> arrayRankTransform(vector<int> &arr)
+    {
+        map<int, vector<int>> m;
+        for (int i{}; i < arr.size(); ++i)
+            m[arr[i]].emplace_back(i);
+        int rank{1};
+        for (auto &[val, indexs] : m)
+        {
+            for (auto &index : indexs)
+                arr[index] = rank;
+            ++rank;
+        }
+        return arr;
+    }
+
+    bool validSquare(vector<int> &p1, vector<int> &p2, vector<int> &p3, vector<int> &p4)
+    {
+        using point = std::pair<int,int>;
+        auto isRightAng = [](point first, point mid, point last)
+        {
+            auto vec1 = point{first.first - mid.first, first.second - mid.second};
+            auto vec2 = point{last.first - mid.first, last.second - mid.second};
+            return vec1.first * vec2.first + vec1.second * vec2.second == 0 &&
+                   vec1.first * vec1.first + vec1.second * vec1.second == vec2.first * vec2.first + vec2.second * vec2.second;
+        };
+
+        auto v2p = [](vector<int> v)
+        {
+            return point{v[0], v[1]};
+        };
+
+        if (isRightAng(v2p(p1),v2p(p2),v2p(p3)))
+            return isRightAng(v2p(p1), v2p(p4), v2p(p3));
+        if (isRightAng(v2p(p2), v2p(p1), v2p(p3)))
+            return isRightAng(v2p(p2), v2p(p4), v2p(p3));
+        if (isRightAng(v2p(p1), v2p(p3), v2p(p2)))
+            return isRightAng(v2p(p1), v2p(p4), v2p(p2));
+        return false;
+    }
 };
 }
 
