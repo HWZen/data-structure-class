@@ -7628,6 +7628,36 @@ public:
             return isRightAng(v2p(p1), v2p(p4), v2p(p2));
         return false;
     }
+
+    int maxLevelSum(TreeNode *root)
+    {
+        int res{INT_MIN};
+        int resIndex{0};
+        queue<TreeNode *> q;
+        q.push(root);
+        for(int index{1}; !q.empty(); ++index)
+        {
+            int sum{};
+            queue<TreeNode*> next_q;
+            while (!q.empty())
+            {
+                auto node = q.front();
+                q.pop();
+                sum += node->val;
+                if (node->left)
+                    next_q.push(node->left);
+                if (node->right)
+                    next_q.push(node->right);
+            }
+            q.swap(next_q);
+            if (sum > res)
+            {
+                res = sum;
+                resIndex = index;
+            }
+        }
+        return resIndex;
+    }
 };
 }
 
