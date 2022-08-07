@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <algorithm>
 #include <array>
 #include <climits>
@@ -7659,6 +7660,64 @@ public:
         return resIndex;
     }
 
+    vector<string> stringMatching(vector<string> &words)
+    {
+        vector<string> res;
+        for (int i{}; i < words.size(); ++i)
+        {
+            
+            for (int j = 0; j < words.size(); ++j)
+            {
+                if (j == i)
+                    continue;
+                if (words[j].find(words[i]) != string::npos)
+                {
+                    res.emplace_back(std::move(words[i]));
+                    break;
+                }
+            }
+        }
+        return res;
+    }
+
+    vector<int> exclusiveTime(int n, vector<string> &strLogs)
+    {
+        struct Log
+        {
+            int func;
+            bool isStart;
+            int timestamp;
+            Log(const string &str)
+            {
+                char buf[8];
+                sscanf(str.c_str(), "%d:%[^:]:%d", &func, buf, &timestamp);
+                isStart = (strcmp("start", buf) ? false : true);
+            }
+        };
+        vector<int> res(n, 0);
+        vector<Log> logs(strLogs.begin(), strLogs.end());
+        stack<int> st;
+        for (auto it{logs.begin()}; it < logs.end(); ++it)
+        {
+            if (it->isStart)
+            {
+                if (st.empty())
+                {
+                    st.emplace(it->func);
+                    continue;
+                }
+                res[st.top()] += it->timestamp - (it - 1)->timestamp - ((it - 1)->isStart ? 0 : 1);
+                st.emplace(it->func);
+            }
+            else
+            {
+                res[st.top()] += it->timestamp - (it - 1)->timestamp + ((it - 1)->isStart ? 1 : 0);
+                st.pop();
+            }
+        }
+        return res;
+    }
+
     string generateTheString(int n)
     {
         string res(n, 'a');
@@ -8146,6 +8205,27 @@ class Solution
         if (it->next)
             it->next = it->next->next;
         return head;
+    }
+
+    vector<int> exchange(vector<int> &nums)
+    {
+        auto specifyQsort = [](vector<int>::iterator left, vector<int>::iterator right)
+        {
+            --right;
+            auto tmp = *right;
+            while (left < right)
+            {
+                while (left < right && *left & 1)
+                    ++left;
+                *right = *left;
+                while (left < right && !(*right & 1))
+                    --right;
+                *left = *right;
+            }
+            *right = tmp;
+        };
+        specifyQsort(nums.begin(), nums.end());
+        return nums;
     }
 
     bool isMatch(string s, string p)
