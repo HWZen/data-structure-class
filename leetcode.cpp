@@ -7658,6 +7658,125 @@ public:
         }
         return resIndex;
     }
+
+    string generateTheString(int n)
+    {
+        string res(n, 'a');
+        if (!(n & 1))
+            res.back() = 'b';
+        return res;
+    }
+
+    class MyCircularQueue
+    {
+        vector<int> m_data;
+        size_t m_size{0};
+        size_t m_head{0};
+        size_t m_tail{0};
+    public:
+        MyCircularQueue(int k):m_data(k){}
+
+        bool enQueue(int value)
+        {
+            if (isFull())
+                return false;
+            m_data[m_tail++] = value;
+            if (m_tail == m_data.size())
+                m_tail = 0;
+            ++m_size;
+            return true;
+        }
+
+        bool deQueue()
+        {
+            if (isEmpty())
+                return false;
+            ++m_head;
+            if (m_head == m_data.size())
+                m_head = 0;
+            --m_size;
+            return true;
+        }
+
+        int Front()
+        {
+            return isEmpty() ? -1 : m_data[m_head];
+        }
+
+        int Rear()
+        {
+            return isEmpty() ? -1 : (m_tail == 0 ? m_data.back() : m_data[m_tail - 1]);
+        }
+
+        bool isEmpty()
+        {
+            return m_size == 0;
+        }
+
+        bool isFull()
+        {
+            return m_size == m_data.size();
+        }
+    };
+
+    string orderlyQueue(string s, int k)
+    {
+        if (k == 1)
+        {
+            s += s;
+            string_view sv{s}, ans{sv};
+            for (size_t i{}, n{s.size()/2}; i < n; ++i)
+                ans = min(ans, sv.substr(i, n));
+            return {ans.cbegin(), ans.cend()};
+        }
+        else
+        {
+            sort(s.begin(), s.end());
+            return s;
+        }
+    }
+
+    vector<int> minSubsequence(vector<int> &nums)
+    {
+        auto sum = accumulate(nums.begin(), nums.end(), 0);
+        sort(nums.begin(), nums.end(),std::greater<>());
+        int resSum{};
+        int it;
+        for (it = 0 ; it < nums.size() && resSum <= sum / 2; ++it)
+        {
+            resSum += nums[it];
+        }
+
+        return {nums.begin(), nums.begin() + it};
+    }
+
+    TreeNode *addOneRow(TreeNode *root, int val, int depth)
+    {
+        if (depth == 1)
+            return new TreeNode(val, root, nullptr);
+
+        vector<TreeNode *> layer[2];
+        layer[0].emplace_back(root);
+        for (int i{}; i < depth - 1; ++i)
+        {
+            for (auto &it : layer[0])
+            {
+                if (it->left)
+                    layer[1].emplace_back(it->left);
+                if (it->right)
+                    layer[1].emplace_back(it->right);
+            }
+            layer[0].swap(layer[1]);
+            layer[1].clear();
+        }
+        for (auto &it : layer[1])
+        {
+            it->left = new TreeNode(val, it->left, nullptr);
+            it->right = new TreeNode(val, nullptr, it->right);
+        }
+        return root;
+
+    }
 };
 }
 
@@ -8027,6 +8146,18 @@ class Solution
         if (it->next)
             it->next = it->next->next;
         return head;
+    }
+
+    bool isMatch(string s, string p)
+    {
+        std::regex reg{p};
+        return std::regex_match(s,reg);
+    }
+
+    bool isNumber(string &s)
+    {
+        std::regex num1(R"((\s*[+-]?(\.)?[0-9]+([Ee][+-]?[0-9]+)?\s*)|(\s*[+-]?[0-9]+(\.[0-9]*)?([Ee][+-]?[0-9]+)?\s*))");
+        return std::regex_match(s, num1);
     }
 };
 }
