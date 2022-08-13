@@ -1,3 +1,4 @@
+#include <stdexcept>
 #define _CRT_SECURE_NO_WARNINGS
 #include <algorithm>
 #include <array>
@@ -7834,10 +7835,169 @@ public:
             it->right = new TreeNode(val, nullptr, it->right);
         }
         return root;
+    }
 
+
+    template<class Ty>
+    string makeLargestSpecial(Ty &&s)
+    {
+        if (s.size() <= 2)
+            return s;
+        vector<string> subString;
+        int cnt{};
+        auto left{s.begin()};
+        for (auto it{s.begin()}; it < s.end(); ++it)
+        {
+            if (*it == '1')
+                ++cnt;
+            else
+            {
+                --cnt;
+                if (cnt == 0)
+                {
+                    subString.emplace_back("1" + makeLargestSpecial(string(left + 1, it - 1)) + "0");
+                    left = it + 1;
+                }
+            }
+        }
+        sort(subString.begin(), subString.end(), greater<string>{});
+        string res = accumulate(subString.begin(), subString.end(), ""s);
+        return res;
+    }
+
+    int minStartValue(vector<int> &nums)
+    {
+        int minimum{INT_MAX};
+        int64_t sum{};
+        for (auto &it : nums)
+        {
+            sum += it;
+            if (sum < minimum)
+                minimum = sum;
+        }
+        return minimum > -1 ? 1 : -minimum + 1;
+    }
+
+    string solveEquation(string equation)
+    {
+        auto getNum = [&equation](string::iterator &it)
+        {
+            int res{0};
+            while (it < equation.end() && *it >= '0' && *it <= '9')
+            {
+                res *= 10;
+                res += *it++ - '0';
+            }
+            return res;
+        };
+        
+        int x{0}, c{0};
+        int sign1{1}, sign2{1};
+        for (auto it{equation.begin()}; it < equation.end();)
+        {
+            if (*it >= '0' && *it <= '9')
+            {
+                auto num = getNum(it) * sign1 * sign2;
+                if (it == equation.end() || *it != 'x')
+                    c += num;
+                else if (*it == 'x')
+                {
+                    x += num;
+                    ++it;
+                }
+            }
+            else
+            {
+                switch (*it)
+                {
+                case '+':
+                    sign1 = 1;
+                    break;
+                case '-':
+                    sign1 = -1;
+                    break;
+                case '=':
+                    sign1 = 1;
+                    sign2 = -1;
+                    break;
+                case 'x':
+                    x += sign1 * sign2;
+                    break;
+                default:
+                    throw std::runtime_error((string("unexpect char: ") + *it).c_str());
+                }
+                ++it;
+            }
+        }
+        if (x == 0 && c == 0)
+            return "Infinite solutions";
+        if (x != 0 && c == 0)
+            return "x=0";
+        if (x == 0 && c != 0)
+            return "No solution";
+        if (x != 0 && c != 0)
+            return "x=" + to_string(-c / x);
+        return "";
+    }
+
+    string reformat(string s)
+    {
+        vector<char> nums, chars;
+        for (auto &ch : s)
+        {
+            if (ch >= '0' && ch <= '9')
+                nums.emplace_back(ch);
+            else
+                chars.emplace_back(ch);
+        }
+        if (abs((int64_t)nums.size() - (int64_t)chars.size()) > 1)
+            return {};
+
+        string res;
+        res.reserve(nums.size() + chars.size());
+        if (chars.size() > nums.size())
+            swap(chars, nums);
+        while(!nums.empty() || !chars.empty())
+        {
+            if (!nums.empty())
+            {
+                res.push_back(nums.back());
+                nums.pop_back();
+            }
+            if (!chars.empty())
+            {
+                res.push_back(chars.back());
+                chars.pop_back();
+            }
+        }
+        return res;
+    }
+
+    vector<vector<int>> groupThePeople(vector<int> &groupSizes)
+    {
+        unordered_map<int, vector<int>> m;
+        for (int i{}; i < groupSizes.size(); ++i)
+            m[groupSizes[i]].emplace_back(i);
+        vector<vector<int>> res;
+        for (auto &pair : m)
+        {
+            auto v{std::move(pair.second)};
+            for (auto it{v.begin()}; it < v.end(); it += pair.first)
+                res.emplace_back(it, it + pair.first);
+        }
+        return res;
     }
 };
 }
+
+/*
+auto __FAST_IO__{ []() noexcept
+{
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr); std::cout.tie(nullptr);
+    return 0;
+}() };
+*/
 
 namespace 剑指offer
 {
@@ -8238,6 +8398,91 @@ class Solution
     {
         std::regex num1(R"((\s*[+-]?(\.)?[0-9]+([Ee][+-]?[0-9]+)?\s*)|(\s*[+-]?[0-9]+(\.[0-9]*)?([Ee][+-]?[0-9]+)?\s*))");
         return std::regex_match(s, num1);
+    }
+
+    ListNode *reverseList(ListNode *head)
+    {
+        auto makeNode = [](int val, ListNode *next)
+        {
+            ListNode *node = new ListNode(val);
+            node->next = next;
+            return node;
+        };
+        ListNode *node = new ListNode(head->val);
+        while (head->next)
+        {
+            head = head->next;
+            node = makeNode(head->val, node);
+        }
+        return node;
+    }
+
+    ListNode *mergeTwoLists(ListNode *l1, ListNode *l2)
+    {
+        if (l1 == nullptr || l2 == nullptr)
+            return (ListNode*)((uint64_t)l1 + (uint64_t)l2);
+        ListNode *root;
+        if (l1->val > l2->val)
+        {
+            root = l2;
+            l2 = l2->next;
+        }
+        else
+        {
+            root = l1;
+            l1 = l1->next;
+        }
+        auto it = root;
+        while (l1 && l2)
+        {
+            if (l1->val > l2->val)
+            {
+                it->next = l2;
+                l2 = l2->next;
+            }
+            else
+            {
+                it->next = l1;
+                l1 = l1->next;
+            }
+            it = it->next;
+        }
+        if (l1)
+            it->next = l1;
+        else if (l2)
+            it->next = l2;
+        return root;
+    }
+
+    bool isSubStructure(TreeNode *A, TreeNode *B)
+    {
+        if (!B)
+            return false;
+        auto sameStruct = [&B](TreeNode *root) -> bool
+        {
+            function<bool(TreeNode *, TreeNode *)> dfs = [&](TreeNode *it, TreeNode *b) -> bool
+            {
+                if (b == nullptr)
+                    return true;
+                if (it == nullptr)
+                    return false;
+                if (b->val != it->val)
+                    return false;
+                return dfs(it->left, b->left) && dfs(it->right, b->right);
+            };
+            return dfs(root, B);
+        };
+
+        function<bool(TreeNode *)> dfs = [&B, &sameStruct, &dfs](TreeNode *node)
+        {
+            if (!node)
+                return false;
+            if (node->val == B->val && sameStruct(node))
+                return true;
+            return dfs(node->left) || dfs(node->right);
+        };
+
+        return dfs(A);
     }
 };
 }
