@@ -8082,16 +8082,165 @@ public:
         auto R = right;
         return R - L;
     }
+
+    class MyCircularDeque
+    {
+        std::vector<int> m_data;
+        std::vector<int>::iterator frontIt;
+        std::vector<int>::iterator backIt;
+        size_t m_size{0};
+    public:
+        MyCircularDeque(int k)
+            : m_data(k), frontIt(m_data.begin()), backIt(m_data.begin() + 1)
+        {
+        }
+
+        bool insertFront(int value)
+        {
+            if (m_size >= m_data.size())
+                return false;
+            frontIt = (frontIt == m_data.begin() ? m_data.end() - 1 : frontIt - 1);
+            *frontIt = value;
+            ++m_size;
+            return true;
+        }
+
+        bool insertLast(int value)
+        {
+            if (m_size >= m_data.size())
+                return false;
+            *backIt++ = value;
+            if (backIt == m_data.end())
+                backIt = m_data.begin();
+            ++m_size;
+            return true;
+        }
+
+        bool deleteFront()
+        {
+            if (isEmpty())
+                return false;
+            frontIt = (frontIt == m_data.end() - 1 ? m_data.begin() : frontIt + 1);
+            --m_size;
+            return true;
+        }
+
+        bool deleteLast()
+        {
+            if (isEmpty())
+                return false;
+            backIt = (backIt == m_data.begin() ? m_data.end() - 1 : backIt - 1);
+            --m_size;
+            return true;
+        }
+
+        int getFront()
+        {
+            if (isEmpty())
+                return -1;
+            return *frontIt;
+        }
+
+        int getRear()
+        {
+            if (isEmpty())
+                return -1;
+            return (backIt == m_data.begin() ? m_data.back() : *(backIt - 1));
+        }
+
+        bool isEmpty()
+        {
+            return m_size == 0;
+        }
+
+        bool isFull()
+        {
+            return m_size == m_data.size();
+        }
+    };
+
+    class OrderedStream
+    {
+        vector<string>::iterator ptr;
+        vector<string> data;
+    public:
+        OrderedStream(int n) : data(n)
+        {
+            ptr = data.begin();
+        }
+
+        vector<string> insert(int idKey, string &value)
+        {
+            data[idKey] = std::move(value);
+            vector<string> res;
+            while (ptr < data.end() && !ptr->empty())
+                res.emplace_back(std::move(*ptr++));
+            return res;
+        }
+    };
+
+    int deepestLeavesSum(TreeNode *root)
+    {
+        int res;
+        vector<TreeNode *> bfsBuffer;
+        bfsBuffer.emplace_back(root);
+        while (!bfsBuffer.empty())
+        {
+            vector<TreeNode *> nextBuffer;
+            res = 0;
+            for (auto &node : bfsBuffer)
+            {
+                res += node->val;
+                if (node->left)
+                    nextBuffer.emplace_back(node->left);
+                if (node->right)
+                    nextBuffer.emplace_back(node->right);
+            }
+            bfsBuffer = std::move(nextBuffer);
+        }
+        return res;
+    }
+
+    int maxEqualFreq(vector<int> &nums)
+    {
+        unordered_map<int, int> count, freq;
+        int maxFreq{0}, res{0};
+        for (int i{}; i < nums.size(); ++i)
+        {
+            auto num = nums[i];
+            if (count[num] > 0)
+                --freq[count[num]];
+            ++count[num];
+            maxFreq = max(maxFreq, count[num]);
+            ++freq[count[num]];
+            bool match = maxFreq == 1 ||
+                    freq[maxFreq] * maxFreq + freq[maxFreq - 1] * (maxFreq - 1) == i + 1 && freq[maxFreq] == 1 ||
+                    freq[maxFreq] * maxFreq + 1 == i + 1 && freq[1] == 1;
+
+            if (match)
+                res = max(res, i + 1);
+        }
+        return res;
+    }
+
+    int busyStudent(vector<int> &startTime, vector<int> &endTime, int queryTime)
+    {
+        int res{0};
+        for (int i{}; i < startTime.size(); ++i)
+            if (startTime[i] <= queryTime && endTime[i] >= queryTime)
+                ++res;
+        return res;
+    }
 };
 }
 
 /*
-auto __FAST_IO__{ []() noexcept
+auto __FAST_IO__ = []() noexcept
 {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr); std::cout.tie(nullptr);
     return 0;
-}() };
+}() ;
 */
 
 namespace 剑指offer
@@ -8578,6 +8727,21 @@ class Solution
         };
 
         return dfs(A);
+    }
+
+    TreeNode *mirrorTree(TreeNode *root)
+    {
+        function<void(TreeNode *)> dfs = [&dfs](TreeNode *node)
+        {
+            if (!node)
+                return;
+            dfs(node->left);
+            dfs(node->right);
+            std::swap(node->left, node->right);
+        };
+
+        dfs(root);
+        return root;
     }
 };
 }
