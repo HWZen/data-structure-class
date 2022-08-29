@@ -7987,6 +7987,101 @@ public:
         }
         return res;
     }
+
+    int maxScore(string &s)
+    {
+        int oneNums = std::count(s.begin(), s.end(), '1');
+        int score{oneNums};
+        int maxScore{score - 1};
+        for (auto it{s.begin()}; it < s.end() - 1; ++it)
+        {
+            auto &ch = *it;
+            if (ch == '0')
+            {
+                ++score;
+                if (score > maxScore)
+                    maxScore = score;
+            }
+            else
+                --score;
+        }
+        return maxScore;
+    }
+
+    int maxProduct(vector<int> &nums)
+    {
+        int max{}, secondMax{};
+        for (auto &it : nums)
+        {
+            if (it > max)
+            {
+                secondMax = max;
+                max = it;
+            }
+            else if (it > secondMax)
+                secondMax = it;
+        }
+        return (max -  1) * (secondMax - 1);
+    }
+
+    int widthOfBinaryTree(TreeNode *root)
+    {
+        if (!root)
+            return 0;
+        vector<pair<TreeNode *, uint64_t>> q;
+        q.emplace_back(root, 0);
+        uint64_t max{0};
+        while (!q.empty())
+        {
+            uint64_t left{q.front().second};
+            uint64_t right{left};
+            auto tempQ{decltype(q)()};
+            for (auto &[node, pos] : q)
+            {
+                if (node->left)
+                    tempQ.emplace_back(node->left, pos * 2);
+                if (node->right)
+                    tempQ.emplace_back(node->right, pos * 2 + 1);
+                if (pos > right)
+                    right = pos;
+            }
+            q.swap(tempQ);
+            if (right - left > max)
+                max = right - left;
+        }
+        return max + 1;
+    }
+
+    int preimageSizeFZF(int k)
+    {
+        int64_t left{0}, right{5 * static_cast<int64_t>(k + 1)};
+        while (right >= left)
+        {
+            auto mid{(left + right) / 2};
+            auto count = trailingZeroes(mid);
+            if (count < k)
+                left = mid + 1;
+            else
+                right = mid - 1;
+        }
+        if (trailingZeroes(right + 1) != k)
+            return 0;
+        auto L = right;
+        ++k;
+        left = 0;
+        right = 5 * static_cast<int64_t>(k + 1);
+        while (right >= left)
+        {
+            auto mid{(left + right) / 2};
+            auto count = trailingZeroes(mid);
+            if (count < k)
+                left = mid + 1;
+            else
+                right = mid - 1;
+        }
+        auto R = right;
+        return R - L;
+    }
 };
 }
 
