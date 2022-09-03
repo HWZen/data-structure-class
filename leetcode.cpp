@@ -8231,6 +8231,154 @@ public:
                 ++res;
         return res;
     }
+
+    vector<vector<string>> printTree(TreeNode *root)
+    {
+        int MaxDepth{0};
+        function<void(TreeNode *, int)> dfs = [&](TreeNode *node, int depth)
+        {
+            if (!node)
+                return;
+            if (depth > MaxDepth)
+                MaxDepth = depth;
+            dfs(node->left, depth + 1);
+            dfs(node->right, depth + 1);
+        };
+
+        dfs(root, 1);
+        auto n = (1 << MaxDepth) - 1;
+        vector<vector<string>> res(MaxDepth, vector<string>(n, ""));
+        function<void(TreeNode *, int, int)> dfs2 = [&](TreeNode *node, int depth, int idx)
+        {
+            res[depth][idx] = to_string(node->val);
+            if (node->left)
+                dfs2(node->left, depth + 1, idx - (1 << (MaxDepth - depth - 2)));
+            if (node->right)
+                dfs2(node->right, depth + 1, idx + (1 << (MaxDepth - depth - 2)));
+        };
+        dfs2(root, 0, (n - 1) / 2);
+        return res;
+    }
+
+    bool canBeEqual(vector<int> &target, vector<int> &arr)
+    {
+        int *pTarget = target.data();
+        int *pArr = arr.data();
+        sort(pTarget , pTarget + target.size());
+        sort(pArr, pArr + arr.size());
+        return target == arr;
+    }
+
+    vector<int> findClosestElements(vector<int> &arr, int k, int x)
+    {
+        auto begin = lower_bound(arr.begin(), arr.end(), x);
+        if (begin == arr.end())
+            return vector<int>{arr.end() - k, arr.end()};
+        if(begin > arr.begin() && abs(*begin - x) > abs(*(begin - 1) - x))
+            --begin;
+        auto leftIt = begin;
+        auto rightIt = begin + 1;
+        while(--k && leftIt > arr.begin() && rightIt < arr.end())
+        {
+            if (abs(*(leftIt - 1) - x) <= abs(*rightIt - x))
+                --leftIt;
+            else
+                ++rightIt;
+        }
+        if (!k)
+            return {leftIt, rightIt};
+        if(leftIt == arr.begin())
+            return {leftIt, rightIt + k};
+        if (rightIt == arr.end())
+            return {leftIt - k, rightIt};
+        throw
+            std::runtime_error("findClosestElements: not enough elements");
+    }
+
+    vector<int> shuffle(vector<int> &nums, int n)
+    {
+        auto it1 = nums.begin();
+        auto it2 = it1 + n;
+
+        vector<int> res;
+        res.reserve(nums.size());
+        for (int i{}; i < n; ++i)
+        {
+            res.emplace_back(*it1++);
+            res.emplace_back(*it2++);
+        }
+        return res;
+    }
+
+    TreeNode *insertIntoMaxTree(TreeNode *root, int val)
+    {
+        if (!root)
+            return new TreeNode(val);
+        if (root->val < val)
+        {
+            auto newRoot = new TreeNode(val);
+            newRoot->left = root;
+            return newRoot;
+        }
+        auto it = root;
+        while (it->right && it->right->val > val)
+            it = it->right;
+        auto newRoot = new TreeNode(val);
+        newRoot->left = it->right;
+        it->right = newRoot;
+        return root;
+    }
+
+    bool validateStackSequences(vector<int> &pushed, vector<int> &popped)
+    {
+        stack<int> s;
+        int i{};
+        for (int val : pushed)
+        {
+            s.push(val);
+            while (!s.empty() && s.top() == popped[i])
+            {
+                s.pop();
+                ++i;
+            }
+        }
+        return s.empty();
+    }
+
+    vector<int> finalPrices(vector<int> &prices)
+    {
+        stack<int> s;
+        for(int i{int(prices.size() - 1)}; i >= 0; --i)
+        {
+            auto tmp = prices[i];
+            while(!s.empty() && prices[i] < s.top())
+                s.pop();
+        
+            if(!s.empty())
+                prices[i] -= s.top();
+            s.push(tmp);
+        }
+        return prices;
+    }
+
+    int longestUnivaluePath(TreeNode *root)
+    {
+        int res{};
+        function<int(TreeNode *)> dfs = [&](TreeNode *node)
+        {
+            if (!node)
+                return 0;
+            int leftRes{0}, rightRes{0};
+            if (int tmp{dfs(node->left)}; node->left && node->left->val == node->val)
+                leftRes = tmp + 1;
+            if (int tmp{dfs(node->right)}; node->right && node->right->val == node->val)
+                rightRes = tmp + 1;
+            res = max({res, leftRes + rightRes});
+            return max(leftRes, rightRes);
+        };
+        dfs(root);
+        return res;
+    }
 };
 }
 
@@ -8742,6 +8890,24 @@ class Solution
 
         dfs(root);
         return root;
+    }
+
+    bool isSymmetric(TreeNode *root)
+    {
+        if (!root)
+            return true;
+        function<bool(TreeNode * node1, TreeNode * node2)> dfs = [&dfs](TreeNode *node1, TreeNode *node2)
+        {
+            if (!node1 && !node2)
+                return true;
+            if (!node1 || !node2)
+                return false;
+            if (node1->val != node2->val)
+                return false;
+            return dfs(node1->left, node2->right) && dfs(node1->right, node2->left);
+        };
+
+        return dfs(root->left, root->right);
     }
 };
 }
