@@ -8379,6 +8379,148 @@ public:
         dfs(root);
         return res;
     }
+
+    vector<TreeNode *> findDuplicateSubtrees(TreeNode *root)
+    {
+        struct Tuple
+        {
+            int val{};
+            size_t leftHash{};
+            size_t rightHash{};
+
+            size_t hash()
+            {
+                std::array<size_t, 3> tmp{(size_t)val, leftHash, rightHash};
+                std::string buf;
+                buf.resize(sizeof(size_t[3]));
+                memcpy(buf.data(), tmp.data(), sizeof(size_t[3]));
+                return std::hash<std::string>{}(buf);
+            }
+        };
+
+        std::unordered_map<size_t, int> trees;
+        vector<TreeNode *> res;
+
+        function<size_t(TreeNode *)> dfs = [&](TreeNode *node) -> size_t
+        {
+            if (!node)
+                return 114514;
+
+            Tuple myTuple{node->val, dfs(node->left), dfs(node->right)};
+
+            size_t myHash = myTuple.hash();
+
+            if (++trees[myHash] == 2)
+                res.emplace_back(node);
+            return myHash;
+        };
+        dfs(root);
+        return res;
+    }
+
+    string reorderSpaces(string text)
+    {
+        vector<string_view> words;
+        int spaceCount{0};
+        for (auto it{text.begin()}; it < text.end();)
+        {
+            if (*it != ' ')
+            {
+                auto wordBegin{it};
+                while (it < text.end() && *it != ' ')
+                    ++it;
+                words.emplace_back(&*wordBegin, it - wordBegin);
+            }
+            else
+            {
+                ++it;
+                ++spaceCount;
+            }
+        }
+        if (words.size() == 1)
+            return string(words.front()) + string(spaceCount, ' ');
+        int interval = spaceCount / (words.size() - 1);
+        int endSpace = spaceCount % (words.size() - 1);
+        string res(endSpace, ' ');
+        string strInterval(interval,' ');
+        for (auto &word : words)
+        {
+            res += word;
+            res += strInterval;
+        }
+        res += string(endSpace, ' ');
+        res.resize(text.size());
+        return res;
+    }
+
+    vector<int> constructArray(int n, int k)
+    {
+        int nk = n - k;
+        vector<int> res;
+        res.reserve(n);
+        int itBegin{1};
+        for (; itBegin < nk; ++itBegin)
+            res.emplace_back(itBegin);
+        for (int itEnd{n}; itBegin <= itEnd; ++itBegin, --itEnd)
+        {
+            res.emplace_back(itBegin);
+            if (itBegin != itEnd)
+                res.emplace_back(itEnd);
+        }
+        return res;
+    }
+
+    int minOperations(vector<string> &logs)
+    {
+        int res{0};
+        for (auto &log : logs)
+        {
+            if (log == "../")
+            {
+                if(res > 0)
+                    --res;
+            }
+            else if (log != "./")
+                ++res;
+        }
+        return res;
+    }
+
+    int maximumSwap(int num)
+    {
+        if (num == 0)
+            return 0;
+        int maxNum{-1};
+        size_t maxIndex{0};
+        int res{num};
+        size_t index{0};
+        int rawNum{num};
+        while (num > 0)
+        {
+
+            if (num % 10 > maxNum)
+            {
+                maxNum = num % 10;
+                maxIndex = index;
+            }
+            else if (num % 10 < maxNum)
+                res = (maxNum - num % 10) * pow(10, index) + (num % 10 - maxNum) * pow(10, maxIndex) + rawNum;
+            num /= 10;
+            ++index;
+        }
+        return res;
+    }
+
+    double trimMean(vector<int> &arr)
+    {
+        sort(arr.begin(), arr.end());
+        double sum{0};
+        auto itEnd{arr.end() - arr.size() * 0.05};
+        for (auto itBegin{arr.begin() + arr.size() * 0.05}; itBegin < itEnd; ++itBegin)
+            sum += *itBegin;
+        return sum / arr.size() * 0.9;
+        
+    }
 };
 }
 
