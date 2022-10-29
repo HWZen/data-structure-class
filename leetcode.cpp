@@ -8470,6 +8470,103 @@ public:
         return res;
     }
 
+    int findLongestChain(vector<vector<int>> &pairs)
+    {
+        sort(pairs.begin(), pairs.end(), [](const auto &a, const auto &b)
+             { return a[1] < b[1]; });
+
+        int res{0};
+        int now{INT_MIN};
+        for (auto &nums : pairs)
+        {
+            if(nums[0] > now)
+            {
+                now = nums[1];
+                ++res;
+            }
+        }
+        return res;
+    }
+
+    int numSpecial(vector<vector<int>> &mat)
+    {
+        vector<int> row(mat.size());
+        vector<int> col(mat[0].size());
+        for(int i{}; i < mat.size(); ++i)
+        {
+            for(int j{}; j < mat[i].size(); ++j)
+            {
+                if(mat[i][j])
+                {
+                    ++row[i];
+                    ++col[j];
+                }
+            }
+        }
+        int res{};
+        for(int i{}; i < mat.size(); ++i)
+        {
+            for(int j{}; j < mat[i].size(); ++j)
+            {
+                if(mat[i][j] && row[i] == 1 && col[j] == 1)
+                    ++res;
+            }
+        }
+        return res;
+    }
+
+    TreeNode *trimBST(TreeNode *root, int low, int high)
+    {
+        function<void(TreeNode *)> dfs = [&](TreeNode *node)
+        {
+            if (!node)
+                return;
+            while(node->left && node->left->val < low)
+                node->left = node->left->right;
+            while(node->right && node->right->val > high)
+                node->right = node->right->left;
+            dfs(node->left);
+            dfs(node->right);
+        };
+        if(!root)
+            return nullptr;
+        if(root->val < low)
+            return trimBST(root->right, low, high);
+        if(root->val > high)
+            return trimBST(root->left, low, high);
+        dfs(root);
+        return root;
+    }
+
+    double mincostToHireWorkers(vector<int> &quality, vector<int> &wage, int k)
+    {
+        vector<int> index(quality.size());
+        iota(index.begin(), index.end(), 0);
+        sort(index.begin(), index.end(), [&](int left, int right)
+             { return double(wage[left]) / quality[left] < double(wage[right]) / quality[right]; });
+        priority_queue<int> q;
+        int sum{};
+        double res{DBL_MAX};
+        for (int i{}; i < index.size(); ++i)
+        {
+            
+            if (q.size() < k || q.top() > quality[index[i]])
+            {
+                if (q.size() > k)
+                {
+                    sum -= q.top();
+                    q.pop();
+                }
+                q.push(quality[index[i]]);
+                sum += quality[index[i]];
+            }
+
+            if (q.size() == k)
+                res = min(res, double(sum) * wage[index[i]] / quality[index[i]]);
+        }
+        return res;
+    }
+
     int minOperations(vector<string> &logs)
     {
         int res{0};
@@ -8519,7 +8616,175 @@ public:
         for (auto itBegin{arr.begin() + arr.size() * 0.05}; itBegin < itEnd; ++itBegin)
             sum += *itBegin;
         return sum / arr.size() * 0.9;
+    }
         
+    int specialArray(vector<int> &nums)
+    {
+        sort(nums.begin(), nums.end(), std::greater<int>());
+        for (int i{1}; i < nums.size(); ++i)
+        {
+            if(nums[i - 1] >= i && (nums[i] < i || i == nums.size()))
+                return i;
+        }
+        return -1;
+    }
+
+    int maxLengthBetweenEqualCharacters(string s)
+    {
+        struct hash_char
+        {
+            size_t operator()(const char &c) const
+            {
+                return c;
+            }
+        };
+
+        unordered_map<char, pair<int, int>, hash_char> map;
+
+        if (s.size() < 2)
+            return -1;
+
+        int res{-1};
+        for (int i{}; i < s.size(); ++i)
+        {
+            if (map.find(s[i]) == map.end())
+                map[s[i]] = {i, i};
+            else
+            {
+                map[s[i]].second = i;
+                if (map[s[i]].second - map[s[i]].first - 1 > res)
+                    res = map[s[i]].second - map[s[i]].first - 1;
+            }
+        }
+        return res;
+    }
+
+    vector<int> decrypt(vector<int> &code, int k)
+    {
+        class MyInt : public vector<int>
+        {
+        public:
+            using vector<int>::vector;
+            MyInt(vector<int> &&vec) : vector<int>(std::move(vec)) {}
+            auto &operator[](int64_t index)
+            {
+                if (index < 0)
+                    index += size();
+                index %= size();
+                return vector<int>::operator[](index);
+            }
+        };
+        auto accumulate = [](MyInt &code, int64_t begin, int64_t end)
+        {
+            int sum{};
+            for (auto i{begin}; i < end; ++i)
+                sum += code[i];
+            return sum;
+        };
+        if (k == 0)
+            return vector<int>(code.size(), 0);
+        MyInt _code{std::move(code)};
+        MyInt res(_code.size(), 0);
+        for (int i{}; i < _code.size(); ++i)
+        {
+            if (k > 0)
+                res[i] = accumulate(_code, i + 1, i + k + 1);
+            else
+                res[i] = accumulate(_code, i + k, i);
+        }
+        return res;
+    }
+
+    int rotatedDigits(int n)
+    {
+        auto isGoodNum = [](int num) constexpr noexcept
+        {
+            bool flag{false};
+            while (num)
+            {
+                if (num % 10 == 3 || num % 10 == 4 || num % 10 == 7)
+                    return false;
+                if (num % 10 == 2 || num % 10 == 5 || num % 10 == 6 || num % 10 == 9)
+                    flag = true;
+                num /= 10;
+            }
+            return flag;
+        };
+        constexpr array<int, 10001> isGoodNumArray{[&]() constexpr noexcept
+                                                   {
+                                                       array<int, 10001> res{0};
+                                                       for (int i{1}; i < res.size(); ++i)
+                                                           res[i] = res[i - 1] + static_cast<int>(isGoodNum(i));
+                                                       return res;
+                                                   }()};
+        return isGoodNumArray[n];
+    }
+
+    int minAddToMakeValid(string s)
+    {
+        int res{};
+        int left{};
+        for (auto &c : s)
+        {
+            if (c == '(')
+                ++left;
+            else if (left > 0)
+                --left;
+            else
+                ++res;
+        }
+        return res + left;
+    }
+
+    int jobScheduling(vector<int> &startTime, vector<int> &endTime, vector<int> &profit)
+    {
+        vector<int> index(startTime.size());
+        iota(index.begin(), index.end(), 0);
+        sort(index.begin(), index.end(), [&](int a, int b)
+             { return endTime[a] < endTime[b]; });
+        vector<int> dp(startTime.size());
+        dp[0] = profit[index[0]];
+        for (int i{1}; i < index.size(); ++i)
+        {
+            int k = upper_bound(index.begin(), index.begin() + i, startTime[index[i]], [&](int left, int right)
+                                { return left < endTime[index[right]]; }) - index.begin();
+            dp[i] = max(dp[i - 1], profit[index[i]] + (k > 0 ? dp[k] : 0));
+        }
+        return dp.back();
+    }
+
+    string mergeAlternately(string word1, string word2)
+    {
+        string res(word1.size() + word2.size(), 0);
+        auto it1{0};
+        auto it2{0};
+        for(;it1 < word1.size() && it2 < word2.size(); ++it1, ++it2)
+        {
+            res[it1 + it2] = word1[it1];
+            res[it1 + it2 + 1] = word2[it2];
+        }
+        for (; it1 < word1.size(); ++it1)
+            res[it1 + it2] = word1[it1];
+        for (; it2 < word2.size(); ++it2)
+            res[it1 + it2] = word2[it2];
+        return res;
+    }
+
+    int countMatches(vector<vector<string>> &items, string ruleKey, string ruleValue)
+    {
+        unordered_map<string, int> type, color, name;
+        for (auto &item : items)
+        {
+            ++type[item[0]];
+            ++color[item[1]];
+            ++name[item[2]];
+        }
+        if (ruleKey == "type")
+            return type[ruleValue];
+        else if(ruleKey == "color")
+            return color[ruleValue];
+        else
+            return name[ruleValue];
     }
 };
 }
@@ -9050,6 +9315,10 @@ class Solution
         };
 
         return dfs(root->left, root->right);
+    }
+    bool checkOnesSegment(string s)
+    {
+        return std::regex_match(s, std::regex(R"(1+0*)"));
     }
 };
 }
