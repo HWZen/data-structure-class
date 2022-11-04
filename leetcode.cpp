@@ -3576,13 +3576,14 @@ public:
     {
         if (nums.size() < 3)
             return false;
-        int small = INT_MAX, mid = INT_MAX;
+        int small_num = INT_MAX;
+        int mid = INT_MAX;
         for (int i : nums)
         {
             if (i > mid)
                 return true;
-            if (i < small)
-                small = i;
+            if (i < small_num)
+                small_num = i;
             else
                 mid = i;
         }
@@ -4026,18 +4027,18 @@ public:
         vector<int> ans(n);
         for (int j = 0; j < n; ++j)
         {
-            int col = j; // ��ĳ�ʼ��??
+            int col = j;
             for (auto &row : grid)
             {
                 int dir = row[col];
-                col += dir; // �ƶ���
+                col += dir;
                 if (col < 0 || col == n || row[col] != dir)
-                { // �����߻� V ��
+                {
                     col = -1;
                     break;
                 }
             }
-            ans[j] = col; // col >= 0 Ϊ�ɹ�����ײ�??
+            ans[j] = col;
         }
         return ans;
     }
@@ -4756,7 +4757,7 @@ public:
                 }
             }
             else
-            { // key ����������
+            { 
                 if (lst.empty() || lst.begin()->second > 1)
                 {
                     unordered_set<string> s({key});
@@ -4774,7 +4775,7 @@ public:
         {
             auto cur = nodes[key];
             if (cur->second == 1)
-            { // key ������һ�Σ������Ƴ� nodes
+            {
                 nodes.erase(key);
             }
             else
@@ -5254,9 +5255,9 @@ public:
         }
         else
         {
-            // 替换次数和删除次数
+            
             int replace = 0, remove = n - 20;
-            // k mod 3 = 1 的组数，即删除 2 个字符可以减少 1 次替换操作
+            
             int rm2 = 0;
             int cnt = 0;
             char cur = '#';
@@ -5273,16 +5274,13 @@ public:
                     {
                         if (cnt % 3 == 0)
                         {
-                            // 如果是 k % 3 = 0 的组，那么优先删除 1 个字符，减少 1 次替换操作
                             --remove;
                             --replace;
                         }
                         else if (cnt % 3 == 1)
                         {
-                            // 如果是 k % 3 = 1 的组，那么存下来备用
                             ++rm2;
                         }
-                        // k % 3 = 2 的组无需显式考虑
                     }
                     replace += cnt / 3;
                     cnt = 1;
@@ -5303,11 +5301,9 @@ public:
             }
             replace += cnt / 3;
 
-            // 使用 k % 3 = 1 的组的数量，由剩余的替换次数、组数和剩余的删除次数共同决定
             int use2 = min({replace, rm2, remove / 2});
             replace -= use2;
             remove -= use2 * 2;
-            // 由于每有一次替换次数就一定有 3 个连续相同的字符（k / 3 决定），因此这里可以直接计算出使用 k % 3 = 2 的组的数量
             int use3 = min({replace, remove / 3});
             replace -= use3;
             remove -= use3 * 3;
@@ -8786,6 +8782,599 @@ public:
         else
             return name[ruleValue];
     }
+
+    int flipLights(int n, int presses)
+    {
+        if (presses > 2 && n > 2)
+            return 8;
+        if (n < 3)
+            return 1 + (presses > 0) * n + (presses > 1 && n > 1);
+        else
+            return 1 + 3 * presses;
+    }
+
+    vector<int> frequencySort(vector<int> &nums)
+    {
+        array<int, 201> mp{0};
+        for (const auto &num : nums)
+            ++mp[num + 100];
+        sort(nums.begin(), nums.end(), [&](int left, int right)
+             {
+                if (mp[left + 100] == mp[right + 100])
+                    return left > right;
+                else
+                    return mp[left + 100] < mp[right + 100];
+             });
+        return std::move(nums);
+    }
+
+    bool canPartitionKSubsets(vector<int> &nums, int k)
+    {
+        auto sum = accumulate(nums.begin(), nums.end(), 0);
+        if (sum % k != 0)
+            return false;
+        int per = sum / k;
+        sort(nums.begin(), nums.end());
+        if (nums.back() > per)
+            return false;
+
+        vector<bool> dp(1 << nums.size(), true);
+        function<bool(int, int)> dfs = [&](int s, int p)
+        {
+            if (s == 0)
+                return true;
+            if (!dp[s])
+                return false;
+            for (int i{}; i < nums.size(); ++i)
+            {
+                if (nums[i] + p > per)
+                    break;
+                if ((s >> i) & 1)
+                    if (dfs(s ^ (1 << i), (p + nums[i]) % per))
+                        return true;
+            }
+            return false;
+        };
+        return dfs((1<<nums.size()) - 1, 0);
+    }
+
+    bool canFormArray(vector<int> &arr, vector<vector<int>> &pieces)
+    {
+        unordered_map<int, size_t> m;
+        for (size_t i{}; i < arr.size(); ++i)
+            m[arr[i]] = i;
+
+        for (const auto &piece : pieces)
+        {
+            int index{-1};
+            for (const auto &i : piece)
+            {
+                if (m.count(i) == 0)
+                    return false;
+                if (m[i] != index + 1 && index != -1)
+                    return false;
+                index = m[i];
+            }
+        }
+        return true;
+    }
+
+    class MyLinkedList
+    {
+    private:
+        struct Node
+        {
+            int m_val;
+            Node *m_next;
+        };
+        using pNode = Node *;
+        pNode m_begin{nullptr};
+        size_t m_size{0};
+    public:
+        
+        MyLinkedList()
+        {
+        }
+
+        int get(int index)
+        {
+            if (index < 0 || index >= m_size)
+                return -1;
+            auto it = m_begin;
+            while (index--)
+                it = it->m_next;
+            return it->m_val;
+        }
+
+        void addAtHead(int val)
+        {
+            addAtIndex(0, val);
+        }
+
+        void addAtTail(int val)
+        {
+            addAtIndex(m_size, val);
+        }
+
+        void addAtIndex(int index, int val)
+        {
+            if (index > m_size)
+                return;
+            
+            if (index <= 0)
+            {
+                auto node{new Node{val, m_begin}};
+                m_begin = node;
+                ++m_size;
+                return;
+            }
+
+            auto it{m_begin};
+            --index;
+            while (index--)
+                it = it->m_next;
+            auto node{new Node{val, it->m_next}};
+            it->m_next = node;
+            ++m_size;
+        }
+
+        void deleteAtIndex(int index)
+        {
+            if (index < 0 || index >= m_size)
+                return;
+            if (index == 0)
+            {
+                m_begin = m_begin->m_next;
+                --m_size;
+                return;
+            }
+
+            auto it{m_begin};
+            --index;
+            while (index--)
+                it = it->m_next;
+            it->m_next = it->m_next->m_next;
+            --m_size;
+        }
+    };
+
+    int getKthMagicNumber(int k)
+    {
+        vector<int> dp(k);
+        dp[0] = 1;
+        size_t p3{0}, p5{0}, p7{0};
+        for (int i{1}; i < k; ++i)
+        {
+            dp[i] = min({dp[p3] * 3, dp[p5] * 5, dp[p7] * 7});
+            if (dp[i] == dp[p3] * 3)
+                ++p3;
+            if (dp[i] == dp[p5] * 5)
+                ++p5;
+            if (dp[i] == dp[p7] * 7)
+                ++p7;
+        }
+        return dp.back();
+    }
+
+    bool isFlipedString(string &s1, string &s2)
+    {
+        if (s1.size() != s2.size())
+            return false;
+        s2 += s2;
+        return s2.find(s1) != string::npos;
+    }
+
+    void setZeroes(vector<vector<int>> &matrix)
+    {
+        bool firstColZero{false};
+        bool firstRowZero{false};
+        for (const auto &col : matrix)
+            if (col.front() == 0)
+                firstRowZero = true;
+        for (const auto &i : matrix.front())
+            if (i == 0)
+                firstColZero = true;
+        for (int i{1}; i < matrix.size(); ++i)
+        {
+            for (int j{1}; j < matrix.front().size(); ++j)
+            {
+                if (matrix[i][j] == 0)
+                {
+                    matrix[0][j] = 0;
+                    matrix[i][0] = 0;
+                }
+            }
+        }
+
+        for (size_t i{1}; i < matrix.front().size(); ++i)
+            if (matrix.front()[i] == 0)
+                for (size_t j{1}; j < matrix.size(); ++j)
+                    matrix[j][i] = 0;
+
+        for (size_t i{1}; i < matrix.size(); ++i)
+            if (matrix[i].front() == 0)
+                for (size_t j{1}; j < matrix.front().size(); ++j)
+                    matrix[i][j] = 0;
+        if (firstRowZero)
+            for (auto &col : matrix)
+                col.front() = 0;
+        if (firstColZero)
+            matrix.front() = vector<int>(matrix.front().size(), 0);
+    }
+
+    int scoreOfParentheses(string s)
+    {
+        std::function<int(string::iterator &)> fun = [&](string::iterator &iter)
+        {
+            int stk = 0;
+            int res = 0;
+            char last = *iter;
+            while (stk > 0)
+            {
+                ++iter;
+                if (*iter == '(' && last == '(')
+                    ++stk;
+                else if (*iter == ')')
+                {
+                    res = res == 0 ? 1 : res * 2;
+                    --stk;
+                }
+                else if (*iter == '(' && last == ')')
+                    res += fun(iter);
+                last = *iter;
+            }
+            return res;
+        };
+
+        auto iter = s.begin();
+        int sum = 0;
+        while (iter != s.end())
+        {
+            sum += fun(iter);
+            ++iter;
+        }
+        return sum;
+    }
+
+    bool areAlmostEqual(string &s1, string &s2)
+    {
+        if (s1.length() != s2.length())
+            return false;
+        char s1_index[2]{0,0};
+        char s2_index[2]{0,0};
+        for (size_t i{0}; i < s1.length(); ++i)
+        {
+            if (s1[i] != s2[i])
+            {
+                if (s1_index[0] == 0)
+                {
+                    s1_index[0] = s1[i];
+                    s2_index[0] = s2[i];
+                }
+                else if (s1_index[1] == 0)
+                {
+                    s1_index[1] = s1[i];
+                    s2_index[1] = s2[i];
+                }
+                else
+                    return false;
+            }
+        }
+        return s1_index[0] == s2_index[1] && s1_index[1] == s2_index[0];
+    }
+
+    int numComponents(ListNode *head, vector<int> &nums)
+    {
+        unordered_set<int> set_nums(nums.begin(), nums.end());
+
+        int res{0};
+        for (auto it = head; it; )
+        {
+            while (it && !set_nums.count(it->val))
+                it = it->next;
+            if (!it)
+                return res;
+            ++res;
+            while (it && set_nums.count(it->val))
+                it = it->next;
+        }
+
+        return res;
+    }
+
+    int maxChunksToSorted(vector<int> &arr)
+    {
+        int res{0};
+        int tmp{0};
+        for (int i{}; i < arr.size(); ++i)
+        {
+            tmp = max(arr[i], tmp);
+            if (tmp == i)
+                ++res;
+        }
+        return res;
+    }
+
+    int totalFruit(vector<int> &fruits)
+    {
+        if (fruits.size() < 2)
+            return fruits.size();
+        int res{0};
+        int bufNum[2];
+        int bufIndex[2];
+        int now{1};
+        bufNum[0] = fruits.back();
+        bufIndex[0] = fruits.size() - 1;
+
+        int it;
+        for (it = fruits.size() - 2; it >= 0; --it)
+        {
+            if (fruits[it] != bufNum[0])
+            {
+                bufNum[1] = fruits[it];
+                bufIndex[1] = it;
+                bufIndex[0] = it + 1;
+                ++now;
+                --it;
+                break;
+            }
+            else
+            {
+                ++now;
+            }
+        }
+
+        for (; it >= 0; --it)
+        {
+            auto num = fruits[it];
+            if (num == bufNum[0] || num == bufNum[1])
+            {
+                ++now;
+                if (num != fruits[it + 1])
+                    bufIndex[num == bufNum[1]] = it;
+            }
+            else
+            {
+                res = max(res, now);
+                if (bufIndex[0] > bufIndex[1])
+                {
+                    swap(bufIndex[0], bufIndex[1]);
+                    bufNum[0] = bufNum[1];
+                }
+                bufIndex[1] = it;
+                bufNum[1] = num;
+                now = bufIndex[0] - it + 1;
+            }
+        }
+        return max(res, now);
+
+    }
+
+    int countStudents(vector<int> &students, vector<int> &sandwiches)
+    {
+        int s[2];
+        s[1] = accumulate(students.begin(), students.end(), 0);
+        s[0]  = students.size() - s[1];
+        int res{0};
+        for (const auto &i : sandwiches)
+        {
+            if (s[i] <= 0)
+                return res;
+            --s[i];
+            ++res;
+        }
+        return students.size() - res;
+    }
+
+    class StockSpanner
+    {
+        struct DayPrice
+        {
+            int day{};
+            int price{};
+        };
+    public:
+        StockSpanner() = default;
+
+        int next(int price)
+        {
+            while (!m_st.empty() && price >= m_st.top().price)
+                m_st.pop();
+            int last_day = m_st.empty() ? 0 : m_st.top().day;
+            m_st.emplace(DayPrice{++m_day, price});
+            return m_day - last_day;
+        }
+
+    private:
+        stack<DayPrice> m_st{};
+        int m_day{};
+    };
+
+    int partitionDisjoint(vector<int> &nums)
+    {
+        int pos{0}, leftMax{nums[0]};
+        for (int i{1}; i < nums.size() - 1; ++i)
+        {
+            if (nums[i] > leftMax)
+                leftMax = nums[i];
+            if (nums[i] < leftMax)
+                pos = i;
+        }
+        return pos + 1;
+    }
+
+    int shortestSubarray(vector<int> &nums, int k)
+    {
+        if (nums.front() >= k)
+            return 1;
+        vector<int> preSum(nums.size() + 1);
+        preSum[0] = 0;
+        for (size_t i{1}; i < preSum.size(); ++i)
+            preSum[i] = preSum[i - 1] + nums[i - 1];
+
+        deque<int> dq({0});
+        int res = INT_MAX;
+        for (size_t i{1}; i < preSum.size(); ++i)
+        {
+            while (!dq.empty() && preSum[i] - preSum[dq.front()] >= k)
+            {
+                res = min(int(i - dq.front()), res);
+                dq.pop_front();
+            }
+            while (!dq.empty() && preSum[dq.back()] > preSum[i])
+                dq.pop_back();
+            dq.push_back(i);
+        }
+        return res < preSum.size() ? res : -1;
+    }
+
+    int arraySign(vector<int> &nums)
+    {
+        int res{1};
+        for (int i : nums)
+        {
+            if (i == 0)
+                return 0;
+            if (i < 0)
+                res *= -1;
+        }
+        return res;
+    }
+
+    int sumSubarrayMins(vector<int> &arr)
+    {
+        stack<int> st;
+        vector<int> dp(arr.size());
+        int64_t res{0};
+        constexpr int64_t mod = 1e9 + 7;
+        for (int i{}; i < arr.size(); ++i)
+        {
+            while (!st.empty() && arr[st.top()] > arr[i])
+                st.pop();
+            int k = st.empty() ? (i + 1) : (i - st.top());
+            dp[i] = k * arr[i] + (st.empty() ? 0 : dp[i - k]);
+            res = (res + dp[i]) % mod;
+            st.emplace(i);
+        }
+        return res;
+    }
+
+    int magicalString(int n)
+    {
+        vector<char> vec{1, 2, 2, 1, 1, 2, 1, 2, 2, 1, 2, 2, 1, 1, 2, 1, 1, 2, 2};
+        if (n <= vec.size())
+            return std::count_if(vec.begin(), vec.begin() + n, [](int i){return i == 1;});
+        vec.resize(n);
+        int it_begin = 12;
+        int it_now = 19;
+        int res{9};
+        while (it_now < n)
+        {
+            int insert_num = vec[it_now - 1] == 1 ? 2 : 1;
+            int add_res = insert_num == 1;
+            vec[it_now++] = insert_num;
+            res += add_res;
+            if (vec[it_begin++] == 2 && it_now < n)
+            {
+                res += add_res;
+                vec[it_now++] = insert_num;
+            }
+        }
+        return res;
+    }
+
+    bool arrayStringsAreEqual(vector<string> &word1, vector<string> &word2)
+    {
+        struct vec_str_it
+        {
+            vector<string> &vec_ref;
+            size_t vec_index{0};
+            size_t str_index{0};
+            auto& operator*()
+            {
+                return vec_ref[vec_index][str_index];
+            }
+            void operator++()
+            {
+                if (++str_index < vec_ref[vec_index].size())
+                    return;
+                str_index = 0;
+                ++vec_index;
+            }
+            bool end()
+            {
+                return vec_ref.size() == vec_index;
+            }
+        } it1{word1}, it2{word2};
+
+        while(!it1.end() && !it2.end()){
+            if (*it1 != *it2)
+                break;
+            ++it1;
+            ++it2;
+        }
+        return it1.end() && it2.end();
+    }
+
+    vector<int> bestCoordinate(vector<vector<int>> &towers, int radius)
+    {
+        vector<int> res_pos(2, 0);
+        int res_power{0};
+
+        auto getDis = [](auto x1, auto y1, auto x2, auto y2)
+        {
+            auto dx = x2 - x1;
+            auto dy = y2 - y1;
+            return dx * dx + dy * dy;
+        };
+        
+        for (int x{0}; x <= 50; ++x)
+        {
+            for (int y{0}; y <= 50; ++y)
+            {
+                int power{0};
+                for (auto &tower : towers)
+                {
+                    auto dis = getDis(x, y, tower[0], tower[1]);
+                    if (dis > radius * radius)
+                        continue;
+                    power += tower[2] / (1 + sqrt(dis));
+                }
+                if (power > res_power)
+                {
+                    res_power = power;
+                    res_pos[0] = x;
+                    res_pos[1] = y;
+                }
+            }
+        }
+        return res_pos;
+    }
+
+    int maxRepeating(string sequence, string word)
+    {
+        int res{0};
+        int cnt{0};
+        int word_index{0};
+        for (size_t i{}; i < sequence.size(); ++i)
+        {
+            if (sequence[i] == word[word_index])
+            {
+                if (++word_index == word.size())
+                {
+                    ++cnt;
+                    word_index = 0;
+                }
+            }
+            else
+            {
+                res = max(res, cnt);
+                cnt = 0;
+                word_index = 0;
+            }
+        }
+        return res;
+    }
 };
 }
 
@@ -8798,7 +9387,7 @@ auto __FAST_IO__ = []() noexcept
 }() ;
 */
 
-namespace 剑指offer
+namespace ��ָoffer
 {
 
 class Solution
