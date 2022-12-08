@@ -8542,6 +8542,9 @@ public:
              { return double(wage[left]) / quality[left] < double(wage[right]) / quality[right]; });
         priority_queue<int> q;
         int sum{};
+#ifndef DBL_MAX
+#define DBL_MAX 1.7976931348623158e+308
+#endif
         double res{DBL_MAX};
         for (int i{}; i < index.size(); ++i)
         {
@@ -9375,6 +9378,103 @@ public:
         }
         return res;
     }
+
+    vector<string> letterCasePermutation(const string &s)
+    {
+        const size_t size = s.size();
+        const int letterCount = count_if(s.begin(), s.end(), [](char c)
+                                         { return isalpha(c); });
+        vector<string> res(1 << letterCount, string(size, 0));
+        for (int mask{0}; mask < (1 << letterCount); ++mask)
+        {
+            int bitCount{};
+            for (int i{}; i < size; ++i)
+            {
+                if (isalpha(s[i]))
+                {
+                    if (mask & (1 << bitCount))
+                        res[mask][i] = toupper(s[i]);
+                    else
+                        res[mask][i] = tolower(s[i]);
+                    ++bitCount;
+                }
+                else
+                    res[mask][i] = s[i];
+            }
+        }
+        return res;
+    }
+    
+    int reachNumber(int target)
+    {
+        target = abs(target);
+        int sum{};
+        int step{};
+        while (sum < target)
+        {
+            ++step;
+            sum += step;
+        }
+        return target % 2 == 0 ? step : step + 1 + step % 2;
+    }
+
+    int largestAltitude(vector<int>& gain)
+    {
+        int res{0};
+        int cur{0};
+        for (auto i : gain)
+        {
+            cur += i;
+            res = max(res, cur);
+        }
+        return res;
+    }
+
+    int numDifferentIntegers(const string &word)
+    {
+        std::unordered_set<string_view> tab;
+        for (auto it = word.begin(); it < word.end(); ++it)
+        {
+            if (*it < '0' || *it > '9')
+                continue;
+
+            auto tmp = it;
+            for (++it; it < word.end() && *it >= '0' && *it <= '9'; ++it){}
+            while( tmp < it - 1 && *tmp == '0'){ ++tmp;}
+            tab.emplace(tmp, it);
+        }
+        return tab.size();
+    }
+
+    int minOperations(vector<int> &nums1, vector<int> &nums2)
+    {
+        if (nums1.size() * 6 < nums2.size() || nums2.size() * 6 < nums1.size())
+            return -1;
+        int sum1 = accumulate(nums1.begin(), nums1.end(), 0);
+        int sum2 = accumulate(nums2.begin(), nums2.end(), 0);
+        int delta = abs(sum1 - sum2);
+        auto &minVec = sum1 < sum2 ? nums1 : nums2;
+        auto &maxVec = sum1 < sum2 ? nums2 : nums1;
+        array<int, 6> count{0};
+        for (auto i : minVec)
+            ++count[6 - i];
+        for (auto i : maxVec)
+            ++count[i - 1];
+        int res{};
+        for (int i = 5; i >= 0; --i)
+        {
+            int tmp = min(count[i], (delta + i - 1) / i);
+            res += tmp;
+            delta -= tmp * i;
+            if (delta <= 0)
+                break;
+        }
+        return res;
+    }
+
+    bool squareIsWhite(string coordinates) {
+        return (coordinates[0] - 'a' + coordinates[1] - '1') % 2 == 1;
+    }
 };
 }
 
@@ -9387,7 +9487,7 @@ auto __FAST_IO__ = []() noexcept
 }() ;
 */
 
-namespace ½£Ö¸offer
+namespace ï¿½ï¿½Ö¸offer
 {
 
 class Solution
