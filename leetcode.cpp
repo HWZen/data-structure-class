@@ -9475,6 +9475,85 @@ public:
     bool squareIsWhite(string coordinates) {
         return (coordinates[0] - 'a' + coordinates[1] - '1') % 2 == 1;
     }
+
+    bool checkPowersOfThree(int n)
+    {
+        if (n == 0)
+            return true;
+        if (n % 3 != 0 && n % 3 != 1)
+            return false;
+
+        auto pow = [](int x, int y) consteval
+        {
+            int res{1};
+            for (int i{}; i < y; ++i)
+                res *= x;
+            return res;
+        };
+
+        constexpr int threePow[20] = {pow(3, 0), pow(3, 1), pow(3, 2), pow(3, 3), pow(3, 4), pow(3, 5), pow(3, 6), pow(3, 7), pow(3, 8), pow(3, 9), pow(3, 10), pow(3, 11), pow(3, 12), pow(3, 13), pow(3, 14), pow(3, 15), pow(3, 16), pow(3, 17), pow(3, 18), pow(3, 19)};
+
+        auto it = 19;
+        while (n > 0)
+        {
+            if (n >= threePow[it])
+            {
+                n -= threePow[it];
+                if (n == 0)
+                    return true;
+            }
+            --it;
+        }
+        return false;
+    }
+
+    int minOperations(vector<int> &nums)
+    {
+        int res{0};
+        int last{nums.front() - 1};
+        for (auto i : nums)
+        {
+            auto tmp = last - i + 1;
+            res += max(0, tmp);
+            last = tmp > 0 ? i + tmp : i;
+        }
+        return res;
+    }
+
+    int beautySum(string &s)
+    {
+        if (s.size() < 3)
+            return 0;
+        auto beauty = [](const string_view &s)
+        {
+            array<int, 26> count{};
+            for (auto i : s)
+                ++count[i - 'a'];
+            int minIt{INT_MAX};
+            for (auto i: count)
+                if (i != 0)
+                    minIt = min(minIt, i);
+            auto maxIt = *max_element(count.begin(), count.end());
+            return maxIt - minIt;
+        };
+        int res{};
+        for (int i{}; i < s.size(); ++i)
+        {
+            for (int j{i + 2}; j < s.size(); ++j)
+            {
+                res += beauty(string_view{s.data()+ i, static_cast<size_t>(j - i + 1)});
+            }
+        }
+        return res;
+    }
+
+    bool checkIfPangram(string sentence)
+    {
+        array<bool, 26> count{};
+        for (auto i : sentence)
+            count[i - 'a'] = true;
+        return all_of(count.begin(), count.end(), [](bool i){return i;});
+    }
 };
 }
 
