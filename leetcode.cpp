@@ -9379,6 +9379,97 @@ public:
         return res;
     }
 
+    int countConsistentStrings(string allowed, vector<string> &words)
+    {
+        int alowedMask{0};
+        for (auto &ch : allowed)
+            alowedMask |= 1 << (ch - 'a');
+        auto isConsistentString = [&](const string &str)
+        {
+            for (auto &ch : str)
+                if (!(alowedMask | (ch - 'a')))
+                    return false;
+            return true;
+        };
+        return count_if(words.begin(),words.end(),isConsistentString);
+    }
+
+    int numMatchingSubseq(const string &s, vector<string> &words)
+    {
+        array<vector<int>, 26> tab;
+        for (int i{0}; i < s.size(); ++i)
+            tab[s[i] - 'a'].emplace_back(i);
+
+        auto is_substr = [&tab](const string &sub)
+        {
+            auto it1 = sub.begin();
+            int it2{-1};
+            for (; it1 < sub.end(); ++it1)
+            {
+                auto &poses = tab[*it1 - 'a'];
+                auto res = upper_bound(poses.begin(), poses.end(), it2);
+                if (res == poses.end())
+                    return false;
+                it2 = *res;
+            }
+            return true;
+        };
+
+        return count_if(words.begin(), words.end(), is_substr);
+    }
+
+    int sumSubseqWidths(vector<int> &nums)
+    {
+        sort(nums.begin(), nums.end());
+        int64_t res{0};
+        constexpr int64_t mod{static_cast<int64_t>(1e9 + 7)};
+        int64_t x = nums[0], y = 2;
+        for (int j = 1; j < nums.size(); ++j)
+        {
+            res = (res + nums[j] * (y - 1) - x) % mod;
+            x = (x * 2 + nums[j]) % mod;
+            y = y * 2 % mod;
+        }
+        return (res + mod) % mod;
+    }
+
+    int countBalls(int lowLimit, int highLimit)
+    {
+        unordered_map<int, int> tab;
+        for (int i = lowLimit; i <= highLimit; ++i)
+        {
+            int box{0};
+            for (auto tmp{i}; tmp; tmp /= 10)
+                box += tmp % 10;
+            ++tab[box];
+        }
+        int res{0};
+        for (const auto &[box, num] : tab)
+        {
+            if (num > res)
+                res = num;
+        }
+        return res;
+    }
+
+    int numSubarrayBoundedMax(vector<int> &nums, int left, int right)
+    {
+        auto count = [&](int lower)
+        {
+            int res{};
+            int cnt{};
+            for (auto i : nums)
+            {
+                if (i <= lower)
+                    res += ++cnt;
+                else
+                    cnt = 0;
+            }
+            return res;
+        };
+        return count(right) - count(left - 1);
+    }
+
     vector<string> letterCasePermutation(const string &s)
     {
         const size_t size = s.size();
@@ -9554,6 +9645,7 @@ public:
             count[i - 'a'] = true;
         return all_of(count.begin(), count.end(), [](bool i){return i;});
     }
+
 };
 }
 
