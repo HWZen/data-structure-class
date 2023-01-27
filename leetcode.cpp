@@ -41,6 +41,7 @@
 #include <concepts>
 #include <regex>
 #include <span>
+#include <cassert>
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -9646,6 +9647,499 @@ public:
         return all_of(count.begin(), count.end(), [](bool i){return i;});
     }
 
+    int getLucky(string &s, int k)
+    {
+        int res{0};
+        for (auto i : s)
+            res += (i - 'a' + 1) / 10 + (i - 'a' + 1) % 10;
+        for (int i{}; i < k - 1; ++i)
+        {
+            int tmp{};
+            while (res > 0)
+            {
+                tmp += res % 10;
+                res /= 10;
+            }
+            res = tmp;
+        }
+        return res;
+    }
+
+    int minElements(vector<int> &nums, int limit, int goal)
+    {
+        int64_t sum = accumulate(nums.begin(), nums.end(), 0ll);
+        int64_t delta = abs(sum - goal);
+        return (delta + limit - 1) / limit;
+    }
+
+    bool validPath(int n, vector<vector<int>> &edges, int source, int destination)
+    {
+        vector<vector<int>> graph(n);
+        for (auto &i : edges)
+        {
+            graph[i[0]].push_back(i[1]);
+            graph[i[1]].push_back(i[0]);
+        }
+        vector<bool> visited(n);
+        queue<int> q;
+        q.push(source);
+        visited[source] = true;
+        while (!q.empty())
+        {
+            auto tmp = q.front();
+            q.pop();
+            if (tmp == destination)
+                return true;
+            for (auto i : graph[tmp])
+            {
+                if (!visited[i])
+                {
+                    q.push(i);
+                    visited[i] = true;
+                }
+            }
+        }
+        return false;
+    }
+
+    int minimumSize(vector<int> &nums, int maxOperations)
+    {
+        int minNum = 1, maxNum = *max_element(nums.begin(), nums.end());
+        for (auto i : nums)
+        {
+            maxNum = max(maxNum, i);
+            minNum = min(minNum, i);
+        }
+        // binary search
+        while (minNum < maxNum)
+        {
+            int mid = (minNum + maxNum) / 2;
+            int count{};
+            for (auto i : nums)
+                count += (i - 1) / mid;
+            if (count > maxOperations)
+                minNum = mid + 1;
+            else
+                maxNum = mid;
+        }
+        return minNum;
+    }
+
+    int maximumScore(int a, int b, int c)
+    {
+        std::array<int, 3> nums{a, b, c};
+        sort(nums.begin(), nums.end());
+        int res{};
+        if (nums[0] + nums[1] <= nums[2])
+            return nums[0] + nums[1];
+        else
+        {
+            res += nums[2];
+            res += (nums[0] + nums[1] - nums[2]) / 2;
+            return res;
+        }
+    }
+
+    int finalValueAfterOperations(vector<string> &operations)
+    {
+        int res{0};
+        for (auto &op : operations)
+        {
+            if (op[1] == '+')
+                ++res;
+            else
+                --res;
+        }
+        return res;
+    }
+
+    string largestMerge(string_view word1, string_view word2)
+    {
+        string res;
+        res.reserve(word1.size() + word2.size());
+        while (!word1.empty() && !word2.empty())
+        {
+            if (word1 > word2)
+            {
+                res.push_back(word1.front());
+                word1.remove_prefix(1);
+            }
+            else
+            {
+                res.push_back(word2.front());
+                word2.remove_prefix(1);
+            }
+        }
+        res.append(word1);
+        res.append(word2);
+        return res;
+    }
+
+    int minMovesToSeat(vector<int> &seats, vector<int> &students)
+    {
+        sort(seats.begin(), seats.end());
+        sort(students.begin(), students.end());
+        int res{};
+        for (int i{}; i < seats.size(); ++i)
+            res += abs(seats[i] - students[i]);
+        return res;
+    }
+
+    char repeatedCharacter(std::string_view s)
+    {
+        int countCode{};
+        for (auto ch : s)
+        {
+            if (countCode & (1 << (ch - 'a')))
+                return ch;
+            else
+                countCode |= (1 << (ch - 'a'));
+        }
+        return 0;
+    }
+
+    int countEven(int num)
+    {
+        int res{};
+        auto count = [](int n) constexpr noexcept {
+            int res{};
+            while (n > 0)
+            {
+                res += n % 10;
+                n /= 10;
+            }
+            return res;
+        };
+        for (int i = 2; i <= num; ++i)
+        {
+            if (count(i) % 2 == 0)
+                ++res;
+        }
+        return res;
+    }
+
+    int rearrangeCharacters(string_view s, string_view target)
+    {
+        unordered_map<char, int> targetCount;
+        for (auto ch : target)
+            ++targetCount[ch];
+
+        array<int, 26> count{};
+        for (auto ch : s)
+            ++count[ch - 'a'];
+
+        int res = INT_MAX;
+        for (const auto &[ch, cnt] : targetCount)
+            res = min(res, count[ch - 'a'] / cnt);
+        if (res == INT_MAX)
+            return 0;
+        return res;
+    }
+
+    bool areSentencesSimilar(string_view sentence1, string_view sentence2)
+    {
+        if (sentence1 == sentence2)
+            return true;
+        if (sentence1.size() == sentence2.size())
+            return false;
+
+        auto split = [](string_view s)
+        {
+            vector<string_view> res;
+            for (auto i = s.begin(); i != s.end();)
+            {
+                auto j = find(i, s.end(), ' ');
+                res.emplace_back(&*i, distance(i, j));
+                i = j;
+                if (i != s.end())
+                    ++i;
+            }
+            return res;
+        };
+        auto words1 = split(sentence1);
+        auto words2 = split(sentence2);
+        if (words1.size() == words2.size())
+            return false;
+        if (words1.size() < words2.size())
+            swap(words1, words2);
+        auto itLeft = words2.begin();
+        auto itRight = words2.end();
+        for (auto it = words1.begin(); it != words1.end() && itLeft <= words2.end();)
+        {
+            if (*it == *itLeft)
+            {
+                ++itLeft;
+                ++it;
+            }
+            else
+                break;
+        }
+        for (auto it = words1.rbegin(); it != words1.rend() && itRight >= words2.begin();)
+        {
+            if (*it == *(itRight - 1))
+            {
+                --itRight;
+                ++it;
+            }
+            else
+                break;
+        }
+        return itRight == itLeft;
+    }
+
+    int countNicePairs(vector<int> &nums)
+    {
+        unordered_map<int, int> count;
+        auto reverse = [](int n) constexpr noexcept {
+            int res{};
+            while (n > 0)
+            {
+                res = res * 10 + n % 10;
+                n /= 10;
+            }
+            return res;
+        };
+        for (auto &num : nums)
+            ++count[num - reverse(num)];
+        int res{};
+        for (const auto &[_, cnt] : count)
+            res = (res + (long long)cnt * (cnt - 1) / 2) % 1000000007;
+        return res;
+    }
+
+    class MKAverage
+    {
+    public:
+        MKAverage(int m, int k) : m(m), k(k)
+        {
+            divisor = m - 2 * k;
+        }
+
+        void addElement(int num)
+        {
+            dataStream.emplace(num);
+            if (dataStream.size() <= m)
+            {
+                mid.emplace(num);
+                MKsum += num;
+
+                if (dataStream.size() == m)
+                {
+                    auto it = mid.begin();
+                    advance(it, k);
+                    left.insert(mid.begin(), it);
+
+                    auto rit = mid.rbegin();
+                    advance(rit, k);
+                    right.insert(mid.rbegin(), rit);
+
+                    MKsum -= accumulate(left.begin(), left.end(), 0);
+                    MKsum -= accumulate(right.begin(), right.end(), 0);
+
+                    mid.erase(mid.begin(), it);
+                    mid.erase(prev(mid.end(), k), mid.end());
+                }
+                return;
+            }
+
+            if (num < *mid.begin())
+            {
+                left.emplace(num);
+                MKsum += *left.rbegin();
+                mid.emplace(*left.rbegin());
+                left.erase(prev(left.end()));
+            }
+            else if (num > *mid.rbegin())
+            {
+                right.emplace(num);
+                MKsum += *right.begin();
+                mid.emplace(*right.begin());
+                right.erase(right.begin());
+            }
+            else
+            {
+                mid.emplace(num);
+                MKsum += num;
+            }
+
+            auto remove = dataStream.front();
+            dataStream.pop();
+            auto it = mid.find(remove);
+            if (it != mid.end())
+            {
+                mid.erase(it);
+                MKsum -= remove;
+            }
+            else if ((it = left.find(remove)) != left.end())
+            {
+                left.erase(it);
+                left.emplace(*mid.begin());
+                MKsum -= *mid.begin();
+                mid.erase(mid.begin());
+            }
+            else
+            {
+                it = right.find(remove);
+                right.erase(it);
+                right.emplace(*mid.rbegin());
+                MKsum -= *mid.rbegin();
+                mid.erase(prev(mid.end()));
+            }
+        }
+
+        int calculateMKAverage()
+        {
+            if (dataStream.size() < m)
+                return -1;
+            return MKsum / divisor;
+        }
+
+    private:
+        int m;
+        int k;
+        queue<int> dataStream;
+        multiset<int> left;
+        multiset<int> mid;
+        multiset<int> right;
+        int64_t MKsum{0};
+        int64_t divisor;
+    };
+
+    bool strongPasswordCheckerII(string password)
+    {
+        if (password.size() < 8)
+            return false;
+        bool hasLower = false;
+        bool hasUpper = false;
+        bool hasDigit = false;
+        bool hasUnusual = false;
+        std::string_view unusual{"!@#$%^&*()-+"};
+        char lastChar{-1};
+        for (auto c : password)
+        {
+            if (c == lastChar)
+                return false;
+
+            if (c >= 'a' && c <= 'z')
+                hasLower = true;
+            else if (c >= 'A' && c <= 'Z')
+                hasUpper = true;
+            else if (c >= '0' && c <= '9')
+                hasDigit = true;
+            else if (unusual.find(c) != std::string_view::npos)
+                hasUnusual = true;
+            lastChar = c;
+        }
+        return hasLower && hasUpper && hasDigit && hasUnusual;
+    }
+
+    vector<int> findingUsersActiveMinutes(vector<vector<int>> &logs, int k)
+    {
+        unordered_map<int, unordered_set<int>> userActiveMinutes;
+        for (auto &log : logs)
+            userActiveMinutes[log[0]].emplace(log[1]);
+        vector<int> res(k);
+        for (const auto &[_, minutes] : userActiveMinutes)
+            if (minutes.size() <= k && !minutes.empty())
+                ++res[minutes.size() - 1];
+        return res;
+    }
+
+    int minSideJumps(vector<int> &obstacles)
+    {
+        array<vector<int>, 3> dp;
+        dp.fill(vector<int>(obstacles.size()));
+        dp[0][0] = 1;
+        dp[1][0] = 0;
+        dp[2][0] = 1;
+        for (size_t i{1}; i < obstacles.size(); ++i)
+        {
+            for (auto &j : dp)
+                j[i] = j[i - 1];
+            if (obstacles[i] != 0)
+                dp[obstacles[i] - 1][i] = INT_MAX - 1;
+            auto miniCnt = min({dp[0][i], dp[1][i], dp[2][i]});
+            for (auto &j : dp)
+                j[i] = min(j[i], miniCnt + 1);
+        }
+        return min({dp[0].back(), dp[1].back(), dp[2].back()});
+    }
+
+    double calculateTax(vector<vector<int>> &brackets, int income)
+    {
+        if (income <= 0)
+            return 0;
+        double tax{0.0};
+        for (size_t i{brackets.size() - 1}; i > 0; --i)
+            brackets[i][0] -= brackets[i - 1][0];
+        for (auto &bracket : brackets)
+        {
+            if (income <= bracket[0])
+            {
+                return (tax + income * bracket[1]) / 100.0;
+            }
+            else
+            {
+                tax += bracket[0] * bracket[1];
+                income -= bracket[0];
+            }
+        }
+        return tax;
+    }
+
+    vector<int> countPoints(vector<vector<int>> &points, vector<vector<int>> &queries)
+    {
+        auto GetDistence = [](int x1, int y1, int x2, int y2) constexpr noexcept -> int
+        {
+            return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+        };
+
+        vector<int> res;
+        res.reserve(queries.size());
+        for (const auto & query : queries)
+        {
+            int cnt{0};
+            int r2 = query[2] * query[2];
+            for (const auto & point : points)
+                if (GetDistence(point[0], point[1], query[0], query[1]) <= r2)
+                    ++cnt;
+            res.emplace_back(cnt);
+        }
+        return res;
+    }
+
+    string getSmallestString(int n, int k)
+    {
+        string res(n, 'a');
+        k -= n;
+        auto it = res.end();
+        while (k > 0)
+        {
+            *(--it) += (k > 25 ? 25 : k);
+            k -= 25;
+        }
+        return res;
+    }
+
+    string greatestLetter(string_view s)
+    {
+        using flag = unsigned char;
+        constexpr flag UPPER = 0X01;
+        constexpr flag LOWER = 0X02;
+        constexpr flag GOOD  = UPPER | LOWER;
+        array<flag, 26> flags{0};
+        for (const auto &ch : s)
+        {
+            if (ch <= 'Z')
+                flags[ch - 'A'] |= UPPER;
+            else
+                flags[ch - 'a'] |= LOWER;
+        }
+        for (int i{25}; i >= 0; --i)
+            if ((flags[i] & GOOD) == GOOD)
+                return {char('A' + i)};
+        return {};
+    }
 };
 }
 
@@ -9658,7 +10152,7 @@ auto __FAST_IO__ = []() noexcept
 }() ;
 */
 
-namespace ��ָoffer
+namespace JianZhiOffer
 {
 
 class Solution
@@ -10179,6 +10673,119 @@ class Solution
     bool checkOnesSegment(string s)
     {
         return std::regex_match(s, std::regex(R"(1+0*)"));
+    }
+
+    vector<int> spiralOrder(vector<vector<int>> &matrix)
+    {
+        constexpr int flag = INT_MAX;
+        vector<int> res;
+        res.reserve(matrix.size() * matrix.front().size());
+        res.emplace_back(matrix[0][0]);
+        matrix[0][0] = flag;
+        int i = 0, j = 0;
+        int direction = 0;
+        for (;;)
+        {
+            switch(direction)
+            {
+            case 0:
+                if (j + 1 < matrix[i].size() && matrix[i][j + 1] != flag)
+                {
+                    res.emplace_back(matrix[i][++j]);
+                    matrix[i][j] = flag;
+                }
+                else
+                    ++direction;
+                break;
+            case 1:
+                if (i + 1 < matrix.size() && matrix[i + 1][j] != flag)
+                {
+                    res.emplace_back(matrix[++i][j]);
+                    matrix[i][j] = flag;
+                }
+                else
+                    ++direction;
+                break;
+            case 2:
+                if (j - 1 >= 0 && matrix[i][j - 1] != flag)
+                {
+                    res.emplace_back(matrix[i][--j]);
+                    matrix[i][j] = flag;
+                }
+                else
+                    ++direction;
+                break;
+            case 3:
+                if (i - 1 >= 0 && matrix[i - 1][j] != flag)
+                {
+                    res.emplace_back(matrix[--i][j]);
+                    matrix[i][j] = flag;
+                }
+                else
+                    direction = 0;
+                break;
+            }
+            if (res.size() == matrix.size() * matrix.front().size())
+                return res;
+        }
+    }
+
+    class MinStack
+    {
+    public:
+        MinStack() = default;
+
+        void push(int x)
+        {
+            st.push(x);
+            if (minSt.empty() || x <= minSt.top())
+                minSt.push(x);
+        }
+
+        void pop()
+        {
+            if (st.top() == minSt.top())
+                minSt.pop();
+            st.pop();
+        }
+
+        int top()
+        {
+            return st.top();
+        }
+
+        int min()
+        {
+            return minSt.top();
+        }
+
+    private:
+        std::stack<int> st{};
+        std::stack<int> minSt{};
+    };
+
+    bool validateStackSequences(vector<int> &pushed, vector<int> &popped)
+    {
+        std::stack<int> st{};
+        auto pushIt = pushed.begin();
+        auto popIt = popped.begin();
+        while(pushIt != pushed.end())
+        {
+            if (*pushIt == *popIt)
+            {
+                ++popIt;
+                while (!st.empty() && st.top() == *(popIt))
+                {
+                    st.pop();
+                    ++popIt;
+                }
+                
+            }
+            else
+                st.push(*pushIt);
+            ++pushIt;
+        }
+        return st.empty();
     }
 };
 }
