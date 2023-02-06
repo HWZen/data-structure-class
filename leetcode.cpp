@@ -42,6 +42,7 @@
 #include <regex>
 #include <span>
 #include <cassert>
+#include <any>
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -10139,6 +10140,144 @@ public:
             if ((flags[i] & GOOD) == GOOD)
                 return {char('A' + i)};
         return {};
+    }
+
+    ListNode *mergeInBetween(ListNode *list1, int a, int b, ListNode *list2)
+    {
+        auto advance = [](ListNode *it, size_t cnt = 1) constexpr
+        {
+            while (cnt--)
+                it = it->next;
+            return it;
+        };
+
+        auto start = advance(list1, a - 1);
+        auto end = advance(list1, b + 1);
+
+        start->next = list2;
+
+        auto list2End = list2;
+        while (list2End->next)
+            list2End = list2End->next;
+
+        list2End->next = end;
+        return list1;
+    }
+
+    bool checkXMatrix(vector<vector<int>> &grid)
+    {
+        auto n = grid.size();
+        for (int i{0}; i < n; ++i)
+            if (grid[i][i] == 0)
+                return false;
+
+        for (int i{0}; i < n; ++i)
+            if (grid[i][n - i - 1] == 0)
+                return false;
+
+        for (int i{0}; i < n; ++i)
+            for (int j{0}; j < n; ++j)
+                if (i != j && j != n - i - 1 && grid[i][j] != 0)
+                    return false;
+        return true;
+    }
+
+    string decodeMessage(string key, string message)
+    {
+        unordered_map<char, char> keyMap;
+        char it = 'a';
+        for (const auto &ch : key)
+            if (keyMap.count(ch) == 0 && ch != ' ')
+                keyMap[ch] = it++;
+        keyMap[' '] = ' ';
+
+        for (auto &ch : message)
+            ch = keyMap[ch];
+        return message;
+    }
+
+    vector<int> shortestAlternatingPaths(int n, vector<vector<int>> &redEdges, vector<vector<int>> &blueEdges)
+    {
+        vector<vector<int>> redGraph(n);
+        vector<vector<int>> blueGraph(n);
+        for (const auto &edge : redEdges)
+            redGraph[edge[0]].emplace_back(edge[1]);
+        for (const auto &edge : blueEdges)
+            blueGraph[edge[0]].emplace_back(edge[1]);
+
+        vector<int> res(n, -1);
+        vector<uint8_t> visited(n, 0);
+        res[0] = 0;
+        queue<pair<int, bool>> q;
+        q.emplace(0, true);
+        q.emplace(0, false);
+        for (int step{1}; !q.empty(); ++step)
+        {
+            for (size_t i{q.size()}; i > 0; --i)
+            {
+                auto &[node, isRed] = q.front();
+                auto &graph = isRed ? redGraph : blueGraph;
+                for (const auto &next : graph[node])
+                {
+                    if (!(visited[next] & (isRed ? 0X02 : 0X01)))
+                    {
+                        res[next] = min((uint32_t)res[next], (uint32_t)step);
+                        q.emplace(next, !isRed);
+                        visited[next] |= isRed ? 0X02 : 0X01;
+                    }
+                }
+                q.pop();
+            }
+        }
+        return res;
+    }
+
+    bool btreeGameWinningMove(TreeNode *root, int n, int x)
+    {
+        std::function<size_t(TreeNode *)> getTreeNum = [&getTreeNum](TreeNode *root) noexcept -> size_t
+        {
+            size_t res{0};
+            if (root)
+            {
+                res = 1;
+                res += getTreeNum(root->left);
+                res += getTreeNum(root->right);
+            }
+            return res;
+        };
+
+        // dfs find x
+        std::function<TreeNode *(TreeNode *)> findX = [&findX, x](TreeNode *root) noexcept -> TreeNode *
+        {
+            if (root)
+            {
+                if (root->val == x)
+                    return root;
+                auto left = findX(root->left);
+                if (left)
+                    return left;
+                return findX(root->right);
+            }
+            return nullptr;
+        };
+        auto xNode = findX(root);
+        auto leftNum = getTreeNum(xNode->left);
+        auto rightNum = getTreeNum(xNode->right);
+        auto topNum = n - leftNum - rightNum - 1;
+        return max({leftNum, rightNum, topNum}) > n / 2;
+    }
+
+    int getMaximumConsecutive(vector<int> &coins)
+    {
+        sort(coins.begin(), coins.end());
+        int res{1};
+        for (const auto &coin : coins)
+        {
+            if (coin > res)
+                break;
+            res += coin;
+        }
+        return res;
     }
 };
 }
