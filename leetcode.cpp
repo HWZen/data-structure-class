@@ -1,3 +1,4 @@
+#include <forward_list>
 #include <stdexcept>
 #define _CRT_SECURE_NO_WARNINGS
 #include <algorithm>
@@ -10279,6 +10280,326 @@ public:
         }
         return res;
     }
+
+    bool evaluateTree(TreeNode *root) noexcept
+    {
+        if (root->val < 2)
+            return root->val;
+        if (root->val == 2)
+            return evaluateTree(root->left) || evaluateTree(root->right);
+        else if (root->val == 3)
+            return evaluateTree(root->left) && evaluateTree(root->right);
+        throw std::runtime_error("invalid tree");
+    }
+
+    vector<string> alertNames(vector<string> &keyName, vector<string> &keyTime)
+    {
+        std::map<std::string, std::set<int>> nameTimeMap;
+        for (size_t i{0}; i < keyName.size(); ++i)
+        {
+            auto &name = keyName[i];
+            auto &time = keyTime[i];
+            auto hour = (time[0] - '0') * 10 + (time[1] - '0');
+            auto minute = (time[3] - '0') * 10 + (time[4] - '0');
+            nameTimeMap[name].emplace(hour * 60 + minute);
+        }
+
+        std::vector<string> res;
+        for (auto &[name, list] : nameTimeMap)
+        {
+            if (list.size() < 3)
+                continue;
+            auto it2 = list.begin();
+            auto it3 = it2;
+            advance(it3, 2);
+            for (; it3 != list.end(); ++it2, ++it3)
+            {
+                if (*it3 - *it2 <= 60)
+                {
+                    res.emplace_back(name);
+                    break;
+                }
+            }
+        }
+        return res;
+    }
+
+    vector<string> removeSubfolders(vector<string> &folder)
+    {
+        sort(folder.begin(), folder.end());
+        vector<string> res;
+        for (const auto &f : folder)
+        {
+            auto &last = res.empty() ? f : res.back();
+            if (res.empty() || !(f.size() >= last.size() && std::string_view(f.data(), last.size()) == last && f[last.size()] == '/'))
+                res.emplace_back(f);
+        }
+        return res;
+    }
+
+    class AuthenticationManager
+    {
+    public:
+        AuthenticationManager(int timeToLive) : timeToLive(timeToLive)
+        {
+        };
+
+        void generate(string tokenId, int currentTime)
+        {
+            verifiers.push_back({tokenId, currentTime + timeToLive});
+            tokenIdMap[tokenId] = --verifiers.end();
+        }
+
+        void renew(string tokenId, int currentTime)
+        {
+            const auto &it = tokenIdMap.find(tokenId);
+            if (it == tokenIdMap.end())
+                return;
+            if (it->second->time <= currentTime)
+            {
+                verifiers.erase(it->second);
+                tokenIdMap.erase(it);
+                return;
+            }
+            it->second->time = currentTime + timeToLive;
+            verifiers.splice(verifiers.end(), verifiers, it->second);
+        }
+
+        int countUnexpiredTokens(int currentTime)
+        {
+            while(!verifiers.empty() && verifiers.front().time <= currentTime)
+            {
+                tokenIdMap.erase(verifiers.front().tokenId);
+                verifiers.pop_front();
+            }
+            return verifiers.size();
+        }
+
+    private:
+        struct Verif
+        {
+            std::string tokenId;
+            int time;
+        };
+        std::list<Verif> verifiers{};
+        std::unordered_map<std::string, std::list<Verif>::iterator> tokenIdMap{};
+        int timeToLive{};
+    };
+
+    int fillCups(vector<int> &amount)
+    {
+        sort(amount.begin(), amount.end());
+        if (amount[0] + amount[1] <= amount[2])
+            return amount[2];
+        return (amount[0] + amount[1] + amount[2]) / 2;
+    }
+
+    string alphabetBoardPath(string_view target)
+    {
+        std::string res;
+        int x{0}, y{0};
+        for (const auto &c : target)
+        {
+            auto x1 = (c - 'a') % 5;
+            auto y1 = (c - 'a') / 5;
+            if (x == 0 && y == 5)
+            {
+                if (y1 < y)
+                    res.append(y - y1, 'U');
+                if (y1 > y)
+                    res.append(y1 - y, 'D');
+                if (x1 < x)
+                    res.append(x - x1, 'L');
+                if (x1 > x)
+                    res.append(x1 - x, 'R');
+            }
+            else
+            {
+                if (x1 < x)
+                    res.append(x - x1, 'L');
+                if (x1 > x)
+                    res.append(x1 - x, 'R');
+                if (y1 < y)
+                    res.append(y - y1, 'U');
+                if (y1 > y)
+                    res.append(y1 - y, 'D');
+            }
+
+            res.push_back('!');
+            x = x1;
+            y = y1;
+        }
+        return res;
+    }
+
+    int balancedString(string_view s)
+    {
+        array<int, 4> count{0};
+        for (const auto &c : s)
+        {
+            if (c == 'Q')
+                ++count[0];
+            else if (c == 'W')
+                ++count[1];
+            else if (c == 'E')
+                ++count[2];
+            else if (c == 'R')
+                ++count[3];
+        }
+        if (count[0] == count[1] && count[1] == count[2] && count[2] == count[3])
+            return 0;
+        
+        auto it = s.begin();
+        auto it2 = it;
+        auto num = s.size() / 4;
+        while ( count[0] > num || count[1] > num || count[2] > num || count[3] > num)
+        {
+            if (*it2 == 'Q')
+                --count[0];
+            else if (*it2 == 'W')
+                --count[1];
+            else if (*it2 == 'E')
+                --count[2];
+            else if (*it2 == 'R')
+                --count[3];
+            ++it2;
+        }
+        auto res = it2 - it;
+        while (it2 != s.end())
+        {
+            if (*it == 'Q')
+                ++count[0];
+            else if (*it == 'W')
+                ++count[1];
+            else if (*it == 'E')
+                ++count[2];
+            else if (*it == 'R')
+                ++count[3];
+            ++it;
+            while ( ((count[0] > num || count[1] > num || count[2] > num || count[3] > num) && it2 != s.end()))
+            {
+                if (*it2 == 'Q')
+                    --count[0];
+                else if (*it2 == 'W')
+                    --count[1];
+                else if (*it2 == 'E')
+                    --count[2];
+                else if (*it2 == 'R')
+                    --count[3];
+                ++it2;
+            }
+            if (!(count[0] > num || count[1] > num || count[2] > num || count[3] > num))
+                res = std::min(res, it2 - it);
+            else
+                return res;
+        }
+        while (count[0] > num || count[1] > num || count[2] > num || count[3] > num)
+        {
+            if (*it == 'Q')
+                ++count[0];
+            else if (*it == 'W')
+                ++count[1];
+            else if (*it == 'E')
+                ++count[2];
+            else if (*it == 'R')
+                ++count[3];
+            ++it;
+        }
+        res = std::min(res, it2 - it + 1);
+        return res;
+    }
+
+    int longestWPI(vector<int> &hours)
+    {
+        {
+            int cnt{0};
+            for (auto &i : hours)
+                i = i > 8 ? ++cnt : --cnt;
+        }
+        stack<int> st{};
+        for (int i{}; i < hours.size(); ++i)
+        {
+            if (st.empty())
+            {
+                if (hours[i] < 0)
+                    st.push(i);                
+            }
+            else if (hours[i] < hours[st.top()])
+                st.push(i);
+        }
+
+        int res{0};
+        for (int i = hours.size() - 1; i >= 0; --i)
+        {
+            while (1)
+            {
+                if (!st.empty() && hours[i] > hours[st.top()])
+                {
+                    res = std::max(res, i - st.top()); 
+                    st.pop();
+                }
+                else if (st.empty() && hours[i] > 0)
+                {
+                    res = std::max(res, i + 1);
+                    return res;
+                }
+                else
+                    break;
+            }
+        }
+        return res;
+    }
+
+    bool isGoodArray(vector<int> &nums)
+    {
+        int gcd{nums[0]};
+        for (auto &i : nums)
+            gcd = std::gcd(gcd, i);
+        return gcd == 1;
+    }
+
+    vector<int> numberOfPairs(vector<int> &nums)
+    {
+        std::array<int, 101> cnt{0};
+        for (auto &i : nums)
+        {
+            ++cnt[i];
+        }
+        int res{0};
+        for (auto &i : cnt)
+        {
+            if (i)
+                res += i / 2;
+            
+        }
+        return {res, (int)nums.size() - res * 2};
+    }
+
+    int largest1BorderedSquare(vector<vector<int>> &grid)
+    {
+        array<array<int, 100>, 100> left{0};
+        array<array<int, 100>, 100> up{0};
+
+        auto n = grid.size();
+        auto m = grid[0].size();
+        int res{0};
+        for (int i{}; i < n; ++i)
+        {
+            for (int j{}; j < m; ++j)
+            {
+                if (grid[i][j])
+                {
+                    left[i][j] = (j == 0 ? 1 : left[i][j - 1] + 1);
+                    up[i][j] = (i == 0 ? 1 : up[i - 1][j] + 1);
+                    int l = std::min(left[i][j], up[i][j]);
+                    while (l > res && (up[i][j - l + 1] < l || left[i - l + 1][j] < l))
+                        --l;
+                    res = std::max(res, l);
+                }
+            }
+        }
+        return res;
+    }
 };
 }
 
@@ -10926,6 +11247,29 @@ class Solution
         }
         return st.empty();
     }
+
+    vector<int> levelOrder(TreeNode *root)
+    {
+        vector<int> res;
+        vector<TreeNode *> buf{root};
+        while (!buf.empty())
+        {
+            vector<TreeNode *> next_buf;
+            for (auto &i : buf)
+            {
+                if (i)
+                {
+                    res.push_back(i->val);
+                    next_buf.push_back(i->left);
+                    next_buf.push_back(i->right);
+                }
+            }
+            buf = std::move(next_buf);
+        }
+        return res;
+    }
+
+    
 };
 }
 
