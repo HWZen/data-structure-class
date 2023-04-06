@@ -1,4 +1,7 @@
+#include <bit>
 #include <forward_list>
+#include <limits.h>
+#include <ostream>
 #include <stdexcept>
 #define _CRT_SECURE_NO_WARNINGS
 #include <algorithm>
@@ -44,6 +47,7 @@
 #include <span>
 #include <cassert>
 #include <any>
+#include <bitset>
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -52,6 +56,39 @@
 #endif
 
 using namespace std;
+
+namespace SignalList
+{
+    struct Node
+    {
+        int val{};
+        Node *next{};
+        Node() = default;
+        Node(int x) : val(x) {}
+        Node(int x, Node *next) : val(x), next(next) {}
+    };
+}
+namespace DoubleList
+{
+    struct Node
+    {
+        int val{};
+        Node *left{};
+        Node *right{};
+        Node() = default;
+        Node(int x) : val(x) {}
+        Node(int x, Node *left, Node *right) : val(x), left(left), right(right) {}
+    };
+}
+struct TreeNode
+{
+    int val{};
+    TreeNode *left{};
+    TreeNode *right{};
+    TreeNode() = default;
+    TreeNode(int x) : val(x) {}
+    TreeNode(int x, TreeNode *_left, TreeNode *_right) : val(x), left(_left), right(_right) {}
+};
 namespace daily{
 class Solution
 {
@@ -80,15 +117,7 @@ public:
         }
     };
 
-    struct TreeNode
-    {
-        int val{};
-        TreeNode *left{};
-        TreeNode *right{};
-        TreeNode() = default;
-        TreeNode(int x) : val(x) {}
-        TreeNode(int x, TreeNode *_left, TreeNode *_right) : val(x), left(_left), right(_right) {}
-    };
+
     class treeNodeInit
     {
     public:
@@ -467,14 +496,7 @@ public:
         backtracking(std::move(digits), res, {});
         return res;
     }
-    struct ListNode
-    {
-        int val{};
-        ListNode *next = nullptr;
-        ListNode() = default;
-        ListNode(int x) : val(x) {}
-        ListNode(int x, ListNode *next) : val(x), next(next) {}
-    };
+    using ListNode = SignalList::Node;
     ListNode *deleteDuplicates(ListNode *head)
     {
         if (head == nullptr || head->next == nullptr)
@@ -10600,6 +10622,678 @@ public:
         }
         return res;
     }
+
+    double maxAverageRatio(vector<vector<int>> &classes, int extraStudents)
+    {
+        using Iter = vector<vector<int>>::iterator;
+        auto cmp = [](const Iter &a, const Iter &b)
+        {
+            auto &A = *a;
+            auto &B = *b;
+            return (int64_t)(B[1] + 1) * B[1] * (A[1] - A[0]) < (int64_t)(A[1] + 1) * A[1] * (B[1] - B[0]);
+        };
+        std::priority_queue<Iter, vector<Iter>, decltype(cmp)> pq(cmp);
+        for (auto it = classes.begin(); it != classes.end(); ++it)
+        {
+            pq.push(it);
+        }
+        while (extraStudents--)
+        {
+            auto it = pq.top();
+            pq.pop();
+            ++(*it)[0];
+            ++(*it)[1];
+            pq.push(it);
+        }
+        double res{};
+        for (const auto &Class : classes)
+            res += (double)Class[0] / Class[1];
+        return res / classes.size();
+    }
+
+    string bestHand(vector<int> &ranks, vector<char> &suits)
+    {
+        if (suits[0] == suits[1] && suits[1] == suits[2] && suits[2] == suits[3] && suits[3] == suits[4])
+            return "Flush";
+        sort(ranks.begin(), ranks.end());
+        bool two{false};
+        for (int i{}; i < 5; ++i)
+        {
+            int j = i + 1;
+            while (j < 5 && ranks[j] == ranks[i])
+                ++j;
+            if (j - i == 2)
+                two = true;
+            else if (j - i >= 3)
+                return "Three of a Kind";
+            i = j - 1;
+        }
+        if (two)
+            return "Pair";
+        return "High Card";
+    }
+
+    int minTaps(int n, vector<int> &ranges)
+    {
+        using Intervel = pair<int, int>;
+        vector<Intervel> intervals;
+        for (int i{}; i < ranges.size(); ++i)
+            intervals.emplace_back(max(0, i - ranges[i]), min(n, i + ranges[i]));
+        sort(intervals.begin(), intervals.end(), [](const Intervel &a, const Intervel &b)
+             { return a.first < b.first; });
+        vector<int> dp(n + 1, INT_MAX);
+        dp[0] = 0;
+        int now{0};
+        for (const auto &[start, end] : intervals)
+        {
+            if (start > now)
+                return -1;
+            if (end <= now)
+                continue;
+            for (int i = now + 1; i <= end; ++i)
+                dp[i] = min(dp[i], dp[start] + 1);
+            now = end;
+            if (now == n)
+                return dp[n];
+        }
+        return -1;
+    }
+
+    vector<int> circularPermutation(int n, int start)
+    {
+
+        vector<int> res(1 << n);
+        auto _size = 1 << n;
+        for (int i = 0; i < _size; ++i)
+            res[i] = start ^ ((i >> 1) ^ i);
+        return res;
+    }
+
+    int minimumOperations(vector<int> &nums)
+    {
+        unordered_set<int> numSet;
+        for (auto &i : nums)
+            numSet.insert(i);
+        return numSet.size() - numSet.count(0);
+    }
+
+    int minimumSwap(string_view s1, string_view s2)
+    {
+        int xy_cnt{0};
+        int yx_cnt{0};
+        for (int i{}; i < s1.size(); ++i)
+        {
+            if (s1[i] == 'x' && s2[i] == 'y')
+                ++xy_cnt;
+            else if (s1[i] == 'y' && s2[i] == 'x')
+                ++yx_cnt;
+        }
+        if ((xy_cnt + yx_cnt) % 2)
+            return -1;
+        int res = xy_cnt / 2 + yx_cnt / 2;
+        res += xy_cnt % 2;
+        res += yx_cnt % 2;
+        return res;
+    }
+
+    int maxScoreWords(vector<string> &words, vector<char> &letters, vector<int> &score)
+    {
+        std::array<int, 26> letterCnt{};
+        for (const auto &i : letters)
+            ++letterCnt[i - 'a'];
+        int res{0};
+        for (int i{1}; i < 1 << words.size(); ++i)
+        {
+            std::array<int, 26> wordCnt{};
+            for (int j{}; j < words.size(); ++j)
+            {
+                if (i & (1 << j))
+                {
+                    for (const auto &k : words[j])
+                        ++wordCnt[k - 'a'];
+                }
+            }
+            auto allWordCharLessLetterChar = [](const std::array<int, 26> &wordCnt, const std::array<int, 26> &letterCnt)
+            {
+                for (int i{}; i < 26; ++i)
+                {
+                    if (wordCnt[i] > letterCnt[i])
+                        return false;
+                }
+                return true;
+            };
+            if (allWordCharLessLetterChar(wordCnt, letterCnt))
+            {
+                int this_score{0};
+                for (int i{}; i < 26; ++i)
+                    this_score += wordCnt[i] * score[i];
+                res = max(res, this_score);
+            }
+        }
+        return res;
+    }
+
+    int movesToMakeZigzag(vector<int> &nums)
+    {
+        int res1{0};
+        int res2{0};
+        for (int i{}; i < nums.size(); i += 2)
+        {
+            int left = i - 1 >= 0 ? nums[i - 1] : INT_MAX;
+            int right = i + 1 < nums.size() ? nums[i + 1] : INT_MAX;
+            int minNum = min(left, right);
+            if (nums[i] >= minNum)
+                res1 += nums[i] - minNum + 1;
+        }
+        for (int i{1}; i < nums.size(); i += 2)
+        {
+            int left = i - 1 >= 0 ? nums[i - 1] : INT_MAX;
+            int right = i + 1 < nums.size() ? nums[i + 1] : INT_MAX;
+            int minNum = min(left, right);
+            if (nums[i] >= minNum)
+                res2 += nums[i] - minNum + 1;
+        }
+        return min(res1, res2);
+    }
+
+    vector<vector<int>> largestLocal(vector<vector<int>> &grid)
+    {
+        vector<std::pair<int, int>> its;
+        its.reserve(grid.size() * grid[0].size());
+        for (int i{}; i < grid.size(); ++i)
+        {
+            for (int j{}; j < grid[0].size(); ++j)
+            {
+                its.emplace_back(i, j);
+            }
+        }
+        sort(its.begin(), its.end(), [&grid](const std::pair<int, int> &a, const std::pair<int, int> &b)
+             { return grid[a.first][a.second] > grid[b.first][b.second]; });
+        vector<vector<int>> res(grid.size() - 2, vector<int>(grid[0].size() - 2, 0));
+        auto it = its.begin();
+        auto cnt = res.size() * res[0].size();
+        while (cnt)
+        {
+            auto x_min = max(1, it->first - 1);
+            auto x_max = min((int)grid.size() - 2, it->first + 1);
+            auto y_min = max(1, it->second - 1);
+            auto y_max = min((int)grid[0].size() - 2, it->second + 1);
+            for (int l{x_min}; l <= x_max; ++l)
+            {
+                for (int r{y_min}; r <= y_max; ++r)
+                {
+                    auto &res_lr = res[l - 1][r - 1];
+                    auto grid_it = grid[it->first][it->second];
+                    if (res_lr < grid_it)
+                    {
+                        res_lr = grid_it;
+                        --cnt;
+                    }
+                }
+            }
+            ++it;
+        }
+        return res;
+    }
+
+    string printBin(double num)
+    {
+        string res{"0."};
+        res.reserve(32);
+        while (num)
+        {
+            num *= 2;
+            if (num >= 1)
+            {
+                res += '1';
+                num -= 1;
+            }
+            else
+                res += '0';
+            if (res.size() > 32)
+                return "ERROR";
+        }
+        return res;
+    }
+
+    vector<string> getFolderNames(vector<string> &names)
+    {
+        std::unordered_map<std::string, int> nameCnt;
+        for (auto &name : names)
+        {
+            if (nameCnt.count(name) == 0)
+            {
+                nameCnt.insert({name, 1});
+            }
+            else
+            {
+                int k = nameCnt[name];
+                while (nameCnt.count(name + "(" + std::to_string(k) + ")"))
+                    ++k;
+                nameCnt[name] = k + 1;
+                name += "(" + std::to_string(k) + ")";
+                nameCnt.insert({name, 1});
+            }
+        }
+        return names;
+    }
+
+    int minOperationsMaxProfit(vector<int> &customers, int boardingCost, int runningCost)
+    {
+        if (4 * boardingCost <= runningCost)
+            return -1;
+        int res{-1};
+        int maxProfit{0};
+        int curProfit{0};
+        int curCustomer{0};
+        int curCnt{0};
+        for (auto customer : customers)
+        {
+            curCustomer += customer;
+            int curBoarding = min(4, curCustomer);
+            curCustomer -= curBoarding;
+            curProfit += curBoarding * boardingCost - runningCost;
+            if (curProfit > maxProfit)
+            {
+                maxProfit = curProfit;
+                res = customers.size();
+            }
+            ++curCnt;
+            if (curProfit > maxProfit)
+            {
+                maxProfit = curProfit;
+                res = curCnt;
+            }
+        }
+        if (curCustomer)
+        {
+            curProfit += 4 * (curCustomer / 4) * boardingCost - runningCost * (curCustomer / 4);
+            curCnt += curCustomer / 4;
+            curCustomer %= 4;
+            if (curCustomer * boardingCost > runningCost)
+            {
+                curProfit += curCustomer * boardingCost - runningCost;
+                ++curCnt;
+            }
+            if (curProfit > maxProfit)
+            {
+                // maxProfit = curProfit;
+                res = curCnt;
+            }
+        }
+        return res;
+    }
+
+    int minimumDeletions(std::string_view s)
+    {
+        int dp{};
+        int bCnt{};
+        for (auto c : s)
+        {
+            if (c == 'b')
+                ++bCnt;
+            else
+            {
+                dp = min(dp + 1, bCnt);
+            }
+        }
+        return dp;
+    }
+
+    int minimumRecolors(string_view blocks, int k)
+    {
+        auto whiteCnt = count(blocks.begin(), blocks.begin() + k, 'W');
+        auto res = whiteCnt;
+        auto left = blocks.begin();
+        auto right = blocks.begin() + k;
+        while (right < blocks.end())
+        {
+            if (*left == 'W')
+                --whiteCnt;
+            if (*right == 'W')
+                ++whiteCnt;
+            res = min(res, whiteCnt);
+            ++left;
+            ++right;
+        }
+        return res;
+    }
+
+    int minSubarray(vector<int> &nums, int p)
+    {
+        std::vector<uint64_t> prefixSum;
+        prefixSum.reserve(nums.size());
+        prefixSum.emplace_back(nums[0]);
+        std::for_each(nums.begin() + 1, nums.end(), [&prefixSum](auto &num)
+                      { prefixSum.emplace_back(prefixSum.back() + num); });
+        
+        auto mod = prefixSum.back() % p;
+        if (mod == 0)
+            return 0;
+        int res = prefixSum.size();
+        std::unordered_map<int, int> mod2Idx;
+        mod2Idx.insert({0, -1});
+        for (int i = 0; i < prefixSum.size(); ++i)
+        {
+            auto mod_i = prefixSum[i] % p;
+            auto mod_j = (mod_i - mod + p) % p;
+            if (mod2Idx.count(mod_j))
+            {
+                res = min(res, i - mod2Idx[mod_j]);
+            }
+            mod2Idx[mod_i] = i;
+        }
+        return res == prefixSum.size() ? -1 : res;
+    }
+
+    vector<string> findLongestSubarray(vector<string> &array)
+    {
+        auto strCnt = [](const std::string &str) noexcept
+        {
+            return (str[0] >= '0' && str[0] <= '9') ? 1 : -1;
+        };
+        std::vector<int> cnt;
+        cnt.reserve(array.size());
+        cnt.emplace_back(strCnt(array[0]));
+        std::for_each(array.begin() + 1, array.end(), [&](auto &str)
+                      { cnt.emplace_back(cnt.back() + strCnt(str)); });
+        std::unordered_map<int, int> diff2Idx;
+        diff2Idx.insert({0, -1});
+        int resItBegin{0};
+        int resItEnd{0};
+        for (int i = 0; i < array.size(); ++i)
+        {
+            auto diff = cnt[i];
+            if (diff2Idx.count(diff))
+            {
+                if (i - diff2Idx[diff] > resItEnd - resItBegin || (i + 1 - diff2Idx[diff] == resItEnd - resItBegin && diff2Idx[diff] + 1 < resItBegin))
+                {
+                    resItBegin = diff2Idx[diff] + 1;
+                    resItEnd = i + 1;
+                }
+            }
+            else
+                diff2Idx[diff] = i;
+        }
+        return {array.begin() + resItBegin, array.begin() + resItEnd};
+    }
+
+    int minNumberOfHours(int initialEnergy, int initialExperience, vector<int> &energy, vector<int> &experience)
+    {
+        int res{0};
+        auto opponents = energy.size();
+        auto needEnergy = std::accumulate(energy.begin(), energy.end(), 0) + 1;
+        res += std::max(0, needEnergy - initialEnergy);
+        for (int i = 0; i < opponents; ++i)
+        {
+            if (initialExperience > experience[i])
+                initialExperience += energy[i];
+            else
+            {
+                res += experience[i] - initialExperience + 1;
+                initialExperience = 2 * experience[i] + 1;
+            }
+        }
+        return res;
+    }
+
+    vector<vector<int>> restoreMatrix(vector<int> &rowSum, vector<int> &colSum)
+    {
+        vector<vector<int>> res(rowSum.size(), vector<int>(colSum.size()));
+        for (int i = 0; i < rowSum.size(); ++i)
+        {
+            for (int j = 0; j < colSum.size(); ++j)
+            {
+                auto minVal = min(rowSum[i], colSum[j]);
+                res[i][j] = minVal;
+                rowSum[i] -= minVal;
+                colSum[j] -= minVal;
+            }
+        }
+        return res;
+    }
+
+    int countSubarrays(vector<int> &nums, int k)
+    {
+        auto kIndex = std::find(nums.begin(), nums.end(), k) - nums.begin();
+        if (kIndex == nums.size())
+            return 0;
+        int res{0};
+        int sum{0};
+        std::unordered_map<int, int> count;
+        count[0] = 1;
+
+        auto sign = [](int x) noexcept
+        {
+            if (x == 0)
+                return 0;
+            return x > 0 ? 1 : -1;
+        };
+
+        for (int i{0}; i < nums.size(); ++i)
+        {
+            sum += sign(nums[i] - nums[kIndex]);
+            if (i < kIndex)
+                ++count[sum];
+            else
+                res += count[sum] + count[sum - 1];
+        }
+        return res;
+    }
+
+    vector<int> answerQueries(vector<int> &nums, vector<int> &queries)
+    {
+        sort(nums.begin(), nums.end());
+        std::partial_sum(nums.begin(), nums.end(), nums.begin());
+        vector<int> res(queries.size());
+        for (int i = 0; i < queries.size(); ++i)
+            res[i] = std::upper_bound(nums.begin(), nums.end(), queries[i]) - nums.begin();
+        return res;
+    }
+
+    vector<double> convertTemperature(double celsius)
+    {
+        return {celsius + 273.15, celsius * 1.80 + 32.00};
+    }
+
+    int bestTeamScore(vector<int> &scores, vector<int> &ages)
+    {
+        vector<pair<int, int>> players;
+        players.reserve(scores.size());
+        for (int i = 0; i < scores.size(); ++i)
+            players.emplace_back(scores[i], ages[i] );
+        sort(players.begin(), players.end());
+        auto max_age = *max_element(ages.begin(), ages.end());
+        vector<int> dp_tree(max_age + 1, 0);
+        auto lowbit = [](int x) noexcept
+        {
+            return x & (-x);
+        };
+        auto update = [&](int i, int val)
+        {
+            while (i <= max_age)
+            {
+                dp_tree[i] = max(dp_tree[i], val);
+                i += lowbit(i);
+            }
+        };
+        auto query = [&](int i)
+        {
+            int res{0};
+            while (i > 0)
+            {
+                res = max(res, dp_tree[i]);
+                i -= lowbit(i);
+            }
+            return res;
+        };
+        int res = 0;
+        for (int i = 0; i < players.size(); ++i)
+        {
+            auto score = players[i].first;
+            auto age = players[i].second;
+            auto cur = query(age) + score;
+            update(age, cur);
+            res = max(res, cur);
+        }
+        return res;
+    }
+
+    vector<bool> checkArithmeticSubarrays(vector<int> &nums, vector<int> &l, vector<int> &r)
+    {
+        vector<bool> res(l.size());
+        for (int i = 0; i < l.size(); ++i)
+        {
+
+            res[i] = [&]() -> bool
+            {
+                if (r[i] - l[i] < 2)
+                    return true;
+                auto begin = nums.begin() + l[i];
+                auto end = nums.begin() + r[i] + 1;
+                auto max_num = *max_element(begin, end);
+                auto min_num = *min_element(begin, end);
+                
+                if (max_num == min_num)
+                {
+                    for (int j = l[i]; j <= r[i]; ++j)
+                    {
+                        if (nums[j] != min_num)
+                            return false;
+                    }
+                    return true;
+                }
+
+                if ((max_num - min_num) % (r[i] - l[i]) != 0)
+                    return false;
+
+                auto diff = (max_num - min_num) / (r[i] - l[i]);
+
+                vector<int> count(r[i] - l[i] + 1, 0);
+                for (int j = l[i]; j <= r[i]; ++j)
+                {
+                    if ((nums[j] - min_num) % diff != 0)
+                        return false;
+                    auto index = (nums[j] - min_num) / diff;
+                    if (count[index] == 1)
+                        return false;
+                    count[index] = 1;
+                }
+                return true;
+            }();
+        }
+        return res;
+    }
+
+    class StreamChecker
+    {
+        struct DictTreeNode
+        {
+            std::array<DictTreeNode *, 26> children;
+            bool isEnd{false};
+            DictTreeNode() : children{nullptr} {}
+        };
+        DictTreeNode *root;
+        std::list<DictTreeNode *> nodes;
+
+    public:
+        StreamChecker(vector<string> &words)
+        {
+            root = new DictTreeNode();
+            for (const auto &word : words)
+            {
+                auto p = root;
+                for (auto ch : word)
+                {
+                    if (!p->children[ch - 'a'])
+                        p->children[ch - 'a'] = new DictTreeNode();
+                    p = p->children[ch - 'a'];
+                }
+                p->isEnd = true;
+            }
+        }
+
+        bool query(char letter)
+        {
+            if (root->children[letter - 'a'])
+                nodes.emplace_back(root);
+            bool res{false};
+            for (auto it = nodes.begin(); it != nodes.end();)
+            {
+                auto &p = *it;
+                if (p->children[letter - 'a'])
+                {
+                    p = p->children[letter - 'a'];
+                    if (p->isEnd)
+                        res = true;
+                    ++it;
+                }
+                else
+                    it = nodes.erase(it);
+            }
+            return res;
+        }
+    };
+
+    bool findSubarrays(vector<int> &nums)
+    {
+        unordered_set<int> numSet;
+        for (auto it = nums.begin() + 1; it != nums.end(); ++it)
+        {
+            auto num = *it + *(it - 1);
+            if (numSet.count(num))
+                return true;
+            numSet.insert(num);
+        }
+        return false;
+    }
+
+    int maxWidthOfVerticalArea(vector<vector<int>> &points)
+    {
+        sort(points.begin(), points.end(), [](const auto &a, const auto &b) noexcept
+             { return a[0] < b[0]; });
+        int res = 0;
+        for (int i = 1; i < points.size(); ++i)
+            res = max(res, points[i][0] - points[i - 1][0]);
+        return res;
+    }
+
+    int arithmeticTriplets(vector<int> &nums, int diff)
+    {
+        unordered_set<int> numSet;
+        for (auto &num : nums)
+            numSet.insert(num);
+        int res = 0;
+        for (int i = 0; i < nums.size(); ++i)
+        {
+            if (numSet.count(nums[i] + diff) && numSet.count(nums[i] + 2 * diff))
+                ++res;
+        }
+        return res;
+    }
+
+    int commonFactors(int a, int b)
+    {
+        auto abGcd{gcd(a, b)};
+        int res{1};
+        for (int i{2}; i <= abGcd; ++i)
+        {
+            if (a % i == 0 && b % i == 0)
+                ++res;
+        }
+        return res;
+    }
+
+    string baseNeg2(int n)
+    {
+        for (int i = 1; i < 32; i += 2)
+        {
+            if (n & (1 << i))
+                n += (1 << (i + 1));
+        }
+        auto res{bitset<32>(n).to_string()};
+        return res.substr(res.find_first_not_of('0'));
+    }
 };
 }
 
@@ -10617,6 +11311,7 @@ namespace JianZhiOffer
 
 class Solution
 {
+    public:
     /**
      * @brief 
      * 
@@ -10663,22 +11358,7 @@ class Solution
         return std::regex_replace(s,reg,"%20");
     }
 
-    struct ListNode
-    {
-        int val;
-        ListNode *next;
-        ListNode(int x) : val(x), next(NULL) {}
-    };
-
-    
-    
-    struct TreeNode {
-        int val;
-        TreeNode *left;
-        TreeNode *right;
-        TreeNode(int x) : val(x), left(NULL), right(NULL) {}
-    };
-     
+    using ListNode = SignalList::Node;
 
     vector<int>& reversePrint(ListNode *head)
     {
@@ -11269,8 +11949,875 @@ class Solution
         return res;
     }
 
-    
+    class CustomFunction
+    {
+    public:
+        virtual int f(int,int) = 0;
+    };
+
+    vector<vector<int>> findSolution(CustomFunction &customfunction, int z)
+    {
+        vector<vector<int>> res;
+        for (int x{1}, y{1000}; x <= 1000 && y >= 1; ++x)
+        {
+            while(y >= 1 && customfunction.f(x, y) > z)
+                --y;
+            if (y >= 1 && customfunction.f(x, y) == z)
+                res.push_back({x, y});
+        }
+        return res;
+    }
+
+    bool verifyPostorder(vector<int> &postorder)
+    {
+        uint64_t root = UINT64_MAX;
+        std::stack<uint64_t> st{};
+        for (auto it = postorder.rbegin(); it != postorder.rend(); ++it)
+        {
+            if (*it > root)
+                return false;
+            while (!st.empty() && *it < st.top())
+            {
+                root = st.top();
+                st.pop();
+            }
+            st.push(*it);
+        }
+        return true;
+    }
+
+    vector<vector<int>> pathSum(TreeNode *root, int target)
+    {
+        vector<vector<int>> res;
+        vector<int> temp;
+        std::function<void(TreeNode *, int)> dfs = [&](TreeNode *node, int sum)
+        {
+            sum += node->val;
+            if (sum > target)
+                return;
+            temp.push_back(node->val);
+            if (sum == target && !node->left && !node->right)
+            {
+                res.emplace_back(temp);
+                temp.pop_back();
+                return;
+            }
+            if (node->left)
+                dfs(node->left, sum);
+            if (node->right)
+                dfs(node->right, sum);
+            temp.pop_back();
+        };
+        dfs(root, 0);
+        return res;
+    }
+
+    struct RandomNode
+    {
+        int val;
+        RandomNode *next;
+        RandomNode *random;
+    };
+
+    RandomNode *copyRandomList(RandomNode *head)
+    {
+        if (!head)
+            return head;
+        std::unordered_map<RandomNode *, RandomNode *> m;
+        m[nullptr] = nullptr;
+        auto it = head;
+        while (it)
+        {
+            m[it] = new RandomNode{it->val};
+            it = it->next;
+        }
+        for (const auto &[k, v] : m)
+        {
+            if (!k)
+                continue;
+            v->next = m[k->next];
+            v->random = m[k->random];
+        }
+        return m[head];
+    }
+
+    TreeNode *treeToDoublyList(TreeNode *root)
+    {
+        if (!root)
+            return root;
+        using Node = TreeNode;
+        std::function<std::pair<Node *, Node *>(Node *)> subsequent_traversal = [&](Node *node) -> std::pair<Node *, Node *>
+        {
+            if (!node)
+                return {nullptr, nullptr};
+            if (!node->left && !node->right)
+                return {node, node};
+
+            auto [left_head, left_tail] = subsequent_traversal(node->left);
+            auto [right_head, right_tail] = subsequent_traversal(node->right);
+            if (left_head)
+            {
+                left_tail->right = node;
+                node->left = left_tail;
+            }
+            if (right_head)
+            {
+                right_head->left = node;
+                node->right = right_head;
+            }
+            return {left_head ? left_head : node, right_tail ? right_tail : node};
+        };
+        auto [head, tail] = subsequent_traversal(root);
+        head->left = tail;
+        tail->right = head;
+        return head;
+    }
+
+    class Codec
+    {
+    public:
+        inline static std::array<TreeNode, 10000> buffer{};
+        // Encodes a tree to a single string.
+        string serialize(TreeNode *root)
+        {
+            if (!root)
+                return {};
+            size_t pos{0};
+            std::function<void(TreeNode *)> dfs = [&](TreeNode *node)
+            {
+                buffer[pos] = *node;
+                auto &this_node = buffer[pos];
+                if (node->left)
+                {
+                    this_node.left = (TreeNode *)(++pos);
+                    dfs(node->left);
+                }
+                if (node->right)
+                {
+                    this_node.right = (TreeNode *)(++pos);
+                    dfs(node->right);
+                }
+            };
+            dfs(root);
+            return std::string{(char *)buffer.data(), (pos + 1) * sizeof(TreeNode)};
+        }
+
+        // Decodes your encoded data to tree.
+        TreeNode *deserialize(string data)
+        {
+            if (data.empty())
+                return nullptr;
+            assert(data.size() % sizeof(TreeNode) == 0);
+            auto nums = data.size() / sizeof(TreeNode);
+            auto buffer_string = new std::string(std::move(data));
+            auto buffer = (char *)buffer_string->data();
+            auto pointer = (TreeNode *)buffer;
+            for (size_t i{0}; i < nums; ++i)
+            {
+                auto node = pointer + i * sizeof(TreeNode);
+                if (node->left)
+                    node->left = pointer + (size_t)(node->left) * sizeof(TreeNode);
+                if (node->right)
+                    node->right = pointer + (size_t)(node->right) * sizeof(TreeNode);
+            }
+            auto root = pointer;
+            return root;
+        }
+    };
+
+    vector<string> permutation(string s)
+    {
+        if (s.size() == 1)
+            return {s};
+        sort(s.begin(), s.end());
+        vector<string> res;
+        do
+        {
+            res.emplace_back(s);
+        } while (next_permutation(s.begin(), s.end()));
+        return res;
+    }
+
+    int majorityElement(vector<int> &nums)
+    {
+        int candidate;
+        int count{0};
+        for (const auto &num : nums)
+        {
+            if (count == 0)
+                candidate = num;
+            if (num == candidate)
+                ++count;
+            else
+                --count;
+        }
+        return candidate;
+    }
+
+    vector<int> getLeastNumbers(vector<int> &arr, int k)
+    {
+        std::priority_queue<int> q;
+        for (const auto &num : arr)
+        {
+            if (!q.empty() && num >= q.top() && q.size() == k)
+                continue;
+            q.push(num);
+            if (q.size() > k)
+                q.pop();
+        }
+        vector<int> res;
+        while (!q.empty())
+        {
+            res.push_back(q.top());
+            q.pop();
+        }
+        return res;
+    }
+
+    class MedianFinder
+    {
+    public:
+        /** initialize your data structure here. */
+        MedianFinder() = default;
+
+        void addNum(int num)
+        {
+            if (pq_right.empty() && pq_left.empty())
+            {
+                pq_left.push(num);
+                return;
+            }
+
+            if (num > pq_left.top())
+            {
+                pq_right.push(num);
+                if (pq_right.size() > pq_left.size())
+                {
+                    pq_left.push(pq_right.top());
+                    pq_right.pop();
+                }
+                return;
+            }
+            else
+            {
+                pq_left.push(num);
+                if (pq_left.size() > pq_right.size() + 1)
+                {
+                    pq_right.push(pq_left.top());
+                    pq_left.pop();
+                }
+                return;
+            }
+        }
+
+        double findMedian()
+        {
+            if (pq_right.size() == pq_left.size())
+                return (pq_right.top() + pq_left.top()) / 2.0;
+            else if (pq_right.size() > pq_left.size())
+                return pq_right.top();
+            else
+                return pq_left.top();
+        }
+
+    private:
+        std::priority_queue<int> pq_left{};
+        std::priority_queue<int, std::vector<int>, std::greater<int>> pq_right{};
+    };
+
+    int maxSubArray(vector<int> &nums)
+    {
+        int max_sum{INT_MIN};
+        int sum{0};
+        for (const auto &num : nums)
+        {
+            sum += num;
+            max_sum = std::max(max_sum, sum);
+            if (sum < 0)
+                sum = 0;
+        }
+        return max_sum;
+    }
+
+    int countDigitOne(int n)
+    {
+        long long mulk = 1;
+        int ans = 0;
+        for (int k = 0; n >= mulk; ++k)
+        {
+            ans += (n / (mulk * 10)) * mulk + min(max(n % (mulk * 10) - mulk + 1, 0LL), mulk);
+            mulk *= 10;
+        }
+        return ans;
+    }
+
+    int translateNum(int num)
+    {
+        std::string str = std::to_string(num);
+        std::string_view s{str};
+        int p = 0, q = 1, r = 1;
+        while(s.size() > 1)
+        {
+            p = q;
+            q = r;
+            r = 0;
+            r += q;
+            auto pre = s.substr(0,2);
+            if (pre >= "10" && pre <= "25")
+                r += p;
+            s.remove_prefix(1);
+        }
+        return r;
+    }
+
+    int maxValue(vector<vector<int>> &grid)
+    {
+        int m = grid.size();
+        int n = grid[0].size();
+        for (int i{0}; i < m; ++i)
+        {
+            for (int j{0}; j < n; ++j)
+            {
+                if (i == 0 && j == 0)
+                    continue;
+                else if (i == 0)
+                    grid[i][j] += grid[i][j - 1];
+                else if (j == 0)
+                    grid[i][j] += grid[i - 1][j];
+                else
+                    grid[i][j] += std::max(grid[i - 1][j], grid[i][j - 1]);
+            }
+        }
+        return grid.back().back();
+    }
+
+    int lengthOfLongestSubstring(std::string_view s)
+    {
+        int left{0}, right{0};
+        int res{0};
+        std::bitset<256> bit;
+        while (right < s.size())
+        {
+            if (!bit[s[right]])
+            {
+                bit[s[right]] = true;
+                ++right;
+                res = std::max(res, right - left);
+            }
+            else
+            {
+                bit[s[left]] = false;
+                ++left;
+            }
+        }
+        return res;
+    }
+
+    int nthUglyNumber(int n)
+    {
+        constexpr std::array<int, 1690> tab = []() constexpr->std::array<int, 1690>
+        {
+            std::array<int, 1690> res{};
+            res[0] = 1;
+            int i2 = 0, i3 = 0, i5 = 0;
+            int it = 1;
+            while (it < 1690)
+            {
+                int n2 = res[i2] * 2;
+                int n3 = res[i3] * 3;
+                int n5 = res[i5] * 5;
+                int min = std::min(n2, std::min(n3, n5));
+                if (min == n2)
+                    ++i2;
+                if (min == n3)
+                    ++i3;
+                if (min == n5)
+                    ++i5;
+                res[it++] = min;
+            }
+            return res;
+        }
+        ();
+        return tab[n - 1];
+    }
+
+    char firstUniqChar(string s)
+    {
+        std::bitset<256> bit1;
+        std::bitset<256> bit2;
+        for (const auto &c : s)
+        {
+            if (!bit1[c])
+                bit1[c] = true;
+            else
+                bit2[c] = true;
+        }
+
+        for (const auto &c : s)
+        {
+            if (!bit2[c])
+                return c;
+        }
+        return ' ';
+    }
+
+    int reversePairs(vector<int> &nums)
+    {
+        if (nums.size() < 2)
+            return 0;
+        std::function<int(int, int)> mergeSort = [&](int l, int r) -> int
+        {
+            if (l >= r)
+                return 0;
+            int mid = (l + r) / 2;
+            int res = mergeSort(l, mid) + mergeSort(mid + 1, r);
+            vector<int> tmp(r - l + 1);
+            int i = l, j = mid + 1;
+            auto it = tmp.begin();
+            while (i <= mid && j <= r)
+            {
+                if (nums[i] <= nums[j])
+                {
+                    res += j - mid - 1;
+                    *(it++) = nums[i++];
+                }
+                else
+                    *(it++) = nums[j++];
+            }
+            while (i <= mid)
+            {
+                res += j - mid - 1;
+                *(it++) = nums[i++];
+            }
+            while (j <= r)
+                *(it++) = nums[j++];
+            std::copy(tmp.begin(), tmp.end(), nums.begin() + l);
+            return res;
+        };
+        return mergeSort(0, nums.size() - 1);
+    }
+
+    ListNode *getIntersectionNode(ListNode *headA, ListNode *headB)
+    {
+        auto itA = headA;
+        auto itB = headB;
+        auto lenA = 0;
+        auto lenB = 0;
+        while (itA)
+        {
+            ++lenA;
+            itA = itA->next;
+        }
+        while (itB)
+        {
+            ++lenB;
+            itB = itB->next;
+        }
+        auto itBig = lenA > lenB ? headA : headB;
+        auto itSmall = lenA > lenB ? headB : headA;
+        auto diff = abs(lenA - lenB);
+        while (diff--)
+            itBig = itBig->next;
+
+        while (itBig && itSmall && itBig != itSmall)
+        {
+            itBig = itBig->next;
+            itSmall = itSmall->next;
+        }
+        return itBig;
+    }
+
+    int search(vector<int> &nums, int target)
+    {
+        auto start_it = upper_bound(nums.begin(), nums.end(), target - 1);
+        if (start_it == nums.end() || *start_it > target)
+            return 0;
+        auto end_it = upper_bound(nums.begin(), nums.end(), target);
+        return end_it - start_it;
+    }
+
+    int missingNumber(vector<int> &nums)
+    {
+        if (nums.size() == 1)
+            return nums[0] == 0 ? 1 : 0;
+        std::function<int(int, int)> binarySearch = [&](int l, int r) -> int
+        {
+            if (l == r)
+                return l;
+            int mid = (l + r) / 2;
+            if (nums[mid] == mid)
+                return binarySearch(mid + 1, r);
+            else
+                return binarySearch(l, mid);
+        };
+        return binarySearch(0, nums.size() - 1);
+    }
+
+    int kthLargest(TreeNode *root, int k)
+    {
+        int res{};
+        std::function<void(TreeNode *)> inorder = [&](TreeNode *node) -> void
+        {
+            if (!node->left && !node->right)
+            {
+                if (--k == 0)
+                    res = node->val;
+                return;
+            }
+            if (node->right)
+                inorder(node->right);
+            if (--k == 0)
+            {
+                res = node->val;
+                return;
+            }
+            if (node->left)
+                inorder(node->left);
+        };
+        inorder(root);
+        return res;
+    }
+
+    int maxDepth(TreeNode *root)
+    {
+        if (!root)
+            return 0;
+        vector<TreeNode *> buf;
+        buf.emplace_back(root);
+        int res{1};
+        while (!buf.empty())
+        {
+            vector<TreeNode *> tmp;
+            for (const auto &node : buf)
+            {
+                if (node->left)
+                    tmp.emplace_back(node->left);
+                if (node->right)
+                    tmp.emplace_back(node->right);
+            }
+            if (tmp.empty())
+                break;
+            buf = std::move(tmp);
+            ++res;
+        }
+        return res;
+    }
+
+    bool isBalanced(TreeNode *root)
+    {
+        if (!root)
+            return true;
+        std::function<int(TreeNode *)> dfs = [&](TreeNode *node) -> int
+        {
+            if (!node)
+                return 0;
+            int left = dfs(node->left);
+            int right = dfs(node->right);
+            if (left == -1 || right == -1 || abs(left - right) > 1)
+                return -1;
+            return std::max(left, right) + 1;
+        };
+        return dfs(root) != -1;
+    }
+
+    vector<int> singleNumbers(vector<int> &nums)
+    {
+        int mask{};
+        for (const auto &num : nums)
+            mask ^= num;
+        int offset{1};
+        while (!(mask & offset))
+            offset <<= 1;
+        vector<int> buf;
+        for (const auto &num : nums)
+        {
+            if (num & offset)
+                buf.emplace_back(num);
+        }
+        vector<int> res(2);
+        for (const auto &num : buf)
+            res[0] ^= num;
+        res[1] = res[0] ^ mask;
+        return res;
+    }
+
+    vector<vector<int>> mergeSimilarItems(vector<vector<int>> &items1, vector<vector<int>> &items2)
+    {
+        std::map<int, int> mp;
+        for (const auto &item : items1)
+            mp[item[0]] = item[1];
+        for (const auto &item : items2)
+            mp[item[0]] += item[1];
+        vector<vector<int>> res;
+        for (const auto &[value, weight] : mp)
+            res.emplace_back(vector<int>{value, weight});
+        return res;
+    }
+
+    int singleNumber(vector<int> &nums)
+    {
+        int one{}, two{};
+        for (const auto &num : nums)
+        {
+            one = (one ^ num) & ~two;
+            two = (two ^ num) & ~one;
+        }
+        return one;
+    }
+
+    vector<int> twoSum(vector<int> &nums, int target)
+    {
+        auto it1{nums.begin()}, it2{nums.end() - 1};
+        while (it1 < it2)
+        {
+            int sum = *it1 + *it2;
+            if (sum == target)
+                return vector<int>{*it1, *it2};
+            else if (sum < target)
+                it1 = std::lower_bound(it1 + 1, it2 + 1, target - *it2);
+            else
+                it2 = std::upper_bound(it1, it2, target - *it1) - 1;
+        }
+        return vector<int>{};
+    }
+
+    vector<vector<int>> findContinuousSequence(int target)
+    {
+        vector<vector<int>> res;
+        int left{1}, right{2};
+        int sum{3};
+        while (right < target)
+        {
+            if (sum == target)
+            {
+                vector<int> tmp;
+                tmp.reserve(right - left + 1);
+                for (int i = left; i <= right; ++i)
+                    tmp.emplace_back(i);
+                res.emplace_back(std::move(tmp));
+                sum -= left;
+                ++left;
+            }
+            if (sum < target)
+            {
+                ++right;
+                sum += right;
+            }
+            else
+            {
+                sum -= left;
+                ++left;
+            }
+        }
+        return res;
+    }
+
+    string reverseWords(string &s)
+    {
+        std::stringstream ss(s);
+        string word;
+        stack<std::string> stk;
+        while (ss >> word)
+            stk.push(std::move(word));
+        string res;
+        while (!stk.empty())
+        {
+            res += stk.top();
+            stk.pop();
+            if (!stk.empty())
+                res += ' ';
+        }
+        return res;
+    }
+
+    int maximalNetworkRank(int n, vector<vector<int>> &roads)
+    {
+        std::vector<std::vector<int>> mp(n, std::vector<int>(n, 0));
+        std::vector<int> degree(n, 0);
+        
+        for (const auto &road : roads)
+        {
+            mp[road[0]][road[1]] = 1;
+            mp[road[1]][road[0]] = 1;
+            degree[road[0]]++;
+            degree[road[1]]++;
+        }
+
+        int firstMax{0}, secondMax{0};
+        for (auto &item : degree)
+        {
+            if (item > firstMax)
+            {
+                secondMax = firstMax;
+                firstMax = item;
+            }
+            else if (item > secondMax)
+                secondMax = item;
+        }
+
+        std::vector<int> firstMaxItems;
+        std::vector<int> secondMaxItems;
+        for (int i = 0; i < n; ++i)
+        {
+            if (degree[i] == firstMax)
+                firstMaxItems.emplace_back(i);
+            else if (degree[i] == secondMax)
+                secondMaxItems.emplace_back(i);
+        }
+
+        if (firstMaxItems.size() > 1)
+        {
+            for (int i{0}; i < firstMaxItems.size() - 1; ++i)
+            {
+                for (int j{i + 1}; j < firstMaxItems.size(); ++j)
+                    if (!mp[firstMaxItems[i]][firstMaxItems[j]])
+                        return firstMax * 2;
+            }
+            return firstMax * 2 - 1;
+        }
+
+        // only one firstMaxItem
+
+        for (const auto &item : secondMaxItems)
+        {
+            if (!mp[firstMaxItems.front()][item])
+                return firstMax + secondMax;
+        }
+        return firstMax + secondMax - 1;
+    }
+
+    string reverseLeftWords(string s, int n)
+    {
+        std::rotate(s.begin(), s.begin() + n, s.end());
+        return s;   
+    }
+
+    vector<int> maxSlidingWindow(vector<int> &nums, int WinLen)
+    {
+        std::queue<int> dq;
+        std::multiset<int> st;
+        vector<int> res;
+        res.reserve(nums.size() - WinLen + 1);
+        for (int i = 0; i < WinLen; ++i)
+        {
+            dq.push(nums[i]);
+            st.insert(nums[i]);
+        }
+        res.emplace_back(*st.rbegin());
+        for (int i = WinLen; i < nums.size(); ++i)
+        {
+            dq.push(nums[i]);
+            st.insert(nums[i]);
+            st.erase(st.find(dq.front()));
+            dq.pop();
+            res.emplace_back(*st.rbegin());
+        }
+        return res;
+    }
+
+    vector<double> dicesProbability(int n)
+    {
+        vector<double> dp(6, 1.0 / 6.0);
+        for (int i = 2; i <= n; i++)
+        {
+            vector<double> tmp(5 * i + 1, 0);
+            for (int j = 0; j < dp.size(); j++)
+            {
+                for (int k = 0; k < 6; k++)
+                {
+                    tmp[j + k] += dp[j] / 6.0;
+                }
+            }
+            dp = std::move(tmp);
+        }
+        return dp;
+    }
+
+    int lastRemaining(int n, int m)
+    {
+        // 约瑟夫环
+        int res{0};
+        for (int i = 2; i <= n; ++i)
+            res = (res + m) % i;
+        return res;
+    }
+
+    int maxProfit(vector<int> &prices)
+    {
+        int res{0};
+        int minPrice{INT_MAX};
+        for (const auto &price : prices)
+        {
+            res = std::max(res, price - minPrice);
+            minPrice = std::min(minPrice, price);
+        }
+        return res;
+    }
+
+    TreeNode *lowestCommonAncestor(TreeNode *root, TreeNode *p, TreeNode *q)
+    {
+        if (p->val > root->val && q->val > root->val)
+            return lowestCommonAncestor(root->right, p, q);
+        if (p->val < root->val && q->val < root->val)
+            return lowestCommonAncestor(root->left, p, q);
+        return root;
+    }
+
+    int singleNumber2(vector<int> &nums)
+    {
+        int res{0};
+        for (auto &i : nums)
+            res ^= i;
+        return res;
+    }
+
+    int maxProduct(vector<string> &words)
+    {
+        struct Word
+        {
+            size_t len;
+            int mask;
+        };
+        std::vector<Word> wordInfos;
+        wordInfos.reserve(words.size());
+        for (const auto &word : words)
+        {
+            int mask{0};
+            for (const auto &ch : word)
+                mask |= 1 << (ch - 'a');
+            wordInfos.emplace_back(Word{word.size(), mask});
+        }
+        sort(wordInfos.begin(), wordInfos.end(), [](const Word &a, const Word &b) noexcept
+             { return a.len > b.len; });
+        int res{0};
+        for (int i{}; i < wordInfos.size() - 1; ++i)
+        {
+            if (wordInfos[i].len == 0)
+                continue;
+            for (int j{i + 1}; j < wordInfos.size(); ++j)
+            {
+                if (wordInfos[i].mask & wordInfos[j].mask)
+                    continue;
+                res = std::max(res, static_cast<int>(wordInfos[i].len * wordInfos[j].len));
+                wordInfos[j].len = 0;
+            }
+        }
+        return res;
+    }
 };
+}
+
+template<typename ...Argv >
+void print(Argv &&...argv)
+{
+    (std::cout << ... << std::forward<Argv>(argv));
+}
+
+template <typename... Argv>
+void println(Argv &&...argv)
+{
+    print(std::forward<Argv>(argv)...);
+    std::cout << std::endl;
 }
 
 
