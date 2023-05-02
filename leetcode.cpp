@@ -11427,6 +11427,146 @@ public:
         }
         return ans;
     }
+    int maxAncestorDiff(TreeNode *root)
+    {
+        std::list<TreeNode *> nodes;
+        int res{0};
+        std::function<void(TreeNode *)> dfs = [&](TreeNode *node)
+        {
+            if (!node)
+                return;
+            if (nodes.empty())
+                nodes.emplace_back(node);
+            else
+            {
+                if (node->val >= nodes.back()->val)
+                    nodes.emplace_back(node);
+                else if (node->val <= nodes.front()->val)
+                    nodes.emplace_front(node);
+            }
+            auto maxNode = nodes.back();
+            auto minNode = nodes.front();
+            res = max(res, abs(maxNode->val - minNode->val));
+            dfs(node->left);
+            dfs(node->right);
+            if (node == nodes.back())
+                nodes.pop_back();
+            if (node == nodes.front())
+                nodes.pop_front();
+        };
+        dfs(root);
+        return res;
+    }
+
+    constexpr int smallestEvenMultiple(int n) noexcept
+    {
+        return n % 2 == 0 ? n : n * 2;
+    }
+
+    string lastSubstring(std::string_view s)
+    {
+        std::string res{s.front()};
+        std::string temp{};
+        for_each(s.begin() + 1, s.end(), [&](const auto &ch)
+        {
+            if (ch > res.front())
+            {
+                res = ch;
+                temp.clear();
+                return;
+            }
+            res.push_back(ch);
+            if (temp.empty())
+            {
+                if (ch == res.front())
+                    temp = res;
+                return;
+            }
+            temp.push_back(ch);
+            if (temp > res)
+            {
+                res.swap(temp);
+                temp.clear();
+            }
+            else if (temp < std::string_view{res}.substr(temp.size()))
+                temp.clear();
+        });
+        return res;
+    }
+
+    vector<string> sortPeople(vector<string>& names, vector<int>& heights) {
+        std::vector<std::pair<std::string_view, int>> nameHeightPairs;
+        nameHeightPairs.reserve(names.size());
+        for (int i = 0; i < names.size(); ++i)
+            nameHeightPairs.emplace_back(names[i], heights[i]);
+        std::sort(nameHeightPairs.begin(), nameHeightPairs.end(), [](const auto &a, const auto &b) noexcept
+                  { return a.second > b.second; });
+        std::vector<std::string> res;
+        res.reserve(names.size());
+        for (const auto &[name, height] : nameHeightPairs)
+            res.emplace_back(name);
+        return res;
+    }
+
+    class DinnerPlates
+    {
+        int capacity{};
+        std::vector<std::stack<int>> stacks{};
+        std::set<size_t> availableStacks{};
+        std::set<size_t> notEmptyStacks{};
+    public:
+        DinnerPlates(int capacity) : capacity(capacity){}
+
+        void push(int val)
+        {
+            if (!availableStacks.empty())
+            {
+                auto it{*availableStacks.begin()};
+                auto &stack{stacks[it]};
+                stack.push(val);
+                if (stack.size() == capacity)
+                    availableStacks.erase(it);
+                if (stack.size() == 1)
+                    notEmptyStacks.emplace(it);
+                return;
+            }
+            stacks.emplace_back();
+            stacks.back().push(val);
+            if (capacity > 1)
+                availableStacks.emplace(stacks.size() - 1);
+            notEmptyStacks.emplace(stacks.size() - 1);
+        }
+
+        int pop()
+        {
+            if (notEmptyStacks.empty())
+                return -1;
+            auto it{*notEmptyStacks.rbegin()};
+            auto &stack{stacks[it]};
+            auto res{stack.top()};
+            stack.pop();
+            if (stack.empty())
+                notEmptyStacks.erase(it);
+            if (stack.size() == capacity - 1)
+                availableStacks.emplace(it);
+            return res;
+        }
+
+        int popAtStack(int index)
+        {
+            if (index >= stacks.size() || stacks[index].empty())
+                return -1;
+            auto &stack{stacks[index]};
+            auto res{stack.top()};
+            stack.pop();
+            if (stack.empty())
+                notEmptyStacks.erase(index);
+            if (stack.size() == capacity - 1)
+                availableStacks.emplace(index);
+            return res;
+        }
+    };
+    
 };
 }
 
