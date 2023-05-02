@@ -11294,6 +11294,139 @@ public:
         auto res{bitset<32>(n).to_string()};
         return res.substr(res.find_first_not_of('0'));
     }
+
+    vector<int> numMovesStonesII(vector<int> &stones)
+    {
+        sort(stones.begin(), stones.end());
+        int n = stones.size();
+        int maxMove = stones[n - 1] - stones[0] + 1 - n;
+        maxMove -= min(stones[n - 1] - stones[n - 2] - 1, stones[1] - stones[0] - 1);
+        int minMove = maxMove;
+        int i = 0, j = 0;
+        for (; i < n; ++i)
+        {
+            while (j + 1 < n && stones[j + 1] - stones[i] + 1 <= n)
+                ++j;
+            int cost = n - (j - i + 1);
+            if (j - i + 1 == n - 1 && stones[j] - stones[i] + 1 == n - 1)
+                cost = 2;
+            minMove = min(minMove, cost);
+        }
+        return {minMove, maxMove};
+    }
+
+    bool checkDistances(std::string_view s, vector<int> &distance)
+    {
+        constexpr size_t init {0xfffff};
+        array<size_t, 26> count{};
+        count.fill(init);
+        for (size_t i = 0; i < s.size(); ++i)
+        {
+            if (count[s[i] - 'a'] == init)
+                count[s[i] - 'a'] = i;
+            else
+            {
+                if (i - count[s[i] - 'a'] - 1 != distance[s[i] - 'a'])
+                    return false;
+                count[s[i] - 'a'] = i;
+            }
+        }
+        return true;
+    }
+
+    vector<int> nextLargerNodes(ListNode *head)
+    {
+        std::vector<int> res;
+        std::stack<std::pair<ListNode *, size_t>> stk;
+        size_t it{0};
+        for (auto p = head; p; p = p->next)
+        {
+            while (!stk.empty() && stk.top().first->val < p->val)
+            {
+                res[stk.top().second] = p->val;
+                stk.pop();
+            }
+            stk.emplace(p, it++);
+            res.emplace_back(0);
+        }
+        return res;
+    }
+
+    bool isRobotBounded(string instructions)
+    {
+        int x{0}, y{0};
+        int dir{0};
+        for (auto &c : instructions)
+        {
+            switch (c)
+            {
+            case 'G':
+                switch (dir)
+                {
+                case 0:
+                    ++y;
+                    break;
+                case 1:
+                    ++x;
+                    break;
+                case 2:
+                    --y;
+                    break;
+                case 3:
+                    --x;
+                    break;
+                }
+                break;
+            case 'L':
+                dir = (dir + 3) % 4;
+                break;
+            case 'R':
+                dir = (dir + 1) % 4;
+                break;
+            }
+        }
+        return (x == 0 && y == 0) || dir != 0;
+    }
+
+    int mostFrequentEven(vector<int> &nums)
+    {
+        std::unordered_map<int, int> counter{};
+        int res{-1};
+        int resCount{0};
+        for (auto &num : nums)
+        {
+            if (num % 2 != 0)
+                continue;
+            ++counter[num];
+            if (counter[num] > resCount || (counter[num] == resCount && num < res))
+            {
+                res = num;
+                resCount = counter[num];
+            }
+        }
+        return res;
+    }
+
+    int longestArithSeqLength(vector<int> &nums)
+    {
+        auto [minit, maxit] = minmax_element(nums.begin(), nums.end());
+        int diff = *maxit - *minit;
+        int ans = 1;
+        for (int d = -diff; d <= diff; ++d)
+        {
+            std::array<int, 500> f{-1};
+            for (int num : nums)
+            {
+                if (int prev = num - d; prev >= *minit && prev <= *maxit && f[prev] != -1)
+                {
+                    f[num] = max(f[num], f[prev] + 1);
+                    ans = max(ans, f[num]);
+                }
+                f[num] = max(f[num], 1);
+            }
+        }
+        return ans;
+    }
 };
 }
 
