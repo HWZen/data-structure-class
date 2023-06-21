@@ -3,6 +3,7 @@
 #include <limits.h>
 #include <ostream>
 #include <stdexcept>
+#include <xutility>
 #define _CRT_SECURE_NO_WARNINGS
 #include <algorithm>
 #include <array>
@@ -11566,7 +11567,258 @@ public:
             return res;
         }
     };
-    
+
+    bool queryString(string s, int n)
+    {
+        auto intTo0bString = [](int n)
+        {
+            std::string res;
+            while (n)
+            {
+                res.push_back(n % 2 ? '1' : '0');
+                n >>= 1;
+            }
+            std::reverse(res.begin(), res.end());
+            return res;
+        };
+
+        for (int i{1}; i <= n; ++i)
+        {
+            auto strI{intTo0bString(i)};
+            if (std::search(s.begin(), s.end(), strI.begin(), strI.end()) == s.end())
+                return false;
+        }
+        return true;
+    }
+
+
+    int shortestPathBinaryMatrix(vector<vector<int>> &grid)
+    {
+        if (grid[0][0] == 1)
+            return -1;
+        if (grid.size() == 1)
+            return 1;
+        std::queue<std::pair<int, int>> q;
+        q.emplace(0, 0);
+        grid[0][0] = 1;
+        int res{0};
+        while (!q.empty())
+        {
+            ++res;
+            auto size{q.size()};
+            while (size--)
+            {
+                auto [x, y]{q.front()};
+                q.pop();
+                auto update = [&](int newX, int newY)
+                {
+                    if (newX < 0 || newX >= grid.size() || newY < 0 || newY >= grid.size() || grid[newX][newY] == 1)
+                        return;
+                    if (newX == grid.size() - 1 && newY == grid.size() - 1)
+                    {
+                        res += 1;
+                        throw 1;
+                    }
+                    q.emplace(newX, newY);
+                    grid[newX][newY] = 1;
+                };
+                try
+                {
+                    update(x - 1, y - 1);
+                    update(x - 1, y);
+                    update(x - 1, y + 1);
+                    update(x, y - 1);
+                    update(x, y + 1);
+                    update(x + 1, y - 1);
+                    update(x + 1, y);
+                    update(x + 1, y + 1);
+                }
+                catch (int)
+                {
+                    return res;
+                }
+            }
+        }
+        return -1;
+    }
+
+    vector<double> sampleStats(vector<int> &count)
+    {
+        auto minimun = [&]() noexcept
+        {
+            for (int i{0}; i < 256; ++i)
+                if (count[i])
+                    return i;
+            return -1;
+        }();
+        auto maximun = [&]() noexcept
+        {
+            for (int i{255}; i >= 0; --i)
+                if (count[i])
+                    return i;
+            return -1;
+        }();
+        auto elementNum{std::accumulate(count.begin(), count.end(), 0)};
+        auto mean = [&]() noexcept
+        {
+            double res{};
+            for (int i{0}; i < 256; ++i)
+                res += i * (static_cast<double>(count[i]) / elementNum);
+            return res;
+        }();
+        auto median = [&]() noexcept -> double
+        {
+            auto mid{(elementNum + 1) / 2};
+            int i{0};
+            while (mid > 0)
+            {
+                mid -= count[i];
+                ++i;
+            }
+            if (elementNum & 1)
+                return i - 1;
+            else
+            {
+                if (mid < 0)
+                    return i - 1;
+                else
+                {
+                    int j{i};
+                    while (!count[j])
+                        ++j;
+                    return (i - 1 + j) / 2.0;
+                }
+            }
+        }();
+        auto mod = std::ranges::max_element(count) - count.begin();
+
+        return {static_cast<double>(minimun), static_cast<double>(maximun), mean, median, static_cast<double>(mod)};
+        
+    }
+
+    int maximumTastiness(vector<int> &price, int k)
+    {
+        if (k == 2)
+            return std::ranges::max(price) - std::ranges::min(price);
+        std::ranges::sort(price);
+        int left{0}, right{price.back() - price.front()};
+        auto check = [&](int k, int tastiness) noexcept
+        {
+            int prev{INT_MIN >> 1};
+            int cnt{};
+            for (auto p : price)
+            {
+                if (p - prev >= tastiness)
+                {
+                    ++cnt;
+                    prev = p;
+                }
+            }
+            return cnt >= k;
+        };
+        while (left < right)
+        {
+            int mid{(left + right + 1) / 2};
+            if (check(k, mid))
+                left = mid;
+            else
+                right = mid - 1;
+        }
+        return left;
+    }
+
+    vector<int> vowelStrings(vector<string> &words, vector<vector<int>> &queries)
+    {
+        auto check = [](std::string_view str) noexcept
+        {
+            switch (str.front())
+            {
+            case 'a':
+            case 'e':
+            case 'i':
+            case 'o':
+            case 'u':
+                break;
+            default:
+                return false;
+            }
+            switch (str.back())
+            {
+            case 'a':
+            case 'e':
+            case 'i':
+            case 'o':
+            case 'u':
+                break;
+            default:
+                return false;
+            }
+            return true;
+        };
+        std::vector<int> preWords(words.size());
+        preWords[0] = check(words[0]);
+        for (int i{1}; i < words.size(); ++i)
+            preWords[i] = preWords[i - 1] + check(words[i]);
+
+        std::vector<int> res;
+        res.reserve(queries.size());
+        for (auto query : queries)
+        {
+            auto left{query[0] == 0 ? 0 : preWords[query[0] - 1]};
+            auto right{preWords[query[1]]};
+            res.emplace_back(right - left);
+        }
+
+        return res;
+    }
+
+    class TreeAncestor
+    {
+        const std::vector<int> &parent;
+    public:
+        TreeAncestor(int n, vector<int>& _parent): parent{_parent} {
+        }
+
+        int getKthAncestor(int node, int k)
+        {
+            while (k > 0 && node != -1)
+            {
+                node = parent[node];
+                --k;
+            }
+            return node;
+        }
+    };
+
+    int unequalTriplets(vector<int> &nums)
+    {
+        std::unordered_map<int, int> cnt;
+        for (auto num : nums)
+            ++cnt[num];
+        int res{};
+        size_t n{nums.size()};
+        size_t t{0};
+        for (const auto &[_, v] : cnt)
+        {
+            res += t * v * (n - t - v);
+            t += v;
+        }
+        return res;
+    }
+
+    int numTimesAllBlue(vector<int> &flips)
+    {
+        int res{};
+        int maxNum{0};
+        for (int i{0}; i < flips.size(); ++i)
+        {
+            maxNum = std::max(maxNum, flips[i]);
+            if (maxNum == i + 1)
+                ++res;
+        }
+        return res;
+    }
+
 };
 }
 
