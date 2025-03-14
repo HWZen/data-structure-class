@@ -659,7 +659,12 @@ public:
 
     vector<vector<int>> subsetsWithDup(vector<int> &nums)
     {
-        auto set2vector = [](const set<vector<int>> &s)
+        auto vecHash = [](const vector<int> &v)
+        {
+            std::hash<std::string_view> hash;
+            return hash({(char *)v.data(), v.size() * sizeof(int)});
+        };
+        auto set2vector = [](const unordered_set<vector<int>, decltype(vecHash)> &s)
         {
             vector<vector<int>> res;
             res.reserve(s.size());
@@ -668,23 +673,23 @@ public:
             return res;
         };
 
-        function<void(set<vector<int>> &, vector<int>, vector<int>::iterator)> dfs = [&](set<vector<int>> &res, vector<int> tmp, vector<int>::iterator it)
+        auto dfs = [&](this auto &&self, unordered_set<vector<int>, decltype(vecHash)> &res, vector<int> tmp, vector<int>::iterator it)
         {
             if (it == nums.end())
                 res.insert(tmp);
             else
             {
-                dfs(res, tmp, it + 1);
+                self(res, tmp, it + 1);
                 tmp.push_back(*it);
-                dfs(res, tmp, it + 1);
+                self(res, tmp, it + 1);
             };
         };
 
-        sort(nums.begin(), nums.end());
-        set<vector<int>> res;
+        std::ranges::sort(nums.begin(), nums.end());
+        unordered_set<vector<int>, decltype(vecHash)> res;
         dfs(res, vector<int>(), nums.begin());
         return set2vector(res);
-    };
+    }
 
     int clumsy(int N)
     {
@@ -11693,7 +11698,717 @@ public:
         auto mod = std::ranges::max_element(count) - count.begin();
 
         return {static_cast<double>(minimun), static_cast<double>(maximun), mean, median, static_cast<double>(mod)};
-        
+
+    }
+
+    int maximumTastiness(vector<int> &price, int k)
+    {
+        if (k == 2)
+            return std::ranges::max(price) - std::ranges::min(price);
+        std::ranges::sort(price);
+        int left{0}, right{price.back() - price.front()};
+        auto check = [&](int k, int tastiness) noexcept
+        {
+            int prev{INT_MIN >> 1};
+            int cnt{};
+            for (auto p : price)
+            {
+                if (p - prev >= tastiness)
+                {
+                    ++cnt;
+                    prev = p;
+                }
+            }
+            return cnt >= k;
+        };
+        while (left < right)
+        {
+            int mid{(left + right + 1) / 2};
+            if (check(k, mid))
+                left = mid;
+            else
+                right = mid - 1;
+        }
+        return left;
+    }
+
+    vector<int> vowelStrings(vector<string> &words, vector<vector<int>> &queries)
+    {
+        auto check = [](std::string_view str) noexcept
+        {
+            switch (str.front())
+            {
+            case 'a':
+            case 'e':
+            case 'i':
+            case 'o':
+            case 'u':
+                break;
+            default:
+                return false;
+            }
+            switch (str.back())
+            {
+            case 'a':
+            case 'e':
+            case 'i':
+            case 'o':
+            case 'u':
+                break;
+            default:
+                return false;
+            }
+            return true;
+        };
+        std::vector<int> preWords(words.size());
+        preWords[0] = check(words[0]);
+        for (int i{1}; i < words.size(); ++i)
+            preWords[i] = preWords[i - 1] + check(words[i]);
+
+        std::vector<int> res;
+        res.reserve(queries.size());
+        for (auto query : queries)
+        {
+            auto left{query[0] == 0 ? 0 : preWords[query[0] - 1]};
+            auto right{preWords[query[1]]};
+            res.emplace_back(right - left);
+        }
+
+        return res;
+    }
+
+    class TreeAncestor
+    {
+        const std::vector<int> &parent;
+    public:
+        TreeAncestor(int n, vector<int>& _parent): parent{_parent} {
+        }
+
+        int getKthAncestor(int node, int k)
+        {
+            while (k > 0 && node != -1)
+            {
+                node = parent[node];
+                --k;
+            }
+            return node;
+        }
+    };
+
+    int unequalTriplets(vector<int> &nums)
+    {
+        std::unordered_map<int, int> cnt;
+        for (auto num : nums)
+            ++cnt[num];
+        int res{};
+        size_t n{nums.size()};
+        size_t t{0};
+        for (const auto &[_, v] : cnt)
+        {
+            res += t * v * (n - t - v);
+            t += v;
+        }
+        return res;
+    }
+
+    int numTimesAllBlue(vector<int> &flips)
+    {
+        int res{};
+        int maxNum{0};
+        for (int i{0}; i < flips.size(); ++i)
+        {
+            maxNum = std::max(maxNum, flips[i]);
+            if (maxNum == i + 1)
+                ++res;
+        }
+        return res;
+    }
+
+    int longestAwesome(std::string_view s)
+    {
+        std::array<int, 1 << 10> prefixMask{};
+        prefixMask.fill((int)s.size());
+        prefixMask[0] = -1;
+        int mask{0};
+        int res{0};
+        for (int i{0}; i < s.size(); ++i)
+        {
+            auto digit = s[i] - '0';
+            mask ^= 1 << digit;
+            if (prefixMask[mask] != s.size())
+                res = std::max(res, i - prefixMask[mask]);
+            else
+                prefixMask[mask] = i;
+            for (int j{0}; j < 10; ++j)
+                if (prefixMask[mask ^ (1 << j)] != s.size())
+                    res = std::max(res, i - prefixMask[mask ^ (1 << j)]);
+        }
+        return res;
+    }
+
+    long long findMaximumElegance(vector<vector<int>> &items, int k)
+    {
+        std::ranges::sort(items, [](const auto &a, const auto &b) noexcept
+                          { return a.front() > b.front(); });
+        std::stack<int> st;
+        unordered_set<int> used;
+        long long res{};
+        long long profit{};
+        int i{};
+        for (auto &item : items)
+        {
+            if (i < k)
+            {
+                profit += item.front();
+                if (used.contains(item.back()))
+                {
+                    st.push(item.front());
+                }
+                else
+                {
+                    used.insert(item.back());
+                }
+                ++i;
+            }
+            else if (st.empty())
+            {
+                return res;
+            }
+            else if (used.contains(item.back()))
+            {
+                continue;
+            }
+            else
+            {
+                profit += item.front();
+                profit -= st.top();
+                st.pop();
+                used.insert(item.back());
+                res = std::max(res, profit + (long long)used.size() * (long long)used.size());
+            }
+            res = std::max(res, (long long)profit + (long long)used.size() * (long long)used.size());
+        }
+        return res;
+    }
+
+    string smallestString(string s)
+    {
+        auto it = s.begin();
+        while (it != s.end())
+        {
+            if (*it != 'a')
+                break;
+            ++it;
+        }
+        if (it == s.end())
+        {
+            s.back() = 'z';
+            return s;
+        }
+        while (it != s.end())
+        {
+            if (*it == 'a')
+                break;
+            --(*it);
+            ++it;
+        }
+        return s;
+    }
+
+    int minFlips(vector<vector<int>>& grid) {
+        int rowChangeCount{0};
+        for (const auto &row : grid)
+        {
+            auto lit = row.begin();
+            auto rit = row.end() - 1;
+
+            for (;lit < rit; ++lit, --rit)
+            {
+                if (*lit != *rit)
+                    ++rowChangeCount;
+            }
+        }
+
+        int colChangeCount{0};
+        for (size_t i = 0; i < grid.front().size(); ++i)
+        {
+            auto lit = grid.begin();
+            auto rit = grid.end() - 1;
+            for (;lit < rit; ++lit, --rit)
+            {
+                if ((*lit)[i] != (*rit)[i])
+                    ++colChangeCount;
+            }
+        }
+
+        return min(rowChangeCount, colChangeCount);
+    }
+
+    bool isSubstringPresent(string s) {
+        if (s.length() < 2)
+            return true;
+        struct substr
+        {
+            char first;
+            char second;
+        };
+        auto substr2uint16_t = [](substr s) noexcept
+        {
+            return std::bit_cast<uint16_t>(s);
+        };
+        std::unordered_set<uint16_t> substrs;
+        substr cur{s[0], s[1]};
+        substrs.insert(substr2uint16_t(cur));
+        for (int i = 2; i < s.length(); ++i)
+        {
+            cur.first = cur.second;
+            cur.second = s[i];
+            if (substrs.contains(substr2uint16_t({cur.second, cur.first})))
+                return true;
+            substrs.insert(substr2uint16_t(cur));
+        }
+        return false;
+    }
+
+    vector<int> occurrencesOfElement(vector<int>& nums, vector<int>& queries, int x) {
+        std::vector<int> x_occurrences;
+        auto it = std::find(nums.begin(), nums.end(), x);
+        while (it != nums.end()) {
+            x_occurrences.emplace_back(std::distance(nums.begin(), it));
+            it = std::find(std::next(it), nums.end(), x);
+        }
+
+        for (auto& query : queries)
+        {
+            if (query > x_occurrences.size())
+                query = -1;
+            else
+                query = x_occurrences[query - 1];
+        }
+        return queries;
+    }
+    class MyCalendarTwo {
+    public:
+        struct interval
+        {
+            int start;
+            int end;
+        };
+        std::multiset<interval, decltype([](const interval &l, const interval &r)
+        {
+            return l.start < r.start;
+        })> intervals, overlaps;
+        MyCalendarTwo() {
+
+        }
+
+        bool isIntervalOverlap(const interval &l, const interval &r) noexcept
+        {
+            return l.start < r.end && l.end > r.start;
+        };
+
+        bool book(int startTime, int endTime) {
+            interval cur{startTime, endTime};
+            for (const auto &overlap : overlaps)
+            {
+                if (overlap.start > cur.end)
+                    break;
+                if (isIntervalOverlap(cur, overlap))
+                    return false;
+            }
+
+            for (const auto &interval : intervals)
+            {
+                if (interval.start > cur.end)
+                    break;
+                if (isIntervalOverlap(cur, interval))
+                    overlaps.insert({std::max(cur.start, interval.start), std::min(cur.end, interval.end)});
+
+            }
+            intervals.insert(cur);
+            return true;
+        }
+
+    };
+
+    int maxCoins(vector<int>& piles) {
+        std::ranges::sort(piles, std::greater<int>{});
+        int res{};
+        for (int i{1}; i < piles.size() / 3 * 2; i += 2)
+        {
+            res += piles[i];
+        }
+        return res;
+    }
+
+    vector<vector<int>> generateMatrix(int n) {
+        std::vector<std::vector<int>> res(n, std::vector<int>(n, 0));
+
+        std::pair<int,int> direct{0, 1};
+        auto next_direct = [&]
+        {
+            if (direct == std::pair{0, 1})
+            {
+                direct = {1, 0};
+            }
+            else if (direct == std::pair{1, 0})
+            {
+                direct = {0, -1};
+            }
+            else if (direct == std::pair{0, -1})
+            {
+                direct = {-1, 0};
+            }
+            else
+            {
+                direct = {0, 1};
+            }
+        };
+
+        int ypos{0}, xpos{0};
+        for (int i{1}; i <= n * n; ++i)
+        {
+            res[xpos][ypos] = i;
+            if (xpos + direct.first > n - 1 || xpos + direct.first < 0 ||  ypos + direct.second > n - 1 || ypos + direct.second < 0 || res[xpos + direct.first][ypos + direct.second] != 0)
+                next_direct();
+            xpos += direct.first;
+            ypos += direct.second;
+        }
+        return res;
+    }
+
+    class RangeFreqQuery {
+        std::unordered_map<int, std::vector<int>> freq;
+    public:
+        RangeFreqQuery(vector<int>& arr) {
+            auto size = arr.size();
+            for (auto i{0}; i < size; ++i)
+            {
+                freq[arr[i]].emplace_back(i);
+            }
+        }
+
+        int query(int left, int right, int value) {
+            auto it = freq.find(value);
+            if (it == freq.end())
+                return 0;
+            auto &vec = it->second;
+            auto lit = std::lower_bound(vec.begin(), vec.end(), left);
+            auto rit = std::upper_bound(vec.begin(), vec.end(), right);
+            return std::distance(lit, rit);
+        }
+    };
+
+    class Allocator {
+        std::list<std::tuple<int, int, int>> block_list;
+        int pool_size;
+        std::unordered_multimap<int, decltype(block_list.begin())> block_map;
+    public:
+        Allocator(int n) : pool_size(n) {
+            print_status();
+        }
+
+        void print_status()
+        {
+
+            for (auto &block : block_list)
+            {
+                auto [start, end, id] = block;
+                std::cout << std::format("{}~{}, {}", start, end, id) << std::endl;;
+            }
+            std::cout << std::endl;
+        }
+
+        int allocate(int size, int mID) {
+            if (block_list.empty())
+            {
+                if (size > pool_size)
+                {
+                    return -1;
+                }
+                block_list.emplace_back(0, size, mID);
+                block_map.emplace(mID, block_list.begin());
+                print_status();
+                return 0;
+            }
+
+            int last_end{0};
+            for (auto it = block_list.begin(); it != block_list.end(); ++it)
+            {
+                auto [start, end, id] = *it;
+                if (size <= start - last_end)
+                {
+                    auto tmp = block_list.emplace(it, last_end, last_end + size, mID);
+                    block_map.emplace(mID, tmp);
+                    print_status();
+                    return last_end;
+                }
+                last_end = end;
+            }
+            auto [start, end, id] = block_list.back();
+            if (pool_size - end >= size)
+            {
+                block_list.emplace_back(end, end + size, mID);
+                block_map.emplace(mID, --block_list.end());
+                print_status();
+                return end;
+            }
+            print_status();
+            return -1;
+        }
+
+        int freeMemory(int mID) {
+            int ret{0};
+            auto range = block_map.equal_range(mID);
+            for (auto it = range.first; it != range.second; ++it)
+            {
+                auto [start, end, id] = *it->second;
+                ret = end - start;
+                block_list.erase(it->second);
+            }
+            block_map.erase(mID);
+            return ret;
+        }
+    };
+
+    class BrowserHistory {
+        std::vector<std::string> history;
+        int nowIndex{0};
+    public:
+        BrowserHistory(string homepage) {
+            history.emplace_back(std::move(homepage));
+        }
+
+        void visit(string url) {
+            history.resize(nowIndex + 1);
+            history.emplace_back(std::move(url));
+            ++nowIndex;
+        }
+
+        string back(int steps) {
+            nowIndex = std::max(0, nowIndex - steps);
+            return history[nowIndex];
+        }
+
+        string forward(int steps) {
+            nowIndex = std::min(nowIndex + steps, (int)history.size() - 1);
+            return history[nowIndex];
+        }
+    };
+
+    class FoodRatings {
+        class footRating
+        {
+        public:
+            std::string food_name;
+            int rating;
+            bool operator==(const footRating &rhs) const
+            {
+                return food_name == rhs.food_name && rating == rhs.rating;
+            }
+            bool operator>(const footRating &rhs) const
+            {
+                if (rating == rhs.rating)
+                    return food_name > rhs.food_name;
+                return rating > rhs.rating;
+            }
+        };
+        std::unordered_map<std::string, std::set<footRating, std::greater<footRating>>> m;
+        std::unordered_map<std::string, int> map_food_cuisines_index;
+        vector<string>& cuisines;
+        vector<int>& ratings;
+
+        void debug_print(const std::string &cuisine)
+        {
+            for (auto &food : m[cuisine])
+            {
+                std::cout << std::format("{}:{}", food.food_name, food.rating) << std::endl;
+            }
+            std::cout << std::endl;
+        }
+    public:
+        FoodRatings(vector<string>& foods, vector<string>& cuisines, vector<int>& ratings) : cuisines{cuisines}, ratings{ratings} {
+            auto size =  foods.size();
+            for (int i{}; i <  size; ++i)
+            {
+                m[cuisines[i]].insert({foods[i], ratings[i]});
+                map_food_cuisines_index[foods[i]] = i;
+            }
+        }
+
+        void changeRating(const string& food, int newRating) {
+            auto index = map_food_cuisines_index[food];
+            auto cuisine = cuisines[index];
+            m[cuisine].erase({food, ratings[index]});
+            m[cuisine].insert({food, newRating});
+            ratings[index] = newRating;
+            debug_print(cuisine);
+        }
+
+        string highestRated(const string& cuisine) {
+            return m[cuisine].begin()->food_name;
+        }
+    };
+
+    int beautifulSubsets(vector<int>& nums, int k) {
+        int ret{0};
+        std::unordered_multiset<int> subSet;
+        subSet.reserve(nums.size());
+        auto dfs = [&](this auto &&self,int index, int sum)
+        {
+            for (int i = index; i < nums.size(); ++i)
+            {
+                if (subSet.contains(nums[i] + k) || subSet.contains(nums[i] - k))
+                    continue;
+                ++ret;
+                auto it = subSet.insert(nums[i]);
+                self(i + 1, sum + nums[i]);
+                subSet.erase(it);
+            }
+        };
+        dfs(0, 0);
+        return ret;
+    }
+
+    bool isBalanced(const string &num) {
+        int evenSum{}, oddSum{};
+        for (int index{0}; auto ch : num)
+        {
+            if (index % 2 == 0)
+                evenSum += ch - '0';
+            else
+                oddSum += ch - '0';
+            ++index;
+        }
+        return evenSum == oddSum;
+    }
+
+    bool queryString(string s, int n)
+    {
+        auto intTo0bString = [](int n)
+        {
+            std::string res;
+            while (n)
+            {
+                res.push_back(n % 2 ? '1' : '0');
+                n >>= 1;
+            }
+            std::reverse(res.begin(), res.end());
+            return res;
+        };
+
+        for (int i{1}; i <= n; ++i)
+        {
+            auto strI{intTo0bString(i)};
+            if (std::search(s.begin(), s.end(), strI.begin(), strI.end()) == s.end())
+                return false;
+        }
+        return true;
+    }
+
+
+    int shortestPathBinaryMatrix(vector<vector<int>> &grid)
+    {
+        if (grid[0][0] == 1)
+            return -1;
+        if (grid.size() == 1)
+            return 1;
+        std::queue<std::pair<int, int>> q;
+        q.emplace(0, 0);
+        grid[0][0] = 1;
+        int res{0};
+        while (!q.empty())
+        {
+            ++res;
+            auto size{q.size()};
+            while (size--)
+            {
+                auto [x, y]{q.front()};
+                q.pop();
+                auto update = [&](int newX, int newY)
+                {
+                    if (newX < 0 || newX >= grid.size() || newY < 0 || newY >= grid.size() || grid[newX][newY] == 1)
+                        return;
+                    if (newX == grid.size() - 1 && newY == grid.size() - 1)
+                    {
+                        res += 1;
+                        throw 1;
+                    }
+                    q.emplace(newX, newY);
+                    grid[newX][newY] = 1;
+                };
+                try
+                {
+                    update(x - 1, y - 1);
+                    update(x - 1, y);
+                    update(x - 1, y + 1);
+                    update(x, y - 1);
+                    update(x, y + 1);
+                    update(x + 1, y - 1);
+                    update(x + 1, y);
+                    update(x + 1, y + 1);
+                }
+                catch (int)
+                {
+                    return res;
+                }
+            }
+        }
+        return -1;
+    }
+
+    vector<double> sampleStats(vector<int> &count)
+    {
+        auto minimun = [&]() noexcept
+        {
+            for (int i{0}; i < 256; ++i)
+                if (count[i])
+                    return i;
+            return -1;
+        }();
+        auto maximun = [&]() noexcept
+        {
+            for (int i{255}; i >= 0; --i)
+                if (count[i])
+                    return i;
+            return -1;
+        }();
+        auto elementNum{std::accumulate(count.begin(), count.end(), 0)};
+        auto mean = [&]() noexcept
+        {
+            double res{};
+            for (int i{0}; i < 256; ++i)
+                res += i * (static_cast<double>(count[i]) / elementNum);
+            return res;
+        }();
+        auto median = [&]() noexcept -> double
+        {
+            auto mid{(elementNum + 1) / 2};
+            int i{0};
+            while (mid > 0)
+            {
+                mid -= count[i];
+                ++i;
+            }
+            if (elementNum & 1)
+                return i - 1;
+            else
+            {
+                if (mid < 0)
+                    return i - 1;
+                else
+                {
+                    int j{i};
+                    while (!count[j])
+                        ++j;
+                    return (i - 1 + j) / 2.0;
+                }
+            }
+        }();
+        auto mod = std::ranges::max_element(count) - count.begin();
+
+        return {static_cast<double>(minimun), static_cast<double>(maximun), mean, median, static_cast<double>(mod)};
+
     }
 
     int maximumTastiness(vector<int> &price, int k)
