@@ -49,3 +49,9 @@ Makefile
 .idea
 .vs
 build
+
+.cache
+LZMA
+nlohmann
+configor
+

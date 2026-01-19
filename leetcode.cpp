@@ -12534,6 +12534,37 @@ public:
         return res;
     }
 
+    long long maximumOr(vector<int>& nums, int k) {
+
+        auto calculateResult = [&]() -> long long {
+            long long res{};
+            for (auto num : nums) {
+                res |= num;
+            }
+            return res;
+        };
+
+        std::sort(nums.begin(), nums.end(), std::greater<int>{});
+        auto get_max_bit = [](int num) noexcept
+        {
+            return num == 0 ? 0 : 32 - __builtin_clz(num);
+        };
+        auto max_bit = get_max_bit(nums.front());
+        // check how much bits are same
+        auto same_max_bit_it = std::lower_bound(nums.begin(), nums.end(), max_bit, [&](int num, int bit) {
+            return get_max_bit(num) >= bit;
+        }) - 1;
+        long long res{};
+        for (auto it = nums.begin(); it != same_max_bit_it; ++it)
+        {
+            int old = *it;
+            *it = *it << k;
+            res = std::max(res, calculateResult());
+            *it = old;
+        }
+        return res;
+    }
+
 };
 }
 

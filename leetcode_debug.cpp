@@ -1,7 +1,9 @@
 #include "leetcode.cpp"
 
+#include <iostream>
 
 int main()
 {
-    Solution().lengthOfLastWord("Hello world");
+    auto res = daily::Solution().smallestString("eedsaed");
+    std::cout << res << std::endl;
 }
