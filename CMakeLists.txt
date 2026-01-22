@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18...3.28)
 project(cpp-fast-test)
 
 set(CMAKE_CXX_STANDARD 23)
-#set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 include_directories(.)
 
 add_compile_options(/utf-8 /Zc:__cplusplus)
@@ -49,7 +49,7 @@ add_compile_options(/W4 /WX)
 #endif()
 
 add_library(LjTool_TestDiskBenchmarkExtern SHARED
-    temp.cpp
+        磁盘拓展测试程序.cpp
 )
 add_executable(run temp.cpp)
 target_link_directories(run PUBLIC .)

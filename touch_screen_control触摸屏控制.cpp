@@ -18,6 +18,7 @@
 
 #pragma comment(lib, "setupapi.lib")
 
+
 static void enumHIDDevice(const auto &Executor){
     HDEVINFO hDevInfo;
     SP_DEVINFO_DATA deviceInfoData{sizeof(SP_DEVINFO_DATA)};
@@ -26,7 +27,7 @@ static void enumHIDDevice(const auto &Executor){
     defer([&](){
         SetupDiDestroyDeviceInfoList(hDevInfo);
     });
-    
+
     if (hDevInfo == INVALID_HANDLE_VALUE){
         std::wcout << L"SetupDiGetClassDevs failed" << std::endl;
         return;
@@ -64,7 +65,7 @@ static void enumHIDDevice(const auto &Executor){
             std::wcout << L"SetupDiGetDeviceRegistryProperty failed" << std::endl;
             continue;
         }
-        
+
         std::wstring deviceDesc(buffer.data());
         std::wcout << L"Device: " << deviceDesc << std::endl;
 
@@ -151,22 +152,27 @@ static void enumHIDDevice(const auto &Executor){
     }
 }
 
-void disableTouchScreen()
+
+
+json disableTouchScreen()
 {
     std::wcout.imbue(std::locale{"chs"});
-    
-    bool foundTouchscreen = false;
-    
+
+    json result;
+    result["is_ok"] = false;
+    result["log"] = json::array();
+    bool found = false;
+
     enumHIDDevice([&](auto &hDevInfo, auto &deviceInfoData, const auto &deviceDesc){
         // Check if it's a touchscreen - look for keywords in description
         auto deviceDescLower = deviceDesc;
         std::transform(deviceDescLower.begin(), deviceDescLower.end(), deviceDescLower.begin(), ::towlower);
         bool isTouchscreen = (deviceDescLower.find(L"touch") != std::wstring::npos && deviceDescLower.find(L"screen") != std::wstring::npos) ||
                              (deviceDescLower.find(L"触摸屏") != std::wstring::npos);
-        
+
         if (isTouchscreen) {
             std::wcout << L"Found touchscreen: " << deviceDesc << std::endl;
-            
+
             // Check if device is already disabled
             DWORD devStatus = 0;
             if (!SetupDiGetDeviceRegistryProperty(hDevInfo,
@@ -177,65 +183,76 @@ void disableTouchScreen()
                 sizeof(devStatus),
                 nullptr)) {
                 std::wcout << L"Failed to get device status" << std::endl;
+                result["log"].emplace_back(std::format("'{}' failed to get device status", BT deviceDesc.c_str()));
                 return true;
             }
-            
+
             if (devStatus & CONFIGFLAG_DISABLED) {
                 std::wcout << L"Touchscreen already disabled" << std::endl;
-                foundTouchscreen = true;
+                result["result"] = "Touchscreen already disabled";
+                result["is_ok"] = true;
+                found = true;
                 return false;
             }
-            
+
             // Disable the touchscreen device
             SP_PROPCHANGE_PARAMS propChange{};
             propChange.ClassInstallHeader.cbSize = sizeof(SP_CLASSINSTALL_HEADER);
             propChange.ClassInstallHeader.InstallFunction = DIF_PROPERTYCHANGE;
             propChange.Scope = DICS_FLAG_GLOBAL;
             propChange.StateChange = DICS_DISABLE;
-            
+
             if (!SetupDiSetClassInstallParams(hDevInfo,
                 &deviceInfoData,
                 &propChange.ClassInstallHeader,
                 sizeof(propChange))) {
                 std::wcout << L"Failed to set class install params" << std::endl;
+                result["log"].emplace_back(std::format("'{}' failed to set class install param", BT deviceDesc.c_str()));
                 return true;
             }
-            
+
             if (!SetupDiChangeState(hDevInfo, &deviceInfoData)) {
                 std::wcout << L"Failed to disable touchscreen" << std::endl;
+                result["log"].emplace_back(std::format("'{}' failed to disable", BT deviceDesc.c_str()));
                 return true;
             }
-            
+
             std::wcout << L"Touchscreen disabled successfully" << std::endl;
-            foundTouchscreen = true;
+            result["result"] = "Touchscreen disabled successfully";
+            result["is_ok"] = true;
+            found = true;
             return false;  // Stop enumeration after finding and disabling
         }
-        
+
         return true;  // Continue enumeration
     });
-    
-    if (!foundTouchscreen) {
-        std::wcout << L"No touchscreen device found" << std::endl;
+
+    if (!found) {
+        result["result"] = "No touchscreen device found";
+        result["is_ok"] = false;
     }
+    return result;
 
 }
 
-void enableTouchScreen()
+json enableTouchScreen()
 {
     std::wcout.imbue(std::locale{"chs"});
-    
-    bool foundTouchscreen = false;
-    
+
+    json result;
+    result["is_ok"] = false;
+    result["log"] = json::array();
+    bool found = false;
     enumHIDDevice([&](auto &hDevInfo, auto &deviceInfoData, const auto &deviceDesc){
         // Check if it's a touchscreen - look for keywords in description
         auto deviceDescLower = deviceDesc;
         std::transform(deviceDescLower.begin(), deviceDescLower.end(), deviceDescLower.begin(), ::towlower);
         bool isTouchscreen = (deviceDescLower.find(L"touch") != std::wstring::npos && deviceDescLower.find(L"screen") != std::wstring::npos) ||
                              (deviceDescLower.find(L"触摸屏") != std::wstring::npos);
-        
+
         if (isTouchscreen) {
             std::wcout << L"Found touchscreen: " << deviceDesc << std::endl;
-            
+
             // Check if device is already enabled
             DWORD devStatus = 0;
             if (!SetupDiGetDeviceRegistryProperty(hDevInfo,
@@ -246,53 +263,114 @@ void enableTouchScreen()
                 sizeof(devStatus),
                 nullptr)) {
                 std::wcout << L"Failed to get device status" << std::endl;
+                result["log"].emplace_back(std::format("'{}' failed to get device status", BT deviceDesc.c_str()));
                 return true;
             }
-            
+
             if (!(devStatus & CONFIGFLAG_DISABLED)) {
                 std::wcout << L"Touchscreen already enabled" << std::endl;
-                foundTouchscreen = true;
+                result["result"] = "Touchscreen already enabled";
+                result["is_ok"] = true;
+                found = true;
                 return false;
             }
-            
+
             // Enable the touchscreen device
             SP_PROPCHANGE_PARAMS propChange{};
             propChange.ClassInstallHeader.cbSize = sizeof(SP_CLASSINSTALL_HEADER);
             propChange.ClassInstallHeader.InstallFunction = DIF_PROPERTYCHANGE;
             propChange.Scope = DICS_FLAG_GLOBAL;
             propChange.StateChange = DICS_ENABLE;
-            
+
             if (!SetupDiSetClassInstallParams(hDevInfo,
                 &deviceInfoData,
                 &propChange.ClassInstallHeader,
                 sizeof(propChange))) {
                 std::wcout << L"Failed to set class install params" << std::endl;
+                result["log"].emplace_back(std::format("'{}' failed to set class install param", BT deviceDesc.c_str()));
                 return true;
             }
-            
+
             if (!SetupDiChangeState(hDevInfo, &deviceInfoData)) {
                 std::wcout << L"Failed to enable touchscreen" << std::endl;
+                result["log"].emplace_back(std::format("'{}' failed to enable", BT deviceDesc.c_str()));
                 return true;
             }
-            
+
             std::wcout << L"Touchscreen enabled successfully" << std::endl;
-            foundTouchscreen = true;
+            result["result"] = "Touchscreen enabled successfully";
+            result["is_ok"] = true;
+            found = true;
             return false;  // Stop enumeration after finding and enabling
         }
-        
+
         return true;  // Continue enumeration
     });
-    
-    if (!foundTouchscreen) {
-        std::wcout << L"No touchscreen device found" << std::endl;
+
+    if (!found) {
+        result["result"] = "No touchscreen device found";
+        result["is_ok"] = false;
     }
 
+    return result;
 }
 
+json queryTouchScreenStatus()
+{
+    json result;
+    result["is_ok"] = false;
+    result["log"] = json::array();
+    result["data"] = json::array();
+    bool found = false;
+enumHIDDevice([&](auto &hDevInfo, auto &deviceInfoData, const auto &deviceDesc){
+        // Check if it's a touchscreen - look for keywords in description
+        auto deviceDescLower = deviceDesc;
+        std::transform(deviceDescLower.begin(), deviceDescLower.end(), deviceDescLower.begin(), ::towlower);
+        bool isTouchscreen = (deviceDescLower.find(L"touch") != std::wstring::npos && deviceDescLower.find(L"screen") != std::wstring::npos) ||
+                             (deviceDescLower.find(L"触摸屏") != std::wstring::npos);
+
+        if (isTouchscreen) {
+            std::wcout << L"Found touchscreen: " << deviceDesc << std::endl;
+
+            // Check device status
+            DWORD devStatus = 0;
+            if (!SetupDiGetDeviceRegistryProperty(hDevInfo,
+                &deviceInfoData,
+                SPDRP_CONFIGFLAGS,
+                nullptr,
+                (PBYTE)&devStatus,
+                sizeof(devStatus),
+                nullptr)) {
+                std::wcout << L"Failed to get device status" << std::endl;
+                result["log"].emplace_back(std::format("'{}' failed to get device status", BT deviceDesc.c_str()));
+                return true;
+            }
+            found = true;
+
+            if (devStatus & CONFIGFLAG_DISABLED) {
+                std::wcout << L"Touchscreen is disabled" << std::endl;
+                result["data"].emplace_back(json{{"device", (char *)(BT deviceDesc.c_str())}, {"enable", false}});
+            } else {
+                std::wcout << L"Touchscreen is enabled" << std::endl;
+                result["data"].emplace_back(json{{"device", deviceDesc}, {"enable", true}});
+            }
+            result["is_ok"] = true;
+        }
+
+        return true;  // Continue enumeration
+    });
+
+    result["found"] = found;
+    return result;
+}
+
+
+
 int main(int argc, char**){
+    std::cout << queryTouchScreenStatus() << std::endl;
     if (argc > 1) {
-        disableTouchScreen();
+        std::cout << disableTouchScreen() << std::endl;
     } else {
-        enableTouchScreen();
+        std::cout << enableTouchScreen() << std::endl;
     }
 }
