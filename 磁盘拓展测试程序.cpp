@@ -25,13 +25,14 @@
 #pragma comment(lib, "setupapi.lib")
 
 using nlohmann::json;
+// GUID_DEVCLASS_HIDCLASS
 
 
-static void enumHIDDevice(const auto &Executor){
+void enumDevice(const GUID& guid_class, const auto& executor){
     HDEVINFO hDevInfo;
     SP_DEVINFO_DATA deviceInfoData{sizeof(SP_DEVINFO_DATA)};
 
-    hDevInfo = SetupDiGetClassDevs(&GUID_DEVCLASS_HIDCLASS, 0, nullptr, DIGCF_PRESENT);
+    hDevInfo = SetupDiGetClassDevs(&guid_class, 0, nullptr, DIGCF_PRESENT);
     defer([&](){
         SetupDiDestroyDeviceInfoList(hDevInfo);
     });
@@ -95,8 +96,8 @@ static void enumHIDDevice(const auto &Executor){
             else
                 std::wcout << L"SetupDiGetDeviceRegistryProperty failed: " << lastError << std::endl;
         }
-
-        std::wcout << L"Hardware ID: " << buffer.data() << std::endl;
+        std::wstring hardwareId = buffer.data();
+        std::wcout << L"Hardware ID: " << hardwareId << std::endl;
 
         // Get device property keys
         SetupDiGetDevicePropertyKeys(hDevInfo, &deviceInfoData, nullptr, 0, &req_bufsize, 0);
@@ -154,10 +155,19 @@ static void enumHIDDevice(const auto &Executor){
         std::wcout << L"Parent: " << parent << std::endl;
         std::wcout << L"---" << std::endl;
 
-        auto res = Executor(hDevInfo, deviceInfoData, deviceDesc);
+        auto res = executor(hDevInfo, deviceInfoData, deviceDesc, hardwareId);
         if (!res)
             break;
     }
+}
+
+void enumHIDDevice(const auto& executor){
+    enumDevice(GUID_DEVCLASS_HIDCLASS, executor);
+}
+
+void enumVideoDevice(const auto& executor)
+{
+    enumDevice(GUID_DEVCLASS_DISPLAY, executor);
 }
 
 json disableTouchScreen()
@@ -169,7 +179,7 @@ json disableTouchScreen()
     result["log"] = json::array();
     bool found = false;
 
-    enumHIDDevice([&](auto &hDevInfo, auto &deviceInfoData, const auto &deviceDesc){
+    enumHIDDevice([&](auto &hDevInfo, auto &deviceInfoData, const auto &deviceDesc, const auto&){
         // Check if it's a touchscreen - look for keywords in description
         auto deviceDescLower = deviceDesc;
         std::transform(deviceDescLower.begin(), deviceDescLower.end(), deviceDescLower.begin(), ::towlower);
@@ -189,7 +199,7 @@ json disableTouchScreen()
                 sizeof(devStatus),
                 nullptr)) {
                 std::wcout << L"Failed to get device status" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to get device status", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to get device status", BT8 deviceDesc.c_str()));
                 return true;
             }
 
@@ -213,13 +223,13 @@ json disableTouchScreen()
                 &propChange.ClassInstallHeader,
                 sizeof(propChange))) {
                 std::wcout << L"Failed to set class install params" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to set class install param", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to set class install param", BT8 deviceDesc.c_str()));
                 return true;
             }
 
             if (!SetupDiChangeState(hDevInfo, &deviceInfoData)) {
                 std::wcout << L"Failed to disable touchscreen" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to disable", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to disable", BT8 deviceDesc.c_str()));
                 return true;
             }
 
@@ -249,7 +259,7 @@ json enableTouchScreen()
     result["is_ok"] = false;
     result["log"] = json::array();
     bool found = false;
-    enumHIDDevice([&](auto &hDevInfo, auto &deviceInfoData, const auto &deviceDesc){
+    enumHIDDevice([&](auto &hDevInfo, auto &deviceInfoData, const auto &deviceDesc, const auto&){
         // Check if it's a touchscreen - look for keywords in description
         auto deviceDescLower = deviceDesc;
         std::transform(deviceDescLower.begin(), deviceDescLower.end(), deviceDescLower.begin(), ::towlower);
@@ -269,7 +279,7 @@ json enableTouchScreen()
                 sizeof(devStatus),
                 nullptr)) {
                 std::wcout << L"Failed to get device status" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to get device status", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to get device status", BT8 deviceDesc.c_str()));
                 return true;
             }
 
@@ -293,13 +303,13 @@ json enableTouchScreen()
                 &propChange.ClassInstallHeader,
                 sizeof(propChange))) {
                 std::wcout << L"Failed to set class install params" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to set class install param", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to set class install param", BT8 deviceDesc.c_str()));
                 return true;
             }
 
             if (!SetupDiChangeState(hDevInfo, &deviceInfoData)) {
                 std::wcout << L"Failed to enable touchscreen" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to enable", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to enable", BT8 deviceDesc.c_str()));
                 return true;
             }
 
@@ -328,7 +338,7 @@ json queryTouchScreenStatus()
     result["log"] = json::array();
     result["data"] = json::array();
     bool found = false;
-    enumHIDDevice([&](auto &hDevInfo, auto &deviceInfoData, const auto &deviceDesc){
+    enumHIDDevice([&](auto &hDevInfo, auto &deviceInfoData, const auto &deviceDesc, const auto&){
         // Check if it's a touchscreen - look for keywords in description
         auto deviceDescLower = deviceDesc;
         std::transform(deviceDescLower.begin(), deviceDescLower.end(), deviceDescLower.begin(), ::towlower);
@@ -348,14 +358,14 @@ json queryTouchScreenStatus()
                 sizeof(devStatus),
                 nullptr)) {
                 std::wcout << L"Failed to get device status" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to get device status", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to get device status", BT8 deviceDesc.c_str()));
                 return true;
             }
             found = true;
 
             if (devStatus & CONFIGFLAG_DISABLED) {
                 std::wcout << L"Touchscreen is disabled" << std::endl;
-                result["data"].emplace_back(json{{"device", (char *)(BT deviceDesc.c_str())}, {"enable", false}});
+                result["data"].emplace_back(json{{"device", (char *)(BT8 deviceDesc.c_str())}, {"enable", false}});
             } else {
                 std::wcout << L"Touchscreen is enabled" << std::endl;
                 result["data"].emplace_back(json{{"device", deviceDesc}, {"enable", true}});
@@ -510,7 +520,7 @@ bool WriteRegistryValue(const std::wstring& key, const std::wstring& value) {
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, registryPath.c_str(), 0, KEY_SET_VALUE | KEY_WOW64_64KEY, &hKey) != ERROR_SUCCESS) {
         return false;
     }
-	if (RegSetValueExW(hKey, key.c_str(), 0, REG_SZ, (const BYTE*)value.c_str(), (value.size()+1)*sizeof(wchar_t)) != ERROR_SUCCESS) {
+	if (RegSetValueExW(hKey, key.c_str(), 0, REG_SZ, (const BYTE*)value.c_str(), DWORD(value.size()+1)*sizeof(wchar_t)) != ERROR_SUCCESS) {
 		RegCloseKey(hKey);
 		return false;
 	}
@@ -536,7 +546,6 @@ bool DeleteRegistryValue(const std::wstring& key) {
     }
 }
 
-// ...existing code...
 
 // 获取 Windows Update 状态
 bool GetWindowsUpdateStatus() {
@@ -612,20 +621,49 @@ bool ResumeWindowsUpdate() {
     return true;
 }
 
-// 示例主函数
-// int main() {
-//     std::cout << "Current Windows Update status: " << GetWindowsUpdateStatus() << std::endl;
-//     PauseWindowsUpdate(24); // 暂停 24 小时
-//     // ResumeWindowsUpdate();
-//     std::cout << "Current Windows Update status: " << GetWindowsUpdateStatus() << std::endl;
-//     // ResumeWindowsUpdate(); // 恢复更新
-//     return 0;
-// }
+json queryGPUDriverInfo()
+{
+    json result;
+    result["found"] = false;
+    result["data"] = json::array();
+    enumVideoDevice([&](auto& hDevInfo, auto& deviceInfoData, const auto& deviceDesc, const auto& hardwareId) {
+        // 获取驱动注册表项
+        HKEY hDriverKey = SetupDiOpenDevRegKey(hDevInfo, &deviceInfoData, DICS_FLAG_GLOBAL, 0, DIREG_DRV, KEY_READ);
+        std::wstring driverVersion, driverDate;
+        if (hDriverKey == INVALID_HANDLE_VALUE) {
+            std::wcout << L"Failed to open driver registry key for device: " << deviceDesc << std::endl;
+        }
+        defer([&]{RegCloseKey(hDriverKey);});
+        
+        // 读取 DriverVersion
+        wchar_t verBuf[256] = {};
+        DWORD verSize = sizeof(verBuf);
+        if (RegQueryValueExW(hDriverKey, L"DriverVersion", nullptr, nullptr, (LPBYTE)verBuf, &verSize) ==
+                ERROR_SUCCESS) {
+            driverVersion = verBuf;
+        }
+        
+        // 读取 DriverDate
+        wchar_t dateBuf[256] = {};
+        DWORD dateSize = sizeof(dateBuf);
+        if (RegQueryValueExW(hDriverKey, L"DriverDate", nullptr, nullptr, (LPBYTE)dateBuf, &dateSize) ==
+                ERROR_SUCCESS) {
+            driverDate = dateBuf;
+        }
+
+        result["data"].emplace_back(json{{"device", BT8 deviceDesc}, {"driver_version", BT8 driverVersion}, {"driver_date", BT8 driverDate}, {"hardwareId", BT8 hardwareId}});
+        result["found"] = true;
+        return true;  // Continue enumeration
+    });
+
+    return result;
+}
+
 
 extern "C" __declspec(dllexport) const char * Run(void*) try
 {
     json result{
-        {"version", "1.0.0.0"},
+        {"version", "1.0.0.1"},
         {"buildTime", __DATE__ " " __TIME__}
     };
     bool status = GetWindowsUpdateStatus();
@@ -644,7 +682,20 @@ extern "C" __declspec(dllexport) const char * Run(void*) try
     }
 
     // 查询系统激活状态
-    result["activationStatus"] = systemActivationStatus();
+    auto t0 = std::chrono::high_resolution_clock::now();
+    result["activationStatusCount"] = 0;
+    for (int i{}; i < 3; ++i)
+    {
+        result["activationStatus"] = systemActivationStatus();
+        result["activationStatusCount"] = result["activationStatusCount"].get<int>() + 1;
+        if (result["activationStatus"] != -1)
+        {
+            break;
+        }
+
+    }
+    auto t1 = std::chrono::high_resolution_clock::now();
+    result["activationStatusUsedTime"] = std::chrono::duration<double, std::milli>(t1 - t0).count();
 
     // 触摸屏检查
     json touchScreenStatus = queryTouchScreenStatus();
@@ -663,6 +714,9 @@ extern "C" __declspec(dllexport) const char * Run(void*) try
         result["touchScreen"]["enableOperator"] = enableTouchScreen();
         result["touchScreen"]["QureyAfterEnable"] = queryTouchScreenStatus();
     }
+
+    // GPU驱动信息
+    result["GPU"] = queryGPUDriverInfo();
 
     static std::string res = result.dump();
     return res.c_str();
