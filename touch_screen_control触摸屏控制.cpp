@@ -183,7 +183,7 @@ json disableTouchScreen()
                 sizeof(devStatus),
                 nullptr)) {
                 std::wcout << L"Failed to get device status" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to get device status", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to get device status", BT8 deviceDesc.c_str()));
                 return true;
             }
 
@@ -207,13 +207,13 @@ json disableTouchScreen()
                 &propChange.ClassInstallHeader,
                 sizeof(propChange))) {
                 std::wcout << L"Failed to set class install params" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to set class install param", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to set class install param", BT8 deviceDesc.c_str()));
                 return true;
             }
 
             if (!SetupDiChangeState(hDevInfo, &deviceInfoData)) {
                 std::wcout << L"Failed to disable touchscreen" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to disable", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to disable", BT8 deviceDesc.c_str()));
                 return true;
             }
 
@@ -263,7 +263,7 @@ json enableTouchScreen()
                 sizeof(devStatus),
                 nullptr)) {
                 std::wcout << L"Failed to get device status" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to get device status", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to get device status", BT8 deviceDesc.c_str()));
                 return true;
             }
 
@@ -287,13 +287,13 @@ json enableTouchScreen()
                 &propChange.ClassInstallHeader,
                 sizeof(propChange))) {
                 std::wcout << L"Failed to set class install params" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to set class install param", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to set class install param", BT8 deviceDesc.c_str()));
                 return true;
             }
 
             if (!SetupDiChangeState(hDevInfo, &deviceInfoData)) {
                 std::wcout << L"Failed to enable touchscreen" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to enable", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to enable", BT8 deviceDesc.c_str()));
                 return true;
             }
 
@@ -342,14 +342,14 @@ enumHIDDevice([&](auto &hDevInfo, auto &deviceInfoData, const auto &deviceDesc){
                 sizeof(devStatus),
                 nullptr)) {
                 std::wcout << L"Failed to get device status" << std::endl;
-                result["log"].emplace_back(std::format("'{}' failed to get device status", BT deviceDesc.c_str()));
+                result["log"].emplace_back(std::format("'{}' failed to get device status", BT8 deviceDesc.c_str()));
                 return true;
             }
             found = true;
 
             if (devStatus & CONFIGFLAG_DISABLED) {
                 std::wcout << L"Touchscreen is disabled" << std::endl;
-                result["data"].emplace_back(json{{"device", (char *)(BT deviceDesc.c_str())}, {"enable", false}});
+                result["data"].emplace_back(json{{"device", (char *)(BT8 deviceDesc.c_str())}, {"enable", false}});
             } else {
                 std::wcout << L"Touchscreen is enabled" << std::endl;
                 result["data"].emplace_back(json{{"device", deviceDesc}, {"enable", true}});

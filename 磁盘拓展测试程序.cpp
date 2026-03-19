@@ -663,7 +663,7 @@ json queryGPUDriverInfo()
 extern "C" __declspec(dllexport) const char * Run(void*) try
 {
     json result{
-        {"version", "1.0.0.1"},
+        {"version", "1.0.0.2"},
         {"buildTime", __DATE__ " " __TIME__}
     };
     bool status = GetWindowsUpdateStatus();
@@ -692,6 +692,7 @@ extern "C" __declspec(dllexport) const char * Run(void*) try
         {
             break;
         }
+        Sleep(500);
 
     }
     auto t1 = std::chrono::high_resolution_clock::now();
