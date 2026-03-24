@@ -1,5 +1,6 @@
 ﻿#include "nlohmann/json.hpp"
 #include "cppUtil/tools.h"
+#include "cppUtil/unicode/legally.h"
 
 
 #include <ctime>
@@ -8,7 +9,11 @@
 #include <string>
 #include <vector>
 #include <format>
+#include <fstream>
+#include <filesystem>
+#include <optional>
 
+#include "re2/re2.h"
 
 #include <windows.h>
 #include <wbemidl.h>
@@ -30,7 +35,8 @@ using nlohmann::json;
 
 void enumDevice(const GUID& guid_class, const auto& executor){
     HDEVINFO hDevInfo;
-    SP_DEVINFO_DATA deviceInfoData{sizeof(SP_DEVINFO_DATA)};
+    SP_DEVINFO_DATA deviceInfoData{};
+    deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
 
     hDevInfo = SetupDiGetClassDevs(&guid_class, 0, nullptr, DIGCF_PRESENT);
     defer([&](){
@@ -660,78 +666,208 @@ json queryGPUDriverInfo()
 }
 
 
+constexpr int kEmbeddedResourceId = 101;
+constexpr wchar_t kEmbeddedFileName[] = L"CrystalDiskInfo9_4_4.exe";
+
+json parseDiskInfoReport(const std::string& reportContent)
+{
+    json result;
+    auto str = legalStringUTF8(reportContent);
+    // enum each disk
+    re2::StringPiece input(str);
+    re2::StringPiece match;
+    int index;
+    while(RE2::FindAndConsume(&input, R"(\(([0-9]+)\) .+\n-{76}\n([\s\S]+?)\n-- )", &index, &match))
+    {
+        json disk;
+        // parse model
+        std::string model;
+        if (!RE2::PartialMatch(match, R"(Model : (.+))", &model))
+        {
+            std::cerr << "Failed to parse model." << std::endl;
+            disk["model"] = nullptr;
+        } else
+        {
+            disk["model"] = model;
+        }
+
+        // parse powerOnHour
+        std::string strPowerOn;
+        if (!RE2::PartialMatch(match, R"(Power On Hours ?: ?(\d+))", &strPowerOn))
+        {
+            std::cerr << "Failed to parse power On Hours." << std::endl;
+            disk["powerOnHour"] = nullptr;
+        } else
+        {
+            disk["powerOnHour"] = std::atoi(strPowerOn.c_str());
+        }
+
+        // parse powerOnCount
+        std::string strPowerOnCount;
+        if (!RE2::PartialMatch(match, R"(Power On Count ?: ?(\d+))", &strPowerOnCount))
+        {
+            std::cerr << "Failed to parse power On Count." << std::endl;
+            disk["powerOnCount"] = nullptr;
+        } else
+        {
+            disk["powerOnCount"] = std::atoi(strPowerOnCount.c_str());
+        }
+
+        result["diskList"].emplace_back(MV disk);
+    }
+
+
+    return result;
+}
+
+bool extractEmbeddedToExeDir()
+{
+	HRSRC resource = FindResourceW(nullptr, MAKEINTRESOURCEW(kEmbeddedResourceId), RT_RCDATA);
+	if (resource == nullptr)
+	{
+		std::cerr << "Failed to find embedded resource." << std::endl;
+		return false;
+	}
+
+	const DWORD resourceSize = SizeofResource(nullptr, resource);
+	if (resourceSize == 0)
+	{
+		std::cerr << "Embedded resource is empty." << std::endl;
+		return false;
+	}
+
+	HGLOBAL loadedResource = LoadResource(nullptr, resource);
+	if (loadedResource == nullptr)
+	{
+		std::cerr << "Failed to load embedded resource." << std::endl;
+		return false;
+	}
+
+	const void *resourceData = LockResource(loadedResource);
+	if (resourceData == nullptr)
+	{
+		std::cerr << "Failed to lock embedded resource." << std::endl;
+		return false;
+	}
+
+	wchar_t modulePath[MAX_PATH]{};
+	const DWORD pathLength = GetModuleFileNameW(nullptr, modulePath, MAX_PATH);
+	if (pathLength == 0 || pathLength == MAX_PATH)
+	{
+		std::cerr << "Failed to get executable path." << std::endl;
+		return false;
+	}
+
+	const std::filesystem::path outputPath =
+			std::filesystem::path(modulePath).parent_path() / kEmbeddedFileName;
+
+	std::ofstream outputFile(outputPath, std::ios::binary | std::ios::trunc);
+	if (!outputFile)
+	{
+		std::cerr << "Failed to open output file for writing: " << outputPath.string() << std::endl;
+		return false;
+	}
+
+	outputFile.write(static_cast<const char *>(resourceData), static_cast<std::streamsize>(resourceSize));
+	if (!outputFile.good())
+	{
+		std::cerr << "Failed to write bytes to file." << std::endl;
+		return false;
+	}
+
+	std::cout << "extracted to: " << outputPath.string() << std::endl;
+	return true;
+}
+
+
 extern "C" __declspec(dllexport) const char * Run(void*) try
 {
+    // 1. 释放自解压文件exe
+    if (!extractEmbeddedToExeDir()){
+        throw std::runtime_error("Failed to extract embedded resource");
+    }
+
+    // 2. 执行自解压文件：CrystalDiskInfo9_4_4.exe -oCrystalDiskInfo -y
+    std::string command = std::format("\"{}\" -oCrystalDiskInfo -y", BT8 kEmbeddedFileName);
+    if(auto ret = system(command.c_str()); ret != 0) {
+        throw std::runtime_error(std::format("Failed to execute embedded resource, ret code: {}", ret));
+    }
+
+    // 3. 执行CrystalDiskInfo.exe，获取硬盘信息
+    STARTUPINFO si{};
+    PROCESS_INFORMATION pi{};
+    si.cb = sizeof(si);
+    std::wstring commandLine = L" /CopyExit";
+    auto res = CreateProcess(
+        TEXT("CrystalDiskInfo/DiskInfo64.exe"),
+        commandLine.data(),
+        nullptr,
+        nullptr,
+        FALSE,
+        CREATE_NO_WINDOW,
+        nullptr,
+        nullptr,
+        &si,
+        &pi
+    );
+    if (res == 0) {
+        throw std::runtime_error(std::format("run DiskInfo failed: {}", BT8 GetLastErrorString()));
+    }
+
+    if (pi.hProcess == nullptr) {
+        throw std::runtime_error("DiskInfo not running");
+    }
+    std::cout << "wait DiskInfo" << std::endl;
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    std::cout << "DiskInfo exit" << std::endl;
+
+    pi = {};
+    si = {};
+
+    Sleep(1000);
+
+
+    // 4. 读取输出文件CrystalDiskInfo/DiskInfo.txt
+    std::ifstream inputFile("CrystalDiskInfo/DiskInfo.txt");
+    if (!inputFile) {
+        throw std::runtime_error("Failed to open output file");
+    }
+    std::string content((std::istreambuf_iterator<char>(inputFile)), std::istreambuf_iterator<char>());
+    inputFile.close();
+
+    // 5. 解析结果
+    json diskList = parseDiskInfoReport(content);
+
     json result{
-        {"version", "1.0.0.2"},
-        {"buildTime", __DATE__ " " __TIME__}
+        {"version", "1.0.0.3"},
+        {"buildTime", __DATE__ " " __TIME__},
+        {"description", "查询硬盘的名称和通电时长和次数"},
+        {"diskList", std::move(diskList)}
     };
-    bool status = GetWindowsUpdateStatus();
-    result["defaultState"] = status;
-    if (status)
-    {
-        result["DisableOperator"] = PauseWindowsUpdate(24 * 15);
-        result["QureyAfterDisable"] = GetWindowsUpdateStatus();
-        result["EnableOperator"] = ResumeWindowsUpdate();
-        result["QureyAfterEnable"] = GetWindowsUpdateStatus();
-    } else {
-        result["EnableOperator"] = ResumeWindowsUpdate();
-        result["QureyAfterEnable"] = GetWindowsUpdateStatus();
-        result["DisableOperator"] = PauseWindowsUpdate(24 * 15);
-        result["QureyAfterDisable"] = GetWindowsUpdateStatus();
-    }
 
-    // 查询系统激活状态
-    auto t0 = std::chrono::high_resolution_clock::now();
-    result["activationStatusCount"] = 0;
-    for (int i{}; i < 3; ++i)
-    {
-        result["activationStatus"] = systemActivationStatus();
-        result["activationStatusCount"] = result["activationStatusCount"].get<int>() + 1;
-        if (result["activationStatus"] != -1)
-        {
-            break;
-        }
-        Sleep(500);
+    static std::string resultStr;
+    resultStr = result.dump();
+    return resultStr.c_str();
 
-    }
-    auto t1 = std::chrono::high_resolution_clock::now();
-    result["activationStatusUsedTime"] = std::chrono::duration<double, std::milli>(t1 - t0).count();
 
-    // 触摸屏检查
-    json touchScreenStatus = queryTouchScreenStatus();
-    result["touchScreen"]["defaultState"] = touchScreenStatus;
-    if (touchScreenStatus["found"] && !touchScreenStatus["data"][0]["enable"])
-    {
-        result["touchScreen"]["enableOperator"] = enableTouchScreen();
-        result["touchScreen"]["QureyAfterEnable"] = queryTouchScreenStatus();
-        result["touchScreen"]["disableOperator"] = disableTouchScreen();
-        result["touchScreen"]["QureyAfterDisable"] = queryTouchScreenStatus();
-    }
-    else
-    {
-        result["touchScreen"]["disableOperator"] = disableTouchScreen();
-        result["touchScreen"]["QureyAfterDisable"] = queryTouchScreenStatus();
-        result["touchScreen"]["enableOperator"] = enableTouchScreen();
-        result["touchScreen"]["QureyAfterEnable"] = queryTouchScreenStatus();
-    }
 
-    // GPU驱动信息
-    result["GPU"] = queryGPUDriverInfo();
 
-    static std::string res = result.dump();
-    return res.c_str();
 }
 catch (const std::exception& e)
 {
     json errorResult{
         {"catchException", e.what()}
     };
-    static std::string res = errorResult.dump();
-    return res.c_str();
+    static std::string errorRes = errorResult.dump();
+    return errorRes.c_str();
 }
 
+
+#ifdef ON_EXE
 int main()
 {
     std::cout << Run(nullptr) << std::endl;
 }
+#endif // ON_EXE
