@@ -22,6 +22,9 @@
 #include <devguid.h>
 #include <devpkey.h>
 #include <Regstr.h>
+#include <wbemidl.h>
+#include <fcntl.h>
+#include <io.h>
 
 #pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "ole32.lib")
@@ -31,6 +34,234 @@
 
 using nlohmann::json;
 // GUID_DEVCLASS_HIDCLASS
+
+
+
+namespace {
+
+struct ComGuard {
+	bool initialized = false;
+
+	~ComGuard() {
+		if (initialized) {
+			CoUninitialize();
+		}
+	}
+};
+
+struct WmiConnection {
+	IWbemLocator* locator = nullptr;
+	IWbemServices* services = nullptr;
+
+	~WmiConnection() {
+		if (services != nullptr) {
+			services->Release();
+		}
+		if (locator != nullptr) {
+			locator->Release();
+		}
+	}
+};
+
+bool InitComSecurity(ComGuard& comGuard) {
+	const HRESULT initHr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+	if (FAILED(initHr) && initHr != RPC_E_CHANGED_MODE) {
+		std::wcerr << L"CoInitializeEx 失败，HRESULT=" << std::hex << initHr << std::dec << L'\n';
+		return false;
+	}
+
+	comGuard.initialized = (initHr != RPC_E_CHANGED_MODE);
+
+	const HRESULT secHr = CoInitializeSecurity(
+		nullptr,
+		-1,
+		nullptr,
+		nullptr,
+		RPC_C_AUTHN_LEVEL_DEFAULT,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		nullptr,
+		EOAC_NONE,
+		nullptr);
+
+	if (FAILED(secHr) && secHr != RPC_E_TOO_LATE) {
+		std::wcerr << L"CoInitializeSecurity 失败，HRESULT=" << std::hex << secHr << std::dec << L'\n';
+		return false;
+	}
+
+	return true;
+}
+
+bool ConnectWmi(WmiConnection& connection) {
+	const HRESULT createHr = CoCreateInstance(
+		CLSID_WbemLocator,
+		nullptr,
+		CLSCTX_INPROC_SERVER,
+		IID_IWbemLocator,
+		reinterpret_cast<LPVOID*>(&connection.locator));
+	if (FAILED(createHr)) {
+		std::wcerr << L"CoCreateInstance(IWbemLocator) 失败，HRESULT=" << std::hex << createHr << std::dec << L'\n';
+		return false;
+	}
+
+	BSTR nameSpace = SysAllocString(L"ROOT\\CIMV2");
+	if (nameSpace == nullptr) {
+		std::wcerr << L"SysAllocString 失败。\n";
+		return false;
+	}
+
+	const HRESULT connectHr = connection.locator->ConnectServer(
+		nameSpace,
+		nullptr,
+		nullptr,
+		nullptr,
+		0,
+		nullptr,
+		nullptr,
+		&connection.services);
+	SysFreeString(nameSpace);
+	if (FAILED(connectHr)) {
+		std::wcerr << L"ConnectServer 失败，HRESULT=" << std::hex << connectHr << std::dec << L'\n';
+		return false;
+	}
+
+	const HRESULT blanketHr = CoSetProxyBlanket(
+		connection.services,
+		RPC_C_AUTHN_WINNT,
+		RPC_C_AUTHZ_NONE,
+		nullptr,
+		RPC_C_AUTHN_LEVEL_CALL,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		nullptr,
+		EOAC_NONE);
+	if (FAILED(blanketHr)) {
+		std::wcerr << L"CoSetProxyBlanket 失败，HRESULT=" << std::hex << blanketHr << std::dec << L'\n';
+		return false;
+	}
+
+	return true;
+}
+
+IWbemClassObject* QuerySingleObject(IWbemServices* services, const wchar_t* wql) {
+	IEnumWbemClassObject* enumerator = nullptr;
+	BSTR queryLanguage = SysAllocString(L"WQL");
+	BSTR queryText = SysAllocString(wql);
+	if (queryLanguage == nullptr || queryText == nullptr) {
+		if (queryLanguage != nullptr) {
+			SysFreeString(queryLanguage);
+		}
+		if (queryText != nullptr) {
+			SysFreeString(queryText);
+		}
+		std::wcerr << L"SysAllocString 失败。\n";
+		return nullptr;
+	}
+
+	const HRESULT execHr = services->ExecQuery(
+		queryLanguage,
+		queryText,
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		nullptr,
+		&enumerator);
+	SysFreeString(queryLanguage);
+	SysFreeString(queryText);
+	if (FAILED(execHr)) {
+		std::wcerr << L"ExecQuery 失败，WQL=" << wql << L"，HRESULT=" << std::hex << execHr << std::dec << L'\n';
+		return nullptr;
+	}
+
+	IWbemClassObject* object = nullptr;
+	ULONG returned = 0;
+	const HRESULT nextHr = enumerator->Next(WBEM_INFINITE, 1, &object, &returned);
+	enumerator->Release();
+
+	if (FAILED(nextHr) || returned == 0) {
+		std::wcerr << L"未查询到对象，WQL=" << wql << L"\n";
+		return nullptr;
+	}
+
+	return object;
+}
+
+bool GetWmiString(IWbemClassObject* object, const wchar_t* name, std::wstring& outValue) {
+	outValue.clear();
+
+	VARIANT value;
+	VariantInit(&value);
+
+	const HRESULT getHr = object->Get(name, 0, &value, nullptr, nullptr);
+	if (FAILED(getHr)) {
+		VariantClear(&value);
+		return false;
+	}
+
+	if (value.vt == VT_NULL || value.vt == VT_EMPTY) {
+		VariantClear(&value);
+		return false;
+	}
+
+	VARIANT stringValue;
+	VariantInit(&stringValue);
+	const HRESULT changeHr = VariantChangeType(&stringValue, &value, 0, VT_BSTR);
+	VariantClear(&value);
+	if (FAILED(changeHr) || stringValue.vt != VT_BSTR || stringValue.bstrVal == nullptr) {
+		VariantClear(&stringValue);
+		return false;
+	}
+
+	outValue.assign(stringValue.bstrVal, SysStringLen(stringValue.bstrVal));
+	VariantClear(&stringValue);
+	return true;
+}
+
+bool ReadRegString(HKEY root, const wchar_t* subKey, const wchar_t* valueName, std::wstring& outValue) {
+	outValue.clear();
+
+	wchar_t buffer[256] = {};
+	DWORD bytes = static_cast<DWORD>(sizeof(buffer));
+	const LSTATUS status = RegGetValueW(
+		root,
+		subKey,
+		valueName,
+		RRF_RT_REG_SZ,
+		nullptr,
+		buffer,
+		&bytes);
+	if (status != ERROR_SUCCESS) {
+		return false;
+	}
+	outValue = buffer;
+	return true;
+}
+
+bool ReadRegDword(HKEY root, const wchar_t* subKey, const wchar_t* valueName, DWORD& outValue) {
+	outValue = 0;
+
+	DWORD value = 0;
+	DWORD bytes = sizeof(value);
+	const LSTATUS status = RegGetValueW(
+		root,
+		subKey,
+		valueName,
+		RRF_RT_REG_DWORD,
+		nullptr,
+		&value,
+		&bytes);
+	if (status != ERROR_SUCCESS) {
+		return false;
+	}
+	outValue = value;
+	return true;
+}
+
+std::wstring OrUnknown(const std::wstring& v) {
+	if (v.empty()) {
+		return L"未知";
+	}
+	return v;
+}
+
+} // namespace
+
 
 
 void enumDevice(const GUID& guid_class, const auto& executor){
@@ -720,140 +951,146 @@ json parseDiskInfoReport(const std::string& reportContent)
     return result;
 }
 
-bool extractEmbeddedToExeDir()
+HMODULE GetCurrentModule()
 {
-	HRSRC resource = FindResourceW(nullptr, MAKEINTRESOURCEW(kEmbeddedResourceId), RT_RCDATA);
+    HMODULE hModule = NULL;
+    GetModuleHandleEx(
+        GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+        (LPCTSTR)GetCurrentModule,
+        &hModule);
+    return hModule;
+}
+
+
+void extractEmbeddedToExeDir()
+{
+
+    auto module = GetCurrentModule();
+    if (module == nullptr)
+    {
+        throw std::runtime_error("Failed to get current module");
+    }
+
+	HRSRC resource = FindResourceW(module, MAKEINTRESOURCEW(kEmbeddedResourceId), RT_RCDATA);
 	if (resource == nullptr)
 	{
-		std::cerr << "Failed to find embedded resource." << std::endl;
-		return false;
+        throw std::runtime_error("Failed to find embedded resource");
 	}
 
-	const DWORD resourceSize = SizeofResource(nullptr, resource);
+	const DWORD resourceSize = SizeofResource(module, resource);
 	if (resourceSize == 0)
 	{
-		std::cerr << "Embedded resource is empty." << std::endl;
-		return false;
+        throw std::runtime_error("Embedded resource is empty");
 	}
 
-	HGLOBAL loadedResource = LoadResource(nullptr, resource);
+	HGLOBAL loadedResource = LoadResource(module, resource);
 	if (loadedResource == nullptr)
 	{
-		std::cerr << "Failed to load embedded resource." << std::endl;
-		return false;
+        throw std::runtime_error("Failed to load embedded resource");
 	}
 
 	const void *resourceData = LockResource(loadedResource);
 	if (resourceData == nullptr)
 	{
-		std::cerr << "Failed to lock embedded resource." << std::endl;
-		return false;
-	}
-
-	wchar_t modulePath[MAX_PATH]{};
-	const DWORD pathLength = GetModuleFileNameW(nullptr, modulePath, MAX_PATH);
-	if (pathLength == 0 || pathLength == MAX_PATH)
-	{
-		std::cerr << "Failed to get executable path." << std::endl;
-		return false;
+        throw std::runtime_error("Failed to lock embedded resource");
 	}
 
 	const std::filesystem::path outputPath =
-			std::filesystem::path(modulePath).parent_path() / kEmbeddedFileName;
+			std::filesystem::current_path() / kEmbeddedFileName;
 
 	std::ofstream outputFile(outputPath, std::ios::binary | std::ios::trunc);
 	if (!outputFile)
 	{
-		std::cerr << "Failed to open output file for writing: " << outputPath.string() << std::endl;
-		return false;
+        throw std::runtime_error("Failed to open output file for writing: " + outputPath.string());
 	}
 
 	outputFile.write(static_cast<const char *>(resourceData), static_cast<std::streamsize>(resourceSize));
 	if (!outputFile.good())
 	{
-		std::cerr << "Failed to write bytes to file." << std::endl;
-		return false;
+        throw std::runtime_error("Failed to write bytes to file: " + outputPath.string());
 	}
 
 	std::cout << "extracted to: " << outputPath.string() << std::endl;
-	return true;
 }
 
 
 extern "C" __declspec(dllexport) const char * Run(void*) try
 {
-    // 1. 释放自解压文件exe
-    if (!extractEmbeddedToExeDir()){
-        throw std::runtime_error("Failed to extract embedded resource");
-    }
+    ComGuard comGuard;
+	if (!InitComSecurity(comGuard)) {
+		throw std::runtime_error(std::format("Failed to initialize COM security, {}", BT8 GetLastErrorString()));
+	}
 
-    // 2. 执行自解压文件：CrystalDiskInfo9_4_4.exe -oCrystalDiskInfo -y
-    std::string command = std::format("\"{}\" -oCrystalDiskInfo -y", BT8 kEmbeddedFileName);
-    if(auto ret = system(command.c_str()); ret != 0) {
-        throw std::runtime_error(std::format("Failed to execute embedded resource, ret code: {}", ret));
-    }
+	WmiConnection connection;
+	if (!ConnectWmi(connection)) {
+		throw std::runtime_error(std::format("Failed to connect to WMI, {}", BT8 GetLastErrorString()));
+	}
 
-    // 3. 执行CrystalDiskInfo.exe，获取硬盘信息
-    STARTUPINFO si{};
-    PROCESS_INFORMATION pi{};
-    si.cb = sizeof(si);
-    std::wstring commandLine = L" /CopyExit";
-    auto res = CreateProcess(
-        TEXT("CrystalDiskInfo/DiskInfo64.exe"),
-        commandLine.data(),
-        nullptr,
-        nullptr,
-        FALSE,
-        CREATE_NO_WINDOW,
-        nullptr,
-        nullptr,
-        &si,
-        &pi
-    );
-    if (res == 0) {
-        throw std::runtime_error(std::format("run DiskInfo failed: {}", BT8 GetLastErrorString()));
-    }
+	IWbemClassObject* osObject = QuerySingleObject(connection.services, L"SELECT Caption,InstallDate,BuildNumber FROM Win32_OperatingSystem");
+	if (osObject == nullptr) {
+		throw std::runtime_error("Failed to query Win32_OperatingSystem");
+	}
 
-    if (pi.hProcess == nullptr) {
-        throw std::runtime_error("DiskInfo not running");
-    }
-    std::cout << "wait DiskInfo" << std::endl;
-    WaitForSingleObject(pi.hProcess, INFINITE);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-    std::cout << "DiskInfo exit" << std::endl;
+	std::wstring caption;
+	std::wstring installDate;
+	std::wstring buildNumber;
+	GetWmiString(osObject, L"Caption", caption);
+	GetWmiString(osObject, L"InstallDate", installDate);
+	GetWmiString(osObject, L"BuildNumber", buildNumber);
+	osObject->Release();
 
-    pi = {};
-    si = {};
+	const wchar_t* currentVersionKey = L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
+	std::wstring displayVersion;
+	DWORD ubr = 0;
+	const bool hasDisplayVersion = ReadRegString(HKEY_LOCAL_MACHINE, currentVersionKey, L"DisplayVersion", displayVersion);
+	const bool hasUbr = ReadRegDword(HKEY_LOCAL_MACHINE, currentVersionKey, L"UBR", ubr);
 
-    Sleep(1000);
+	std::wstring fullBuild = OrUnknown(buildNumber);
+	if (!buildNumber.empty() && hasUbr) {
+		fullBuild = buildNumber + L"." + std::to_wstring(ubr);
+	}
 
+    IWbemClassObject* biosObject = QuerySingleObject(connection.services, L"SELECT SMBIOSBIOSVersion,ReleaseDate,EmbeddedControllerMajorVersion,EmbeddedControllerMinorVersion FROM Win32_BIOS");
+	if (biosObject == nullptr) {
+		throw std::runtime_error(std::format("Failed to query Win32_BIOS, {}", BT8 GetLastErrorString()));
+	}
 
-    // 4. 读取输出文件CrystalDiskInfo/DiskInfo.txt
-    std::ifstream inputFile("CrystalDiskInfo/DiskInfo.txt");
-    if (!inputFile) {
-        throw std::runtime_error("Failed to open output file");
-    }
-    std::string content((std::istreambuf_iterator<char>(inputFile)), std::istreambuf_iterator<char>());
-    inputFile.close();
+	std::wstring biosVersion;
+	std::wstring biosDate;
+	std::wstring ecMajor;
+	std::wstring ecMinor;
+	GetWmiString(biosObject, L"SMBIOSBIOSVersion", biosVersion);
+	GetWmiString(biosObject, L"ReleaseDate", biosDate);
+	GetWmiString(biosObject, L"EmbeddedControllerMajorVersion", ecMajor);
+	GetWmiString(biosObject, L"EmbeddedControllerMinorVersion", ecMinor);
+	biosObject->Release();
 
-    // 5. 解析结果
-    json diskList = parseDiskInfoReport(content);
+    auto ecVersion = [&]() -> std::wstring {
+        if (ecMajor.empty() || ecMinor.empty()) {
+            return L"未知";
+        }
+        return ecMajor + L"." + ecMinor;
+     }();
 
     json result{
-        {"version", "1.0.0.3"},
-        {"buildTime", __DATE__ " " __TIME__},
-        {"description", "查询硬盘的名称和通电时长和次数"},
-        {"diskList", std::move(diskList)}
+        {"os", {
+            {"version", BT8 caption},
+            {"installDate", BT8 installDate},
+            {"versionNumber", BT8 (hasDisplayVersion ? displayVersion : L"未知")},
+            {"fullBuild", BT8 fullBuild}
+        }},
+        {"bios", {
+            {"biosVersion", BT8 biosVersion},
+            {"releaseDate", BT8 biosDate},
+            {"ecVersion", BT8 ecVersion},
+        }},
+    {"version", "1.0.0.5"},
+    {"buildTime", __DATE__ " " __TIME__},
+    {"description", "查询Bios/ec版本，Windows系统版本信息"}
     };
 
-    static std::string resultStr;
-    resultStr = result.dump();
-    return resultStr.c_str();
-
-
-
-
+    static std::string jsonResult = result.dump();
+    return jsonResult.c_str();
 }
 catch (const std::exception& e)
 {
