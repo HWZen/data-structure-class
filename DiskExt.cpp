@@ -26,6 +26,8 @@
 #include <fcntl.h>
 #include <io.h>
 
+namespace fs = std::filesystem;
+
 #pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "oleaut32.lib")
@@ -896,10 +898,6 @@ json queryGPUDriverInfo()
     return result;
 }
 
-
-constexpr int kEmbeddedResourceId = 101;
-constexpr wchar_t kEmbeddedFileName[] = L"CrystalDiskInfo9_4_4.exe";
-
 json parseDiskInfoReport(const std::string& reportContent)
 {
     json result;
@@ -962,7 +960,7 @@ HMODULE GetCurrentModule()
 }
 
 
-void extractEmbeddedToExeDir()
+void extractEmbeddedToExeDir(int resourceId, std::wstring resourceName)
 {
 
     auto module = GetCurrentModule();
@@ -971,7 +969,7 @@ void extractEmbeddedToExeDir()
         throw std::runtime_error("Failed to get current module");
     }
 
-	HRSRC resource = FindResourceW(module, MAKEINTRESOURCEW(kEmbeddedResourceId), RT_RCDATA);
+	HRSRC resource = FindResourceW(module, MAKEINTRESOURCEW(resourceId), RT_RCDATA);
 	if (resource == nullptr)
 	{
         throw std::runtime_error("Failed to find embedded resource");
@@ -996,7 +994,7 @@ void extractEmbeddedToExeDir()
 	}
 
 	const std::filesystem::path outputPath =
-			std::filesystem::current_path() / kEmbeddedFileName;
+			std::filesystem::current_path() / resourceName;
 
 	std::ofstream outputFile(outputPath, std::ios::binary | std::ios::trunc);
 	if (!outputFile)
@@ -1013,8 +1011,8 @@ void extractEmbeddedToExeDir()
 	std::cout << "extracted to: " << outputPath.string() << std::endl;
 }
 
-
-extern "C" __declspec(dllexport) const char * Run(void*) try
+// 查询Bios/ec版本，Windows系统版本信息
+const char * Run_1005(void*)  try
 {
     ComGuard comGuard;
 	if (!InitComSecurity(comGuard)) {
@@ -1099,6 +1097,115 @@ catch (const std::exception& e)
     };
     static std::string errorRes = errorResult.dump();
     return errorRes.c_str();
+}
+
+
+
+
+// 查询C++能力和CrystalDiskInfo的硬盘名称、接口、传输模式、标准，C++能力和CrystalDiskInfo各跑两次
+const char * Run_1006(void*) try{
+
+    json crystalDiskInfoResult(json::array());
+    json ljtoolDiskResult(json::array());
+
+    // 解压资源文件到临时目录
+    extractEmbeddedToExeDir(101, L"CrystalDiskInfo9_4_4.exe");
+    extractEmbeddedToExeDir(102, L"LjTool_Disk_Test.dll");
+
+    // 解压CrystalDiskInfo到./diskInfo
+    std::wstring diskInfoDir = L".\\diskInfo";
+    if (CreateDirectoryW(diskInfoDir.c_str(), nullptr) == FALSE && GetLastError() != ERROR_ALREADY_EXISTS) {
+        throw std::runtime_error(std::format("Failed to create diskInfo directory: {}", BT8 diskInfoDir));
+    }
+    
+    auto cmdLine = std::format(".\\CrystalDiskInfo9_4_4.exe x -y -o\"{}\"", BT8 diskInfoDir);
+    if (system(cmdLine.c_str()) != 0)
+    {
+        throw std::runtime_error(std::format("Failed to execute command: {}", cmdLine));
+    }
+
+    // 加载dll和函数
+    HMODULE hModule = LoadLibraryW(L"LjTool_Disk_Test.dll");
+    if (hModule == nullptr) {
+        throw std::runtime_error(std::format("Failed to load LjTool_Disk_Test.dll, {}", BT8 GetLastErrorString()));
+    }
+
+    using GetDiskInfosFunc = const char *(*)();
+    auto getDiskInfos = reinterpret_cast<GetDiskInfosFunc>(GetProcAddress(hModule, "getDiskInfos"));
+    if (getDiskInfos == nullptr) {
+        FreeLibrary(hModule);
+        throw std::runtime_error(std::format("Failed to get getDiskInfos function from LjTool_Disk_Test.dll, {}", BT8 GetLastErrorString()));
+    }
+
+
+    for (int i{}; i < 2; ++i)
+    {
+        // 执行CrystalDiskInfo，静默执行，获取硬盘报告
+        cmdLine = std::format("\"{}\\DiskInfo64.exe\" /CopyExit", BT8 diskInfoDir);
+        if (system(cmdLine.c_str()) != 0)
+        {
+            throw std::runtime_error(std::format("Failed to execute command: {}", cmdLine));
+        }
+
+        // 读取报告
+        std::wstring reportFile = diskInfoDir + L"\\DiskInfo.txt";
+        std::ifstream reportStream(reportFile);
+        if (!reportStream.is_open()) {
+            throw std::runtime_error(std::format("Failed to open CrystalDiskInfo report file: {}", BT8 reportFile));
+        }
+        std::string reportContent((std::istreambuf_iterator<char>(reportStream)), std::istreambuf_iterator<char>());
+        reportStream.close();
+
+        // 确保reportContent都是合法utf-8
+        reportContent = legalStringUTF8(reportContent);
+
+        crystalDiskInfoResult.emplace_back(json{
+            {"index", i},
+            {"context", reportContent}
+        });
+
+        // 删除DiskInfo.txt
+        fs::remove(reportFile);
+
+
+        // 调用C++能力获取硬盘信息
+
+
+
+        auto diskInfos = getDiskInfos();
+        ljtoolDiskResult.emplace_back(json{
+            {"index", i},
+            {"context", json::parse(diskInfos)}
+        });
+    }
+
+    json result{
+        {"crystalDiskInfo",   MV crystalDiskInfoResult},
+        {"ljtoolDisk", MV ljtoolDiskResult},
+        {"version", "1.0.0.6"},
+        {"buildTime", __DATE__ " " __TIME__},
+        {"description", "查询C++能力和CrystalDiskInfo的硬盘名称、接口、传输模式、标准，C++能力和CrystalDiskInfo各跑两次"}
+    };
+
+    static std::string jsonResult = result.dump();
+    return jsonResult.c_str();
+
+}
+catch (const std::exception& e)
+{
+    json errorResult{
+        {"catchException", e.what()}
+    };
+    static std::string errorRes = errorResult.dump();
+    return errorRes.c_str();
+}
+
+
+
+
+extern "C" __declspec(dllexport) const char * Run(void* p)
+{
+    return Run_1006(p);
 }
 
 
