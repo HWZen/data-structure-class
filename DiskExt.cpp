@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <optional>
 
+#include "nlohmann/json_fwd.hpp"
 #include "re2/re2.h"
 
 #include <windows.h>
@@ -1087,7 +1088,8 @@ const char * Run_1005(void*)  try
     {"description", "查询Bios/ec版本，Windows系统版本信息"}
     };
 
-    static std::string jsonResult = result.dump();
+    static std::string jsonResult;
+    jsonResult = result.dump();
     return jsonResult.c_str();
 }
 catch (const std::exception& e)
@@ -1187,8 +1189,178 @@ const char * Run_1006(void*) try{
         {"description", "查询C++能力和CrystalDiskInfo的硬盘名称、接口、传输模式、标准，C++能力和CrystalDiskInfo各跑两次"}
     };
 
-    static std::string jsonResult = result.dump();
+    static std::string jsonResult;
+    jsonResult = result.dump();
     return jsonResult.c_str();
+
+}
+catch (const std::exception& e)
+{
+    json errorResult{
+        {"catchException", e.what()}
+    };
+    static std::string errorRes = errorResult.dump();
+    return errorRes.c_str();
+}
+
+// 1.0.0.7： 1.0.0.5+1.0.0.6
+const char * Run_1007(void*) try{
+
+
+    json crystalDiskInfoResult(json::array());
+    json ljtoolDiskResult(json::array());
+
+    // 解压资源文件到临时目录
+    extractEmbeddedToExeDir(101, L"CrystalDiskInfo9_4_4.exe");
+    extractEmbeddedToExeDir(102, L"LjTool_Disk_Test.dll");
+
+    // 解压CrystalDiskInfo到./diskInfo
+    std::wstring diskInfoDir = L".\\diskInfo";
+    if (CreateDirectoryW(diskInfoDir.c_str(), nullptr) == FALSE && GetLastError() != ERROR_ALREADY_EXISTS) {
+        throw std::runtime_error(std::format("Failed to create diskInfo directory: {}", BT8 diskInfoDir));
+    }
+    
+    auto cmdLine = std::format(".\\CrystalDiskInfo9_4_4.exe x -y -o\"{}\"", BT8 diskInfoDir);
+    if (system(cmdLine.c_str()) != 0)
+    {
+        throw std::runtime_error(std::format("Failed to execute command: {}", cmdLine));
+    }
+
+    // 加载dll和函数
+    HMODULE hModule = LoadLibraryW(L"LjTool_Disk_Test.dll");
+    if (hModule == nullptr) {
+        throw std::runtime_error(std::format("Failed to load LjTool_Disk_Test.dll, {}", BT8 GetLastErrorString()));
+    }
+
+    using GetDiskInfosFunc = const char *(*)();
+    auto getDiskInfos = reinterpret_cast<GetDiskInfosFunc>(GetProcAddress(hModule, "getDiskInfos"));
+    if (getDiskInfos == nullptr) {
+        FreeLibrary(hModule);
+        throw std::runtime_error(std::format("Failed to get getDiskInfos function from LjTool_Disk_Test.dll, {}", BT8 GetLastErrorString()));
+    }
+
+
+    for (int i{}; i < 2; ++i)
+    {
+        // 执行CrystalDiskInfo，静默执行，获取硬盘报告
+        cmdLine = std::format("\"{}\\DiskInfo64.exe\" /CopyExit", BT8 diskInfoDir);
+        if (system(cmdLine.c_str()) != 0)
+        {
+            throw std::runtime_error(std::format("Failed to execute command: {}", cmdLine));
+        }
+
+        // 读取报告
+        std::wstring reportFile = diskInfoDir + L"\\DiskInfo.txt";
+        std::ifstream reportStream(reportFile);
+        if (!reportStream.is_open()) {
+            throw std::runtime_error(std::format("Failed to open CrystalDiskInfo report file: {}", BT8 reportFile));
+        }
+        std::string reportContent((std::istreambuf_iterator<char>(reportStream)), std::istreambuf_iterator<char>());
+        reportStream.close();
+
+        // 确保reportContent都是合法utf-8
+        reportContent = legalStringUTF8(reportContent);
+
+        crystalDiskInfoResult.emplace_back(json{
+            {"index", i},
+            {"context", reportContent}
+        });
+
+        // 删除DiskInfo.txt
+        fs::remove(reportFile);
+
+
+        // 调用C++能力获取硬盘信息
+
+
+
+        auto diskInfos = getDiskInfos();
+        ljtoolDiskResult.emplace_back(json{
+            {"index", i},
+            {"context", json::parse(diskInfos)}
+        });
+    }
+
+    ComGuard comGuard;
+	if (!InitComSecurity(comGuard)) {
+		throw std::runtime_error(std::format("Failed to initialize COM security, {}", BT8 GetLastErrorString()));
+	}
+
+	WmiConnection connection;
+	if (!ConnectWmi(connection)) {
+		throw std::runtime_error(std::format("Failed to connect to WMI, {}", BT8 GetLastErrorString()));
+	}
+
+	IWbemClassObject* osObject = QuerySingleObject(connection.services, L"SELECT Caption,InstallDate,BuildNumber FROM Win32_OperatingSystem");
+	if (osObject == nullptr) {
+		throw std::runtime_error("Failed to query Win32_OperatingSystem");
+	}
+
+	std::wstring caption;
+	std::wstring installDate;
+	std::wstring buildNumber;
+	GetWmiString(osObject, L"Caption", caption);
+	GetWmiString(osObject, L"InstallDate", installDate);
+	GetWmiString(osObject, L"BuildNumber", buildNumber);
+	osObject->Release();
+
+	const wchar_t* currentVersionKey = L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
+	std::wstring displayVersion;
+	DWORD ubr = 0;
+	const bool hasDisplayVersion = ReadRegString(HKEY_LOCAL_MACHINE, currentVersionKey, L"DisplayVersion", displayVersion);
+	const bool hasUbr = ReadRegDword(HKEY_LOCAL_MACHINE, currentVersionKey, L"UBR", ubr);
+
+	std::wstring fullBuild = OrUnknown(buildNumber);
+	if (!buildNumber.empty() && hasUbr) {
+		fullBuild = buildNumber + L"." + std::to_wstring(ubr);
+	}
+
+    IWbemClassObject* biosObject = QuerySingleObject(connection.services, L"SELECT SMBIOSBIOSVersion,ReleaseDate,EmbeddedControllerMajorVersion,EmbeddedControllerMinorVersion FROM Win32_BIOS");
+	if (biosObject == nullptr) {
+		throw std::runtime_error(std::format("Failed to query Win32_BIOS, {}", BT8 GetLastErrorString()));
+	}
+
+	std::wstring biosVersion;
+	std::wstring biosDate;
+	std::wstring ecMajor;
+	std::wstring ecMinor;
+	GetWmiString(biosObject, L"SMBIOSBIOSVersion", biosVersion);
+	GetWmiString(biosObject, L"ReleaseDate", biosDate);
+	GetWmiString(biosObject, L"EmbeddedControllerMajorVersion", ecMajor);
+	GetWmiString(biosObject, L"EmbeddedControllerMinorVersion", ecMinor);
+	biosObject->Release();
+
+    auto ecVersion = [&]() -> std::wstring {
+        if (ecMajor.empty() || ecMinor.empty()) {
+            return L"未知";
+        }
+        return ecMajor + L"." + ecMinor;
+     }();
+
+    json result{
+        {"os", {
+            {"version", BT8 caption},
+            {"installDate", BT8 installDate},
+            {"versionNumber", BT8 (hasDisplayVersion ? displayVersion : L"未知")},
+            {"fullBuild", BT8 fullBuild}
+        }},
+        {"bios", {
+            {"biosVersion", BT8 biosVersion},
+            {"releaseDate", BT8 biosDate},
+            {"ecVersion", BT8 ecVersion},
+        }},
+        {"crystalDiskInfo",   MV crystalDiskInfoResult},
+        {"ljtoolDisk", MV ljtoolDiskResult},
+        {"version", "1.0.0.7"},
+        {"buildTime", __DATE__ " " __TIME__},
+        {"description", "查询Bios/ec版本，Windows系统版本信息,查询C++能力和CrystalDiskInfo的硬盘名称、接口、传输模式、标准，C++能力和CrystalDiskInfo各跑两次"}
+
+    };
+
+    static std::string jsonResult;
+    jsonResult = result.dump();
+    return jsonResult.c_str();
+
 
 }
 catch (const std::exception& e)
@@ -1205,7 +1377,7 @@ catch (const std::exception& e)
 
 extern "C" __declspec(dllexport) const char * Run(void* p)
 {
-    return Run_1006(p);
+    return Run_1007(p);
 }
 
 

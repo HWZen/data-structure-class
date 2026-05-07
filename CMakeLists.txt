@@ -19,7 +19,8 @@ add_compile_options(/W4 /WX)
 list(APPEND CMAKE_PREFIX_PATH "C:/Qt/Qt5.12.9/5.12.9/msvc2017_64")
 message("cmake prefix path: ${CMAKE_PREFIX_PATH}")
 find_package(Qt5 COMPONENTS Core Gui Widgets Svg REQUIRED)
-find_package(pugixml CONFIG REQUIRED)
+#find_package(pugixml CONFIG REQUIRED)
+
 #
 set(CMAKE_AUTOMOC ON)
 
@@ -48,22 +49,69 @@ if(WIN32)
     # 生成RC文件（注意使用相对路径）
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/admin.rc" "1 RT_MANIFEST \"admin.manifest\"\n")
 
+        set(EMBEDDED_DLL_PATH "${CMAKE_SOURCE_DIR}/CrystalDiskInfo9_4_4.exe")
+        if(NOT EXISTS "${EMBEDDED_DLL_PATH}")
+                message(FATAL_ERROR "Missing embedded: ${EMBEDDED_DLL_PATH}")
+        endif()
+
+        set(EMBEDDED_DLL_PATH2 "${CMAKE_SOURCE_DIR}/LjTool_Disk_Test.dll")
+        if(NOT EXISTS "${EMBEDDED_DLL_PATH2}")
+                message(FATAL_ERROR "Missing embedded: ${EMBEDDED_DLL_PATH2}")
+        endif()
+
+
+        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/embedded.rc"
+                        "101 RCDATA \"${EMBEDDED_DLL_PATH}\"\n"
+                        "102 RCDATA \"${EMBEDDED_DLL_PATH2}\"\n"
+        )
+
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /utf-8")
     add_definitions(-DUNICODE -D_UNICODE)
 endif()
 
-add_library(LjTool_TestDiskBenchmarkExtern SHARED
-        磁盘拓展测试程序.cpp
+
+
+add_executable(run
+        temp.cpp
+#        ${CMAKE_CURRENT_BINARY_DIR}/admin.rc
+#        ${CMAKE_CURRENT_BINARY_DIR}/admin.manifest
 )
 
-add_executable(LjTool_TestDiskBenchmarkExternExe 磁盘拓展测试程序.cpp)
-
-add_executable(run temp.cpp ${CMAKE_CURRENT_BINARY_DIR}/admin.rc ${CMAKE_CURRENT_BINARY_DIR}/admin.manifest)
-
 target_link_directories(run PUBLIC .)
-target_link_libraries(run PUBLIC comctl32 kernel32 user32 gdi32 advapi32)
+#target_link_libraries(run PUBLIC comctl32 kernel32 user32 gdi32 advapi32)
 #set_property(TARGET run PROPERTY WIN32_EXECUTABLE ON)
-target_link_options(run PUBLIC /MANIFEST:NO /MANIFESTUAC:NO)
+#target_link_options(run PUBLIC /MANIFEST:NO /MANIFESTUAC:NO)
 
 
- target_link_libraries(run PUBLIC pugixml::pugixml)
+# target_link_libraries(run PUBLIC pugixml::pugixml)
+
+
+
+
+# 如果编译器target是32位
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+
+set(absl_DIR ${CMAKE_CURRENT_LIST_DIR}/ThirdLib/abseil/x86/lib/cmake/absl)
+set(re2_DIR ${CMAKE_CURRENT_LIST_DIR}/ThirdLib/re2/x86/lib/cmake/re2)
+find_package(re2 REQUIRED)
+add_library(LjTool_TestDiskBenchmarkExtern SHARED
+        DiskExt.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/embedded.rc
+)
+
+
+add_executable(LjTool_TestDiskBenchmarkExternExe
+        DiskExt.cpp
+       ${CMAKE_CURRENT_BINARY_DIR}/embedded.rc
+)
+target_compile_definitions(LjTool_TestDiskBenchmarkExternExe PRIVATE ON_EXE)
+
+
+target_link_libraries(LjTool_TestDiskBenchmarkExtern PUBLIC re2::re2)
+target_link_libraries(LjTool_TestDiskBenchmarkExternExe PUBLIC re2::re2)
+endif()
+
+
+#find_package(tomlplusplus CONFIG REQUIRED)
+#add_executable(device_detector device_detector.cpp)
+#target_link_libraries(device_detector PUBLIC tomlplusplus::tomlplusplus)
