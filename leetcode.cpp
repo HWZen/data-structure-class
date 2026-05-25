@@ -12565,6 +12565,134 @@ public:
         return res;
     }
 
+    vector<int> findThePrefixCommonArray(vector<int>& A, vector<int>& B) {
+        std::bitset<50> set;
+        std::vector<int> res(A.size());
+        auto nowCount = A.size();
+        auto it = res.rbegin();
+        auto rit_a = A.rbegin();
+        auto rit_b = B.rbegin();
+        for (;it != res.rend();++it, ++rit_a, ++rit_b){
+            *it = nowCount;
+            if (!set.test(*rit_a)){
+                --nowCount;
+                set.set(*rit_a);
+            }
+            if (!set.test(*rit_b)){
+                --nowCount;
+                set.set(*rit_b);
+            }
+        }
+
+        return res;
+    }
+
+    int maxTwoEvents(vector<vector<int>>& events) {
+        struct event{
+            enum class type
+            {
+                start,
+                end
+            } type;
+            int time;
+            int value;
+        };
+
+        std::vector<event> sorted_events;
+        for (auto &e : events)
+        {
+            sorted_events.emplace_back(event::type::start, e[0], e[2]);
+            sorted_events.emplace_back(event::type::end, e[1], e[2]);
+        }
+        std::sort(sorted_events.begin(), sorted_events.end(), [](const event &a, const event &b) {
+            if (a.time == b.time)
+                return a.type < b.type;
+            return a.time < b.time;
+        });
+
+        int res{0};
+        int bestFirst{0};
+        for (auto &e : sorted_events)
+        {
+            if (e.type == event::type::start)
+            {
+                res = std::max(res, e.value + bestFirst);
+            }
+            else
+            {
+                bestFirst = std::max(bestFirst, e.value);
+            }
+        }
+        return res;
+    }
+
+    int longestCommonPrefix(vector<int>& arr1, vector<int>& arr2) 
+    {
+        std::vector<std::string> strArr1, strArr2;
+        for (auto num : arr1)
+            strArr1.emplace_back(std::to_string(num));
+        for (auto num : arr2)
+            strArr2.emplace_back(std::to_string(num));
+
+        auto checkPrefixCount = [](const std::string &s1, const std::string &s2) noexcept
+        {
+            int count{};
+            for (int i{0}; i < s1.size() && i < s2.size(); ++i)
+            {
+                if (s1[i] == s2[i])
+                    ++count;
+                else
+                    break;
+            }
+            return count;
+        };
+
+        std::sort(strArr1.begin(), strArr1.end());
+        std::sort(strArr2.begin(), strArr2.end());
+
+        auto it1 = strArr1.begin();
+        auto it2 = strArr2.begin();
+        int res{0};
+        while (it1 != strArr1.end() || it2 != strArr2.end())
+        {
+            res = std::max(res, checkPrefixCount(*it1, *it2));
+            if (*it1 > *it2){
+                if (++it2 == strArr2.end())
+                    break;
+            }
+            else if (*it1 < *it2){
+                if (++it1 == strArr1.end())
+                    break;
+            }
+            else
+            {
+                if (++it1 == strArr1.end() || ++it2 == strArr2.end())
+                    break;
+            }
+            
+        }
+        return res;
+    }
+
+    int search(vector<int>& nums, int target) {
+        auto split_num = nums.front();
+
+        if (target == split_num)
+            return 0;
+        // bisect
+        auto comp = [split_num, is_left = target > split_num](int num, int target) {
+            if ((is_left ? num >= split_num : num < split_num))
+                return num < target;
+            else
+                return !is_left ;
+        };
+        auto it = std::lower_bound(nums.begin(), nums.end(), target, comp);
+        if (it != nums.end() && *it == target)
+            return std::distance(nums.begin(), it);
+        else
+            return -1;
+    }
+
 };
 }
 
